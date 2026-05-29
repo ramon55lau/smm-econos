@@ -5,10 +5,10 @@ import { authOptions } from "@/lib/auth";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
-import { 
-  publishToFacebook, 
+import {
+  publishToFacebook,
   publishVideoToFacebook,
-  publishToFacebookFeed, 
+  publishToFacebookFeed,
   publishMultiPhotoToFacebook,
   createFacebookAdCampaign,
   createFacebookAdSet,
@@ -19,11 +19,11 @@ import {
   createFacebookAd,
   getFacebookAdAccountDetails
 } from "@/lib/social/facebook";
-import { 
-  publishToInstagram, 
-  publishToInstagramReels, 
+import {
+  publishToInstagram,
+  publishToInstagramReels,
   publishToInstagramStories,
-  publishCarouselToInstagram 
+  publishCarouselToInstagram
 } from "@/lib/social/instagram";
 
 /**
@@ -65,11 +65,11 @@ export async function POST(req: NextRequest) {
     const results: any[] = [];
     const protocol = req.headers.get("x-forwarded-proto") || "http";
     const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "localhost:3000";
-    
+
     // SMM 4.0: BaseURL — uses NEXTAUTH_URL from env (set to https://smm.econos.io in prod)
     let baseUrl = process.env.NEXTAUTH_URL || `${protocol}://${host}`;
     if (baseUrl.endsWith("/")) baseUrl = baseUrl.slice(0, -1);
-    
+
     let rawMessage = `${ad.title}\n\n${ad.description || ""}`;
     if (ad.campaign.hashtags) {
       const tags = ad.campaign.hashtags.split(",").map(t => t.trim().startsWith("#") ? t.trim() : `#${t.trim()}`).join(" ");
@@ -84,13 +84,13 @@ export async function POST(req: NextRequest) {
       if (!url || url.endsWith("/")) continue;
 
       let cleanUrl = url.replace(/\\/g, "/");
-      
+
       // Migrate legacy /uploads/ paths to /api/media/
       if (cleanUrl.startsWith("/uploads/")) {
         cleanUrl = cleanUrl.replace("/uploads/", "/api/media/");
       }
       if (cleanUrl.startsWith("/")) cleanUrl = cleanUrl.substring(1);
-      
+
       let fullUrl = cleanUrl.startsWith("http") ? cleanUrl : `${baseUrl}/${cleanUrl}`;
 
       // Proxied Downloader: Process all images to fix Aspect Ratio for Meta and cache locally
@@ -100,42 +100,54 @@ export async function POST(req: NextRequest) {
           const dlRes = await fetch(fullUrl);
           if (dlRes.ok) {
             const buffer = await dlRes.arrayBuffer();
+            const contentType = dlRes.headers.get("content-type") || "";
+            const isVideoByHeader = contentType.includes("video/");
+
             const extMatch = fullUrl.split("?")[0].split(".").pop();
-            const ext = (extMatch && extMatch.length <= 4) ? extMatch.toLowerCase() : "jpg";
-            const isVideo = ext === "mp4" || ext === "webm" || ext === "mov";
-            
+            let ext = (extMatch && extMatch.length <= 4) ? extMatch.toLowerCase() : "";
+
+            // Fallback for extension based on content type
+            if (!ext) {
+              if (contentType.includes("image/jpeg")) ext = "jpg";
+              else if (contentType.includes("image/png")) ext = "png";
+              else if (contentType.includes("video/mp4")) ext = "mp4";
+              else ext = "jpg";
+            }
+
+            const isVideo = isVideoByHeader || ext === "mp4" || ext === "webm" || ext === "mov";
+
             let finalBuffer = Buffer.from(buffer);
             let finalExt = ext;
-            
+
             if (!isVideo) {
-               try {
-                 const sharp = require("sharp");
-                 const image = sharp(finalBuffer);
-                 const metadata = await image.metadata();
-                 const width = metadata.width || 1080;
-                 const height = metadata.height || 1080;
-                 const size = Math.max(width, height);
-                 
-                 finalBuffer = await image
-                   .resize(size, size, {
-                     fit: 'contain',
-                     background: { r: 255, g: 255, b: 255, alpha: 1 }
-                   })
-                   .jpeg({ quality: 90 })
-                   .toBuffer();
-                 finalExt = "jpg";
-               } catch (sharpErr: any) {
-                 console.error("[SMM Proxied Downloader] Error processing image with sharp:", sharpErr.message);
-               }
+              try {
+                const sharp = require("sharp");
+                const image = sharp(finalBuffer);
+                const metadata = await image.metadata();
+                const width = metadata.width || 1080;
+                const height = metadata.height || 1080;
+                const size = Math.max(width, height);
+
+                finalBuffer = await image
+                  .resize(size, size, {
+                    fit: 'contain',
+                    background: { r: 255, g: 255, b: 255, alpha: 1 }
+                  })
+                  .jpeg({ quality: 90 })
+                  .toBuffer();
+                finalExt = "jpg";
+              } catch (sharpErr: any) {
+                console.error("[SMM Proxied Downloader] Error processing image with sharp:", sharpErr.message);
+              }
             }
-            
+
             const filename = `${randomUUID()}.${finalExt}`;
             const os = require("os");
             const UPLOAD_DIR = path.join(os.tmpdir(), "smm-uploads");
-            
+
             await mkdir(UPLOAD_DIR, { recursive: true });
             await writeFile(path.join(UPLOAD_DIR, filename), finalBuffer);
-            
+
             // Replace external URL with our local, bulletproof API route
             fullUrl = `${baseUrl}/api/media/${filename}`;
             console.log(`[SMM Proxied Downloader] Archivo procesado y guardado localmente en: ${fullUrl}`);
@@ -228,9 +240,9 @@ export async function POST(req: NextRequest) {
               throw new Error(`Meta Ad Account error: ${errorMsg}`);
             }
           } catch (diagError: any) {
-             // Si falla el diagnóstico por permisos, seguimos adelante pero avisamos en logs
-             console.error("[ADS_DIAGNOSTIC] FAILED:", diagError.message);
-             if (diagError.message.includes("Meta Ad Account error")) throw diagError;
+            // Si falla el diagnóstico por permisos, seguimos adelante pero avisamos en logs
+            console.error("[ADS_DIAGNOSTIC] FAILED:", diagError.message);
+            if (diagError.message.includes("Meta Ad Account error")) throw diagError;
           }
 
           // A. Campaign
@@ -238,9 +250,9 @@ export async function POST(req: NextRequest) {
           const campaignObjective = objectiveMapping[adsConfig?.campaignObjective] || adsConfig?.campaignObjective || "OUTCOME_TRAFFIC";
 
           const campRes = await createFacebookAdCampaign(
-            account.accessToken, 
-            adAccountId, 
-            `SMM - ${ad.campaign.name}`, 
+            account.accessToken,
+            adAccountId,
+            `SMM - ${ad.campaign.name}`,
             adsConfig?.budgetAmount || 10,
             campaignObjective
           );
@@ -275,7 +287,7 @@ export async function POST(req: NextRequest) {
           if (isVideo) {
             const videoUpload = await uploadFacebookAdVideo(account.accessToken, adAccountId, mediaFullUrls[0]);
             if (!videoUpload.success || !videoUpload.videoId) {
-               throw new Error(`Video upload error: ${videoUpload.error || "No se pudo subir el video"}`);
+              throw new Error(`Video upload error: ${videoUpload.error || "No se pudo subir el video"}`);
             }
             mediaIdOrHashes = [videoUpload.videoId];
           } else {
@@ -328,7 +340,7 @@ export async function POST(req: NextRequest) {
           if (!adRes.success) throw new Error(`Final Ad error: ${adRes.error}`);
           postId = adRes.postId;
 
-        } 
+        }
         // 2. Facebook Organic Flow
         else if (platform === "facebook") {
           if (destination === "feed") {
@@ -347,7 +359,7 @@ export async function POST(req: NextRequest) {
             }
           } else if (destination === "fanpage") {
             if (!account.pageId) throw new Error("No Facebook Page connected");
-            
+
             if (ad.mediaType === "video") {
               const result = await publishVideoToFacebook(account.pageId, account.accessToken, message, mediaFullUrls[0]);
               if (!result.success) throw new Error(result.error);
@@ -367,13 +379,13 @@ export async function POST(req: NextRequest) {
         else if (platform === "instagram") {
           if (!account.igAccountId) throw new Error("No Instagram Business Account linked to the Facebook Page");
           if (mediaFullUrls.length === 0) throw new Error("Instagram requires media");
-          
+
           // Validar que la URL no esté vacía antes de publicar
           const mediaUrl = mediaFullUrls[0];
           if (!mediaUrl || mediaUrl.trim() === "" || mediaUrl.endsWith("/")) {
             throw new Error(`URL de media inválida para Instagram: "${mediaUrl}"`);
           }
-          
+
           if (destination === "feed") {
             if (mediaFullUrls.length > 1) {
               const items = mediaFullUrls.map(url => {
@@ -404,7 +416,7 @@ export async function POST(req: NextRequest) {
             if (!result.success) throw new Error(result.error);
             postId = result.postId;
           }
-        } 
+        }
         // 4. YouTube Flow
         else if (platform === "youtube") {
           // Check token expiry and refresh if needed
@@ -430,9 +442,9 @@ export async function POST(req: NextRequest) {
           }
 
           if (ad.mediaType !== "video") throw new Error("YouTube requiere exclusivamente un archivo de video.");
-          
+
           const { publishToYouTube, publishToYouTubeShorts } = require("@/lib/social/youtube");
-          
+
           // Read video directly from local disk using the ORIGINAL mediaUrl filename.
           // This avoids the circular self-fetch problem where the server tries to 
           // download from its own /api/media/ route (which fails in Docker/containers).
@@ -441,11 +453,11 @@ export async function POST(req: NextRequest) {
           const pathModule = require("path");
           const fsModule = require("fs/promises");
           const UPLOAD_DIR = pathModule.join(osModule.tmpdir(), "smm-uploads");
-          
+
           // Extract the original filename from ad.mediaUrl (e.g. "/api/media/abc.mp4" → "abc.mp4")
           const originalMediaUrl = ad.mediaUrl || "";
           const originalFilename = originalMediaUrl.split("/").pop()?.split(",")[0]?.trim() || "";
-          
+
           console.log(`[YouTube Upload] ad.mediaUrl = "${originalMediaUrl}"`);
           console.log(`[YouTube Upload] Extracted filename = "${originalFilename}"`);
           console.log(`[YouTube Upload] Looking in UPLOAD_DIR = "${UPLOAD_DIR}"`);
@@ -461,7 +473,7 @@ export async function POST(req: NextRequest) {
             console.log(`[YouTube Upload] Video leído desde disco local: ${localPath} (${videoBuffer.length} bytes)`);
           } catch (localErr: any) {
             console.warn(`[YouTube Upload] No se pudo leer desde ${localPath}: ${localErr.message}`);
-            
+
             // Strategy 2: Also try the proxied filename from mediaFullUrls
             let found = false;
             for (const proxyUrl of mediaFullUrls) {
@@ -474,17 +486,17 @@ export async function POST(req: NextRequest) {
                 break;
               } catch { /* continue to next */ }
             }
-            
+
             if (!found) {
               // Strategy 3: List files in upload dir and try to find any mp4
               try {
                 const files = await fsModule.readdir(UPLOAD_DIR);
                 console.log(`[YouTube Upload] Archivos en ${UPLOAD_DIR}: ${files.join(", ")}`);
               } catch { console.warn(`[YouTube Upload] No se pudo listar ${UPLOAD_DIR}`); }
-              
+
               // Strategy 4: Last resort - download via HTTP from original URL
-              const originalUrl = originalMediaUrl.startsWith("http") 
-                ? originalMediaUrl 
+              const originalUrl = originalMediaUrl.startsWith("http")
+                ? originalMediaUrl
                 : `${baseUrl}/${originalMediaUrl.replace(/^\//, "")}`;
               console.log(`[YouTube Upload] Intentando descarga HTTP desde: ${originalUrl}`);
               const videoResponse = await fetch(originalUrl);
@@ -496,14 +508,14 @@ export async function POST(req: NextRequest) {
               console.log(`[YouTube Upload] Video descargado vía HTTP (${videoBuffer.length} bytes)`);
             }
           }
-          
+
           if (!videoBuffer! || videoBuffer!.length === 0) {
             throw new Error("El buffer del video está vacío. El archivo puede estar corrupto o no existir.");
           }
-          
+
           console.log(`[YouTube Upload] Subiendo video (${videoBuffer!.length} bytes) con título: "${ad.title}"`);
           console.log(`[YouTube Upload] Destination: "${destination}"`);
-          
+
           if (destination === "shorts") {
             // Shorts: ensure #Shorts is in the description
             console.log(`[YouTube Upload] → Publishing as YouTube SHORT`);
@@ -561,7 +573,7 @@ export async function POST(req: NextRequest) {
         results.push({ platform, destination, status: "published", postId });
       } catch (err: any) {
         console.error(`[Publish Error] ${platform}/${destination}:`, err.message);
-        
+
         // SMM 3.1: Capturar información adicional si está disponible
         const detail = err.response?.data?.error?.message || err.message;
         const subcode = err.response?.data?.error?.error_subcode ? ` (subcode: ${err.response.data.error.error_subcode})` : "";

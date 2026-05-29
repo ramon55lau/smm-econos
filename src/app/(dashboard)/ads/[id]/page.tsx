@@ -52,6 +52,7 @@ export default function EditAdPage({ params }: { params: Promise<{ id: string }>
   const [scrapeUrl, setScrapeUrl] = useState("");
   const [scrapingLoading, setScrapingLoading] = useState(false);
   const [scrapedImages, setScrapedImages] = useState<string[]>([]);
+  const [scrapedVideos, setScrapedVideos] = useState<{ url: string; thumbnail?: string }[]>([]);
 
   useEffect(() => {
     const fetchAd = async () => {
@@ -81,12 +82,12 @@ export default function EditAdPage({ params }: { params: Promise<{ id: string }>
   }, [id]);
 
   const mediaUrls = mediaUrl ? mediaUrl.split(",") : [];
-  
+
   const handleRemoveMedia = (urlToRemove: string) => {
     const updated = mediaUrls.filter((u) => u !== urlToRemove);
     setMediaUrl(updated.join(","));
   };
-  
+
   const handleAddMedia = (urlToAdd: string) => {
     const updated = [...mediaUrls, urlToAdd];
     setMediaUrl(updated.join(","));
@@ -112,8 +113,14 @@ export default function EditAdPage({ params }: { params: Promise<{ id: string }>
         if (data.suggestedComment && !firstComment) setFirstComment(data.suggestedComment);
         if (data.linkUrl && !linkUrl) setLinkUrl(data.linkUrl);
         setScrapedImages(data.images || []);
-        if (data.images?.length > 0) {
-          if (!mediaUrl) {
+        setScrapedVideos(data.videos || []);
+
+        // Auto-select media if none selected
+        if (!mediaUrl) {
+          if (data.videos?.length > 0) {
+            setMediaUrl(data.videos[0].url);
+            setMediaType("video");
+          } else if (data.images?.length > 0) {
             setMediaUrl(data.images.slice(0, 4).join(","));
             setMediaType("image");
           }
@@ -151,7 +158,7 @@ export default function EditAdPage({ params }: { params: Promise<{ id: string }>
       if (data.description) setDescription(data.description);
       if (data.firstComment) setFirstComment(data.firstComment);
       if (data.hashtags) setHashtagsStr(data.hashtags);
-      
+
     } catch (err: any) {
       alert(err.message);
     } finally {
@@ -161,12 +168,12 @@ export default function EditAdPage({ params }: { params: Promise<{ id: string }>
 
   const handleFileChange = async (file: File) => {
     setMediaType(file.type.startsWith("video/") ? "video" : "image");
-    
+
     // Upload immediately
     setUploading(true);
     const formData = new FormData();
     formData.append("file", file);
-    
+
     try {
       const res = await fetch("/api/upload", { method: "POST", body: formData });
       if (res.ok) {
@@ -201,10 +208,10 @@ export default function EditAdPage({ params }: { params: Promise<{ id: string }>
       const res = await fetch(`/api/ads/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          title, 
-          description, 
-          mediaType, 
+        body: JSON.stringify({
+          title,
+          description,
+          mediaType,
           mediaUrl,
           linkUrl,
           hashtags: hashtagsStr.trim() || undefined,
@@ -248,47 +255,84 @@ export default function EditAdPage({ params }: { params: Promise<{ id: string }>
                 Pega la URL para añadir datos al anuncio.
               </p>
               <div style={{ display: "flex", gap: "0.5rem" }}>
-                <input 
-                  className={styles.input} 
-                  placeholder="https://ejemplo.com/producto" 
-                  value={scrapeUrl} 
-                  onChange={(e) => setScrapeUrl(e.target.value)} 
+                <input
+                  className={styles.input}
+                  placeholder="https://ejemplo.com/producto"
+                  value={scrapeUrl}
+                  onChange={(e) => setScrapeUrl(e.target.value)}
                   disabled={scrapingLoading}
                   style={{ flex: 1 }}
                 />
-                <button 
-                  type="button" 
-                  className={styles.btnSecondary} 
-                  onClick={handleScrapeLink} 
+                <button
+                  type="button"
+                  className={styles.btnSecondary}
+                  onClick={handleScrapeLink}
                   disabled={scrapingLoading}
                   style={{ whiteSpace: "nowrap", padding: "0.5rem 1rem" }}
                 >
                   {scrapingLoading ? "Extrayendo..." : "🔗 Cargar Contenido"}
                 </button>
               </div>
-              
+
               {scrapedImages.length > 0 && (
                 <div style={{ marginTop: "0.5rem" }}>
                   <p style={{ fontSize: "0.875rem", marginBottom: "0.5rem", color: "var(--text-secondary)" }}>Imágenes detectadas (haz clic para agregar o quitar):</p>
                   <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", maxHeight: "200px", overflowY: "auto", paddingBottom: "0.25rem" }}>
                     {scrapedImages.map((img, idx) => {
-                      const isSelected = mediaUrls.includes(img);
+                      const isSelected = mediaUrls.includes(img) && mediaType === 'image';
                       return (
-                        <img 
-                          key={idx} 
-                          src={img} 
-                          alt={`Scraped ${idx}`} 
+                        <img
+                          key={idx}
+                          src={img}
+                          alt={`Scraped ${idx}`}
                           onClick={() => {
                             if (isSelected) handleRemoveMedia(img);
-                            else handleAddMedia(img);
-                            setMediaType("image");
+                            else {
+                              handleAddMedia(img);
+                              setMediaType("image");
+                            }
                           }}
-                          style={{ 
-                            width: "72px", height: "72px", objectFit: "cover", borderRadius: "var(--radius-md)", 
+                          style={{
+                            width: "72px", height: "72px", objectFit: "cover", borderRadius: "var(--radius-md)",
                             cursor: "pointer", border: isSelected ? "3px solid var(--accent-primary)" : "2px solid transparent",
                             opacity: isSelected ? 1 : 0.6, flexShrink: 0
                           }}
                         />
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {scrapedVideos.length > 0 && (
+                <div style={{ marginTop: "1rem" }}>
+                  <p style={{ fontSize: "0.875rem", marginBottom: "0.5rem", color: "var(--text-secondary)" }}>Videos detectados:</p>
+                  <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", maxHeight: "200px", overflowY: "auto", paddingBottom: "0.25rem" }}>
+                    {scrapedVideos.map((vid, idx) => {
+                      const isSelected = mediaUrl === vid.url && mediaType === 'video';
+                      return (
+                        <div
+                          key={idx}
+                          onClick={() => {
+                            setMediaUrl(vid.url);
+                            setMediaType("video");
+                          }}
+                          style={{
+                            width: "100px", height: "75px", position: "relative",
+                            cursor: "pointer", borderRadius: "var(--radius-md)", overflow: "hidden",
+                            border: isSelected ? "3px solid var(--accent-primary)" : "2px solid transparent",
+                            opacity: isSelected ? 1 : 0.6, flexShrink: 0
+                          }}
+                        >
+                          {vid.thumbnail ? (
+                            <img src={vid.thumbnail} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          ) : (
+                            <div style={{ width: "100%", height: "100%", background: "#333", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "10px" }}>VIDEO</div>
+                          )}
+                          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.3)" }}>
+                            <span style={{ fontSize: "20px", color: "white" }}>▶</span>
+                          </div>
+                        </div>
                       );
                     })}
                   </div>
@@ -300,7 +344,7 @@ export default function EditAdPage({ params }: { params: Promise<{ id: string }>
             <div className={`glass-panel`} style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <h3 className={styles.sectionTitle} style={{ margin: 0, border: "none", padding: 0 }}>🌍 Traducción de Textos</h3>
-                {isTranslating && <span style={{fontSize: "0.8rem", color: "var(--accent-primary)", fontWeight: "bold"}}>⏳ Traduciendo a {isTranslating.toUpperCase()}...</span>}
+                {isTranslating && <span style={{ fontSize: "0.8rem", color: "var(--accent-primary)", fontWeight: "bold" }}>⏳ Traduciendo a {isTranslating.toUpperCase()}...</span>}
               </div>
               <p style={{ fontSize: "0.875rem", color: "var(--text-muted)", marginTop: "-0.5rem" }}>
                 Haz clic en el idioma deseado para traducir automáticamente Título, Descripción y Comentarios.
@@ -311,12 +355,12 @@ export default function EditAdPage({ params }: { params: Promise<{ id: string }>
                   { code: "en", label: "ENG" },
                   { code: "sv", label: "SVE" }
                 ].map(lang => (
-                  <button 
+                  <button
                     key={lang.code}
-                    type="button" 
-                    onClick={() => handleTranslate(lang.code)} 
+                    type="button"
+                    onClick={() => handleTranslate(lang.code)}
                     disabled={!!isTranslating || !title}
-                    style={{ 
+                    style={{
                       flex: 1, padding: "0.5rem 0", borderRadius: "100px", fontWeight: "bold", fontSize: "0.875rem",
                       background: "rgba(1, 107, 248, 0.1)", color: "var(--accent-blue)", border: "1px solid var(--accent-blue)",
                       cursor: (isTranslating || !title) ? "not-allowed" : "pointer", opacity: (isTranslating && isTranslating !== lang.code) ? 0.5 : 1
@@ -407,23 +451,23 @@ export default function EditAdPage({ params }: { params: Promise<{ id: string }>
           <div className={styles.formSection}>
             <div className={`glass-panel`} style={{ padding: "0 0 1.25rem 0", position: "sticky", top: "90px", overflow: "hidden" }}>
               <div className={styles.previewTabs}>
-                <button 
-                  type="button" 
-                  className={`${styles.previewTab} ${previewTab === "facebook" ? styles.previewTabActive : ""}`} 
+                <button
+                  type="button"
+                  className={`${styles.previewTab} ${previewTab === "facebook" ? styles.previewTabActive : ""}`}
                   onClick={() => setPreviewTab("facebook")}
                 >
                   <img src="/images/facebook.png" alt="" style={{ width: 16, height: 16, objectFit: "contain" }} /> Facebook
                 </button>
-                <button 
-                  type="button" 
-                  className={`${styles.previewTab} ${previewTab === "instagram" ? styles.previewTabActive : ""}`} 
+                <button
+                  type="button"
+                  className={`${styles.previewTab} ${previewTab === "instagram" ? styles.previewTabActive : ""}`}
                   onClick={() => setPreviewTab("instagram")}
                 >
                   <img src="/images/instagram.png" alt="" style={{ width: 16, height: 16, objectFit: "contain" }} /> Instagram
                 </button>
-                <button 
-                  type="button" 
-                  className={`${styles.previewTab} ${previewTab === "youtube" ? styles.previewTabActive : ""}`} 
+                <button
+                  type="button"
+                  className={`${styles.previewTab} ${previewTab === "youtube" ? styles.previewTabActive : ""}`}
                   onClick={() => setPreviewTab("youtube")}
                 >
                   <img src="/images/youtube.png" alt="" style={{ width: 16, height: 16, objectFit: "contain" }} /> YouTube
@@ -448,7 +492,7 @@ export default function EditAdPage({ params }: { params: Promise<{ id: string }>
                           </div>
                         </div>
                         <div className={styles.fbText}>
-                          {title && <b>{title}<br/></b>}
+                          {title && <b>{title}<br /></b>}
                           {description || "Escribe una descripción para tu anuncio..."}
                           {previewHashtags && <div style={{ color: "#1877f2", marginTop: "8px" }}>{previewHashtags.replace(/,/g, " ")}</div>}
                         </div>

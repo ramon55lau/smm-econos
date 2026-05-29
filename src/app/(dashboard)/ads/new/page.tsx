@@ -15,7 +15,7 @@ export default function NewAdPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loadingCampaigns, setLoadingCampaigns] = useState(true);
   const [saving, setSaving] = useState(false);
-  
+
   // Preview Logic
   const [previewImageIndex, setPreviewImageIndex] = useState(0);
   const [previewTab, setPreviewTab] = useState<"facebook" | "instagram" | "youtube">("facebook");
@@ -32,6 +32,7 @@ export default function NewAdPage() {
   const [scrapeUrl, setScrapeUrl] = useState("");
   const [scrapingLoading, setScrapingLoading] = useState(false);
   const [scrapedImages, setScrapedImages] = useState<string[]>([]);
+  const [scrapedVideos, setScrapedVideos] = useState<{ url: string; thumbnail?: string }[]>([]);
 
   // Form state
   const [campaignId, setCampaignId] = useState(preselectedCampaignId);
@@ -40,7 +41,7 @@ export default function NewAdPage() {
   const [mediaType, setMediaType] = useState<"image" | "video">("image");
   const [mediaUrl, setMediaUrl] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
-  
+
   // New campaign metadata state
   const [hashtagsStr, setHashtagsStr] = useState("");
   const [firstComment, setFirstComment] = useState("");
@@ -49,7 +50,7 @@ export default function NewAdPage() {
   const [isTranslating, setIsTranslating] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/campaigns").then(r => r.json()).then(setCampaigns).catch(() => {});
+    fetch("/api/campaigns").then(r => r.json()).then(setCampaigns).catch(() => { });
   }, []);
 
   // When campaign changes, populate hashtags/firstComment if they exist
@@ -64,12 +65,12 @@ export default function NewAdPage() {
   }, [campaignId, campaigns]);
 
   const mediaUrls = mediaUrl ? mediaUrl.split(",") : [];
-  
+
   const handleRemoveMedia = (urlToRemove: string) => {
     const updated = mediaUrls.filter((u) => u !== urlToRemove);
     setMediaUrl(updated.join(","));
   };
-  
+
   const handleAddMedia = (urlToAdd: string) => {
     const updated = [...mediaUrls, urlToAdd];
     setMediaUrl(updated.join(","));
@@ -120,8 +121,14 @@ export default function NewAdPage() {
         if (data.suggestedComment && !firstComment) setFirstComment(data.suggestedComment);
         if (data.linkUrl && !linkUrl) setLinkUrl(data.linkUrl);
         setScrapedImages(data.images || []);
-        if (data.images?.length > 0) {
-          if (!mediaUrl) {
+        setScrapedVideos(data.videos || []);
+
+        // Auto-select media if none selected
+        if (!mediaUrl) {
+          if (data.videos?.length > 0) {
+            setMediaUrl(data.videos[0].url);
+            setMediaType("video");
+          } else if (data.images?.length > 0) {
             setMediaUrl(data.images.slice(0, 4).join(","));
             setMediaType("image");
           }
@@ -159,7 +166,7 @@ export default function NewAdPage() {
       if (data.description) setDescription(data.description);
       if (data.firstComment) setFirstComment(data.firstComment);
       if (data.hashtags) setHashtagsStr(data.hashtags);
-      
+
     } catch (err: any) {
       alert(err.message);
     } finally {
@@ -170,22 +177,22 @@ export default function NewAdPage() {
   const handleFileChange = (file: File) => {
     const isVideo = file.type.startsWith("video/");
     setMediaType(isVideo ? "video" : "image");
-    
+
     setUploading(true);
     setUploadProgress(0);
     const formData = new FormData();
     formData.append("file", file);
-    
+
     const xhr = new XMLHttpRequest();
     xhr.open("POST", "/api/upload", true);
-    
+
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable) {
         const percentComplete = Math.round((event.loaded / event.total) * 100);
         setUploadProgress(percentComplete);
       }
     };
-    
+
     xhr.onload = () => {
       setUploading(false);
       setUploadProgress(0);
@@ -197,20 +204,20 @@ export default function NewAdPage() {
           if (!mediaUrl) {
             setMediaType(data.mediaType);
           }
-        } catch(e) {
+        } catch (e) {
           alert("Error decodificando respuesta");
         }
       } else {
         alert("Error subiendo archivo");
       }
     };
-    
+
     xhr.onerror = () => {
       setUploading(false);
       setUploadProgress(0);
       alert("Error de conexión al subir archivo");
     };
-    
+
     xhr.send(formData);
   };
 
@@ -232,11 +239,11 @@ export default function NewAdPage() {
       const res = await fetch("/api/ads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          campaignId, 
-          title, 
-          description, 
-          mediaType, 
+        body: JSON.stringify({
+          campaignId,
+          title,
+          description,
+          mediaType,
           mediaUrl,
           linkUrl,
           hashtags: hashtagsStr.trim() || undefined,
@@ -260,7 +267,7 @@ export default function NewAdPage() {
   const filePreviewUrl = mediaUrls.length > 0 ? mediaUrls[currentPreviewIndex] : null;
   const nextPreview = () => setPreviewImageIndex(i => (i + 1) % mediaUrls.length);
   const prevPreview = () => setPreviewImageIndex(i => (i - 1 + mediaUrls.length) % mediaUrls.length);
-  
+
   // Format hashtags for preview
   const previewHashtags = hashtagsStr.split(",").map(t => t.trim()).filter(t => t).map(t => t.startsWith("#") ? t : `#${t}`).join(" ");
 
@@ -270,24 +277,24 @@ export default function NewAdPage() {
         {/* LEFT NAV: The "Tree" */}
         <div className={styles.leftNav}>
           <div className={styles.navIconWrapper} title="Campaña">
-             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 21 1.9-1.9"/><path d="m3.1 7.1 1.9 1.9"/><path d="M5 16h14"/><path d="M5 8h14"/><path d="m19 21 1.9-1.9"/><path d="m19.1 7.1 1.9 1.9"/><path d="M9 12h6"/><path d="M12 9v6"/></svg>
-             <span className={styles.navIconLabel}>Campaña</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 21 1.9-1.9" /><path d="m3.1 7.1 1.9 1.9" /><path d="M5 16h14" /><path d="M5 8h14" /><path d="m19 21 1.9-1.9" /><path d="m19.1 7.1 1.9 1.9" /><path d="M9 12h6" /><path d="M12 9v6" /></svg>
+            <span className={styles.navIconLabel}>Campaña</span>
           </div>
           <div className={styles.navIconWrapper} title="Conjunto de Anuncios">
-             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="M7 3v18"/><path d="M3 7h18"/><path d="M3 17h18"/><path d="M17 3v18"/></svg>
-             <span className={styles.navIconLabel}>Conjunto</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><path d="M7 3v18" /><path d="M3 7h18" /><path d="M3 17h18" /><path d="M17 3v18" /></svg>
+            <span className={styles.navIconLabel}>Conjunto</span>
           </div>
           <div className={`${styles.navIconWrapper} ${styles.navIconActive}`} title="Anuncio">
-             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
-             <span className={styles.navIconLabel}>Anuncio</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></svg>
+            <span className={styles.navIconLabel}>Anuncio</span>
           </div>
         </div>
 
         {/* CENTER AREA: Form Cards */}
         <div className={styles.centerArea}>
           <div className={styles.cardHeader} style={{ background: "transparent", border: "none", marginBottom: "0" }}>
-             <h2 className={styles.cardTitle} style={{ fontSize: "1.5rem" }}>Crear Nuevo Anuncio</h2>
-             <Link href="/campaigns" className={styles.btnSecondary} style={{ padding: "0.4rem 1rem", fontSize: "0.8rem" }}>← Volver</Link>
+            <h2 className={styles.cardTitle} style={{ fontSize: "1.5rem" }}>Crear Nuevo Anuncio</h2>
+            <Link href="/campaigns" className={styles.btnSecondary} style={{ padding: "0.4rem 1rem", fontSize: "0.8rem" }}>← Volver</Link>
           </div>
 
           {/* Card 1: Scraper & Translation Tools */}
@@ -296,15 +303,15 @@ export default function NewAdPage() {
               <span className={styles.cardTitle}>🛠️ Herramientas de Contenido</span>
               <span className={styles.toolBadge}>IA Power</span>
             </div>
-            
+
             <div className={styles.formGroup}>
               <label className={styles.label}>Importar desde URL</label>
               <div style={{ display: "flex", gap: "0.5rem" }}>
-                <input 
-                  className={styles.input} 
-                  placeholder="https://..." 
-                  value={scrapeUrl} 
-                  onChange={(e) => setScrapeUrl(e.target.value)} 
+                <input
+                  className={styles.input}
+                  placeholder="https://..."
+                  value={scrapeUrl}
+                  onChange={(e) => setScrapeUrl(e.target.value)}
                   disabled={scrapingLoading}
                 />
                 <button type="button" className={styles.btnPrimary} onClick={handleScrapeLink} disabled={scrapingLoading}>
@@ -312,7 +319,7 @@ export default function NewAdPage() {
                 </button>
               </div>
             </div>
-            
+
             <div className={styles.formGroup} style={{ marginTop: "0.5rem" }}>
               <label className={styles.label}>Idioma</label>
               <div style={{ display: "flex", gap: "0.4rem" }}>
@@ -321,10 +328,10 @@ export default function NewAdPage() {
                   { code: "en", label: "ENG" },
                   { code: "sv", label: "SVE" }
                 ].map(lang => (
-                  <button 
+                  <button
                     key={lang.code}
-                    type="button" 
-                    onClick={() => handleTranslate(lang.code)} 
+                    type="button"
+                    onClick={() => handleTranslate(lang.code)}
                     disabled={!!isTranslating || !title}
                     className={styles.btnSecondary}
                     style={{ flex: 1, padding: "0.5rem 0", fontSize: "0.75rem", background: isTranslating === lang.code ? "var(--meta-accent-blue)" : "" }}
@@ -340,18 +347,60 @@ export default function NewAdPage() {
                 <p className={styles.label} style={{ marginBottom: "0.5rem" }}>Imágenes detectadas:</p>
                 <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", maxHeight: "150px", overflowY: "auto" }}>
                   {scrapedImages.map((img, idx) => (
-                    <img 
-                      key={idx} 
-                      src={img} 
-                      alt={`Scraped ${idx}`} 
-                      onClick={() => mediaUrls.includes(img) ? handleRemoveMedia(img) : handleAddMedia(img)}
-                      style={{ 
-                        width: "60px", height: "60px", objectFit: "cover", borderRadius: "4px", 
-                        cursor: "pointer", border: mediaUrls.includes(img) ? "2px solid var(--meta-accent-blue)" : "1px solid var(--meta-border)",
-                        opacity: mediaUrls.includes(img) ? 1 : 0.6
+                    <img
+                      key={idx}
+                      src={img}
+                      alt={`Scraped ${idx}`}
+                      onClick={() => {
+                        if (mediaUrls.includes(img)) {
+                          handleRemoveMedia(img);
+                        } else {
+                          handleAddMedia(img);
+                          setMediaType("image");
+                        }
+                      }}
+                      style={{
+                        width: "60px", height: "60px", objectFit: "cover", borderRadius: "4px",
+                        cursor: "pointer", border: (mediaUrls.includes(img) && mediaType === 'image') ? "2px solid var(--meta-accent-blue)" : "1px solid var(--meta-border)",
+                        opacity: (mediaUrls.includes(img) && mediaType === 'image') ? 1 : 0.6
                       }}
                     />
                   ))}
+                </div>
+              </div>
+            )}
+
+            {scrapedVideos.length > 0 && (
+              <div style={{ marginTop: "0.5rem" }}>
+                <p className={styles.label} style={{ marginBottom: "0.5rem" }}>Videos detectados:</p>
+                <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", maxHeight: "150px", overflowY: "auto" }}>
+                  {scrapedVideos.map((vid, idx) => {
+                    const isSelected = mediaUrl === vid.url && mediaType === 'video';
+                    return (
+                      <div
+                        key={idx}
+                        onClick={() => {
+                          setMediaUrl(vid.url);
+                          setMediaType("video");
+                        }}
+                        style={{
+                          width: "80px", height: "60px", position: "relative",
+                          cursor: "pointer", borderRadius: "4px", overflow: "hidden",
+                          border: isSelected ? "2px solid var(--meta-accent-blue)" : "1px solid var(--meta-border)",
+                          opacity: isSelected ? 1 : 0.6
+                        }}
+                      >
+                        {vid.thumbnail ? (
+                          <img src={vid.thumbnail} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        ) : (
+                          <div style={{ width: "100%", height: "100%", background: "#333", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "10px" }}>VIDEO</div>
+                        )}
+                        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.2)" }}>
+                          <span style={{ fontSize: "14px" }}>▶</span>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -359,10 +408,10 @@ export default function NewAdPage() {
 
           {/* Card 2: Ad Identity */}
           <div className={styles.configCard}>
-             <div className={styles.cardHeader}>
+            <div className={styles.cardHeader}>
               <span className={styles.cardTitle}>📱 Identidad del Anuncio</span>
             </div>
-            
+
             <div className={styles.formGroup}>
               <label className={styles.label}>Campaña *</label>
               <select className={styles.select} value={campaignId} onChange={(e) => e.target.value === "__new__" ? setShowNewCampaignModal(true) : setCampaignId(e.target.value)} required>
@@ -383,7 +432,7 @@ export default function NewAdPage() {
               <label className={styles.label}>Título del Anuncio *</label>
               <input className={styles.input} placeholder="Ej: Promo Verano" value={title} onChange={(e) => setTitle(e.target.value)} required />
             </div>
-            
+
             <div className={styles.formGroup}>
               <label className={styles.label}>Descripción / Copy</label>
               <textarea className={styles.textarea} placeholder="Escribe el texto persuasivo..." value={description} onChange={(e) => setDescription(e.target.value)} />
@@ -401,8 +450,8 @@ export default function NewAdPage() {
               <input className={styles.input} placeholder="https://miweb.com" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} />
             </div>
             <div className={styles.formGroup}>
-               <label className={styles.label}>Metadatos: Hashtags</label>
-               <input className={styles.input} placeholder="marketing, ventas" value={hashtagsStr} onChange={(e) => setHashtagsStr(e.target.value)} />
+              <label className={styles.label}>Metadatos: Hashtags</label>
+              <input className={styles.input} placeholder="marketing, ventas" value={hashtagsStr} onChange={(e) => setHashtagsStr(e.target.value)} />
             </div>
 
             {mediaUrls.length > 0 && (
@@ -425,7 +474,7 @@ export default function NewAdPage() {
 
             <div className={styles.metaUpload} onClick={() => document.getElementById('fileInput')?.click()}>
               <input id="fileInput" type="file" style={{ display: "none" }} accept="image/*,video/*" onChange={(e) => e.target.files?.[0] && handleFileChange(e.target.files[0])} />
-              
+
               {uploading ? (
                 <div style={{ width: "100%", padding: "0 2rem", textAlign: "center" }}>
                   <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>⏳</div>
@@ -442,7 +491,7 @@ export default function NewAdPage() {
               )}
             </div>
           </div>
-          
+
           {/* Padding for scroll */}
           <div style={{ height: "40px" }} />
         </div>
@@ -471,14 +520,14 @@ export default function NewAdPage() {
                     </div>
                   </div>
                   <div className={styles.fbText}>
-                    {title && <b>{title}<br/></b>}
+                    {title && <b>{title}<br /></b>}
                     {description || "Contenido del anuncio..."}
                     {previewHashtags && <div style={{ color: "var(--meta-accent-blue)", marginTop: "8px" }}>{previewHashtags}</div>}
                   </div>
                   <div className={styles.fbMedia}>
                     {filePreviewUrl ? (
-                      (filePreviewUrl.toLowerCase().endsWith(".mp4") || filePreviewUrl.toLowerCase().endsWith(".webm")) ? 
-                        <video src={filePreviewUrl} style={{ width: "100%", background: "#000" }} controls /> : 
+                      (filePreviewUrl.toLowerCase().endsWith(".mp4") || filePreviewUrl.toLowerCase().endsWith(".webm")) ?
+                        <video src={filePreviewUrl} style={{ width: "100%", background: "#000" }} controls /> :
                         <img src={filePreviewUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     ) : <div style={{ height: "180px", background: "#3a3b3c", display: "flex", alignItems: "center", justifyContent: "center" }}>Sin Multimedia</div>}
                   </div>
@@ -492,14 +541,14 @@ export default function NewAdPage() {
 
               {previewTab === 'instagram' && (
                 <div className={styles.igPreview}>
-                   <div className={styles.igHeader}>
+                  <div className={styles.igHeader}>
                     <div className={styles.igAvatar} />
                     <span className={styles.igName}>tu_marca</span>
                   </div>
                   <div className={styles.igMedia}>
                     {filePreviewUrl ? (
-                      (filePreviewUrl.toLowerCase().endsWith(".mp4") || filePreviewUrl.toLowerCase().endsWith(".webm")) ? 
-                        <video src={filePreviewUrl} style={{ width: "100%", height: "100%", objectFit: "cover", background: "#000" }} controls /> : 
+                      (filePreviewUrl.toLowerCase().endsWith(".mp4") || filePreviewUrl.toLowerCase().endsWith(".webm")) ?
+                        <video src={filePreviewUrl} style={{ width: "100%", height: "100%", objectFit: "cover", background: "#000" }} controls /> :
                         <img src={filePreviewUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     ) : null}
                   </div>
@@ -507,7 +556,7 @@ export default function NewAdPage() {
                   <div className={styles.igText}><b>tu_marca</b> {title} {description}</div>
                 </div>
               )}
-              
+
               {/* YouTube and comments ... simplified for brevity */}
             </div>
           </div>

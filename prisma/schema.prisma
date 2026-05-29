@@ -32,6 +32,7 @@ model User {
   userPermissions UserPermission[]
   socialAccounts  SocialAccount[]
   campaigns       Campaign[]
+  passwordResetTokens PasswordResetToken[]
 }
 
 // NextAuth models
@@ -68,6 +69,17 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expires   DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // SMM specific models

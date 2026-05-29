@@ -1,5 +1,6 @@
 import Image from "next/image";
-import styles from "./PrivacyPolicy.module.css";
+import Link from "next/link";
+import styles from "../terms/TermsOfService.module.css";
 
 export default function PrivacyPolicyPage() {
   const lastUpdated = new Date().toLocaleDateString("es-ES", {
@@ -16,85 +17,111 @@ export default function PrivacyPolicyPage() {
           <div className={styles.headerDivider}></div>
           <Image src="/images/logo-smm.png" alt="SMM" width={150} height={60} className={styles.logo} priority />
         </div>
-        
+
         <h1 className={styles.title}>Política de Privacidad</h1>
         <p className={styles.lastUpdated}>Última actualización: {lastUpdated}</p>
 
         <section className={styles.section}>
           <p>
-            En <strong>Econos</strong>, con sede en Málaga, España, nos tomamos muy en serio la privacidad de sus datos. 
-            Esta Política de Privacidad describe cómo recopilamos, utilizamos y protegemos su información al utilizar 
-            nuestra plataforma Social Media Manager (SMM).
+            En <strong>Social Media Manager (SMM)</strong> de Econos, nos comprometemos a proteger tu privacidad y a ser completamente
+            transparentes sobre cómo utilizamos tus datos. Esta política describe el tratamiento de la información que recopilamos
+            cuando usas nuestra plataforma.
           </p>
         </section>
 
         <section className={styles.section}>
-          <h2>1. Información que recopilamos</h2>
+          <h2>1. Información que Recopilamos</h2>
+          <p>Recopilamos la información necesaria para operar el servicio:</p>
+          <ul>
+            <li><strong>Datos de cuenta:</strong> nombre, correo electrónico y foto de perfil obtenidos mediante inicio de sesión con Google o credenciales propias.</li>
+            <li><strong>Tokens de acceso:</strong> credenciales OAuth de Google y Meta para interactuar con sus APIs en tu nombre.</li>
+            <li><strong>Contenido publicado:</strong> imágenes, videos y textos que tú generas y publicas a través de SMM.</li>
+            <li><strong>Datos de uso:</strong> registros de actividad dentro de la plataforma para mejorar el servicio.</li>
+          </ul>
+        </section>
+
+        <section className={styles.section}>
+          <h2>2. Permisos de Google</h2>
           <p>
-            Recopilamos información necesaria para la gestión técnica y operativa de sus campañas publicitarias y publicaciones en:
+            SMM solicita permisos a los servicios de Google para las siguientes funciones específicas:
           </p>
           <ul>
-            <li>Facebook e Instagram (a través de Meta Graph API)</li>
-            <li>YouTube (a través de YouTube API Services)</li>
+            <li><strong>youtube.upload:</strong> Publicar videos de propiedades en tu canal de YouTube únicamente con tu confirmación explícita.</li>
+            <li><strong>youtube.readonly:</strong> Verificar el estado de los videos publicados y mostrar métricas básicas en tu panel.</li>
+            <li><strong>Google Ads (adwords):</strong> Crear y gestionar campañas publicitarias de propiedades bajo tu supervisión directa.</li>
+            <li><strong>openid / email / profile:</strong> Autenticar tu identidad y vincular tu cuenta de Google con tu perfil en SMM.</li>
           </ul>
           <p>
-            Esto incluye datos de perfil público, tokens de acceso (encriptados) y métricas de rendimiento de anuncios 
-            proporcionadas a través de las APIs oficiales de dichas plataformas.
+            Para más detalles sobre el uso de datos de Google, consulta nuestra{" "}
+            <Link href="/privacy-policy/google" style={{ color: "var(--accent-primary)", textDecoration: "underline" }}>
+              Política de Privacidad — Servicios de Google
+            </Link>.
           </p>
         </section>
 
         <section className={styles.section}>
-          <h2>2. Uso de los Servicios de la API de YouTube</h2>
+          <h2>3. Permisos de Meta</h2>
           <p>
-            Nuestra aplicación utiliza los <strong>Servicios de la API de YouTube</strong> para permitir la carga y gestión de contenido de video directamente en su canal de YouTube. Al utilizar nuestra herramienta, usted también acepta estar sujeto a los <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener noreferrer" style={{color: "var(--accent-primary)", textDecoration: "underline"}}>Términos de Servicio de YouTube</a>.
+            SMM solicita acceso a Meta (Facebook e Instagram) para:
           </p>
-          <p>
-            Además del uso de nuestros propios datos, nuestra aplicación procesa datos obtenidos a través de la API de YouTube. Puede consultar la <strong>Política de Privacidad de Google</strong> en el siguiente enlace: <a href="http://www.google.com/policies/privacy" target="_blank" rel="noopener noreferrer" style={{color: "var(--accent-primary)", textDecoration: "underline"}}>http://www.google.com/policies/privacy</a>.
-          </p>
-        </section>
-
-        <section className={styles.section}>
-          <h2>3. Gestión de Datos y Revocación de Acceso</h2>
-          <p>
-            Usted puede revocar el acceso de nuestra aplicación a sus datos de Google en cualquier momento a través de la página de <strong>Configuración de Seguridad de Google</strong>: 
-            <br />
-            <a href="https://security.google.com/settings/security/permissions" target="_blank" rel="noopener noreferrer" style={{color: "var(--accent-primary)", textDecoration: "underline"}}>https://security.google.com/settings/security/permissions</a>.
-          </p>
-          <p>
-            Si desea que eliminemos los datos almacenados en nuestros servidores relacionados con su cuenta de YouTube, puede desconectar su cuenta desde el panel de ajustes de SMM o contactarnos directamente.
-          </p>
-        </section>
-
-        <section className={styles.section}>
-          <h2>4. Uso de la Información</h2>
-          <p>La información recopilada se utiliza exclusivamente para:</p>
           <ul>
-            <li>Gestionar y optimizar la publicación de sus contenidos y anuncios.</li>
-            <li>Generar informes detallados de rendimiento y ROI.</li>
-            <li>Proporcionar soporte técnico y mejorar la experiencia del usuario.</li>
+            <li>Publicar imágenes y videos en páginas de Facebook e Instagram que administras.</li>
+            <li>Gestionar campañas publicitarias en tus Cuentas Publicitarias de Meta.</li>
+            <li>Leer estadísticas básicas de tus publicaciones para mostrártelas en el panel.</li>
           </ul>
-          <p>No compartimos, vendemos ni utilizamos sus datos para fines distintos a la funcionalidad principal de la herramienta SMM.</p>
         </section>
 
         <section className={styles.section}>
-          <h2>5. Protección y Seguridad</h2>
+          <h2>4. Almacenamiento y Seguridad</h2>
           <p>
-            Implementamos medidas de seguridad técnicas y organizativas de nivel empresarial para proteger sus datos 
-            contra el acceso no autorizado, la alteración o la pérdida. Sus credenciales de plataforma se almacenan 
-            utilizando estándares de cifrado avanzados (AES-256).
+            Los tokens de acceso de Google y Meta se almacenan cifrados en nuestra base de datos. Solo se utilizan para ejecutar
+            las acciones que tú autorizas dentro de SMM. Puedes revocar el acceso en cualquier momento desde la
+            configuración de tu cuenta de Google (
+            <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent-primary)", textDecoration: "underline" }}>
+              myaccount.google.com/permissions
+            </a>
+            ) o de Meta.
           </p>
         </section>
 
         <section className={styles.section}>
-          <h2>6. Contacto</h2>
+          <h2>5. Uso Compartido de Datos</h2>
           <p>
-            Para cualquier consulta relacionada con esta política o el tratamiento de sus datos, puede contactarnos en 
-            nuestra sede en Málaga o a través de los canales de soporte habilitados en la plataforma.
+            No vendemos, alquilamos ni compartimos tus datos personales o de campaña con terceros para fines ajenos a la
+            operativa técnica del servicio. Tus datos se utilizan exclusivamente para ejecutar las funcionalidades que tú
+            has activado dentro de SMM.
+          </p>
+        </section>
+
+        <section className={styles.section}>
+          <h2>6. Tus Derechos</h2>
+          <ul>
+            <li>Acceder a los datos que tenemos sobre tu cuenta.</li>
+            <li>Solicitar la eliminación de tu cuenta y todos tus datos asociados.</li>
+            <li>Revocar permisos de Google o Meta en cualquier momento sin afectar el resto de la plataforma.</li>
+          </ul>
+        </section>
+
+        <section className={styles.section}>
+          <h2>7. Contacto</h2>
+          <p>
+            Si tienes alguna pregunta sobre esta política, escríbenos a:{" "}
+            <a href="mailto:soporte@econos.com" style={{ color: "var(--accent-primary)", textDecoration: "underline" }}>
+              soporte@econos.com
+            </a>
           </p>
         </section>
 
         <div className={styles.footer}>
-          &copy; {new Date().getFullYear()} Econos. Todos los derechos reservados.
+          © {new Date().getFullYear()} Econos. Todos los derechos reservados.
+          {" · "}
+          <Link href="/terms" style={{ color: "var(--accent-primary)", textDecoration: "underline" }}>
+            Condiciones de Uso
+          </Link>
+          {" · "}
+          <Link href="/privacy-policy/google" style={{ color: "var(--accent-primary)", textDecoration: "underline" }}>
+            Privacidad – Google
+          </Link>
         </div>
       </div>
     </div>
