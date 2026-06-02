@@ -26,7 +26,7 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
     const [accounts, setAccounts] = useState<any[]>([]);
 
     useEffect(() => {
-        fetch("/api/social").then(r => r.json()).then(setAccounts).catch(() => { });
+        fetch("/api/social/accounts").then(r => r.json()).then(setAccounts).catch(() => { });
     }, []);
 
     const handleFinalPublish = async () => {
@@ -40,9 +40,9 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
                     title: data.title,
                     description: data.description,
                     mediaType: data.videos?.length ? "video" : "image",
-                    mediaUrl: data.videos?.length ? data.videos[0].url : data.images[0],
+                    mediaUrl: data.videos?.length ? data.videos[0].url : (data.images?.length ? data.images[0] : ""),
                     linkUrl: data.linkUrl,
-                    campaignId: "default", // Should handle campaign selection too
+                    campaignId: "default",
                 })
             });
 
@@ -57,12 +57,11 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
                     adId: ad.id,
                     destinations: [
                         {
-                            platform: platform.split("-")[0], // e.g. facebook, instagram, youtube
+                            platform: platform === "google-ads" ? "youtube" : platform.split("-")[0],
                             destination: publishType === "organic" ? organicDestination : "ads",
                             adsConfig: publishType === "paid" ? {
                                 budgetAmount: parseFloat(budget),
                                 durationDays: parseInt(duration),
-                                // Add more targeting defaults
                             } : undefined
                         }
                     ]
@@ -83,40 +82,80 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
         }
     };
 
+    const getProviderIcon = (provider: string) => {
+        switch (provider) {
+            case 'youtube': return '▶️';
+            case 'facebook': return '🔵';
+            case 'instagram': return '📸';
+            default: return '👤';
+        }
+    };
+
+    const filteredAccounts = accounts.filter(a => {
+        if (platform === 'youtube' && a.provider === 'youtube') return true;
+        if (platform === 'google-ads' && a.provider === 'youtube') return true;
+        if (platform === 'facebook' && a.provider === 'facebook') return true;
+        if (platform === 'instagram' && a.provider === 'instagram') return true;
+        return platform.includes(a.provider);
+    });
+
     return (
         <div className="publish-modal-overlay">
-            <div className="modal-card">
+            <div className="modal-card glass-panel">
                 <div className="modal-header">
                     <button className="close-btn" onClick={onClose}>✕</button>
                     <div className="stepper">
-                        <div className={step >= 1 ? "active" : ""}>1</div>
-                        <div className={step >= 2 ? "active" : ""}>2</div>
-                        <div className={step >= 3 ? "active" : ""}>3</div>
+                        <div className={step >= 1 ? "step active" : "step"}>1</div>
+                        <div className={step >= 2 ? "step active" : "step"}>2</div>
+                        <div className={step >= 3 ? "step active" : "step"}>3</div>
                     </div>
                 </div>
 
                 <div className="modal-body">
                     {step === 1 && (
                         <div className="step-content">
-                            <h2>Selecciona tu perfil</h2>
-                            <p>Elige la cuenta desde la que deseas publicar.</p>
+                            <div className="header-with-action">
+                                <div className="titles">
+                                    <h2 className="step-title">Selecciona tu perfil</h2>
+                                    <p className="step-sub">Elige la cuenta desde la que deseas publicar.</p>
+                                </div>
+                                <a href="/settings/accounts" className="add-profile-btn" title="Conectar nueva cuenta">
+                                    <span className="plus">+</span>
+                                </a>
+                            </div>
+
                             <div className="account-list">
-                                {accounts.length === 0 ? (
-                                    <p className="no-accounts">No hay cuentas conectadas.</p>
+                                {filteredAccounts.length === 0 ? (
+                                    <div className="empty-state">
+                                        <div className="empty-icon">🔌</div>
+                                        <p>No hay cuentas de {platform} conectadas.</p>
+                                        <a href="/settings/accounts" className="sync-now-link">Sincronizar ahora</a>
+                                    </div>
                                 ) : (
-                                    accounts.filter(a => platform.includes(a.provider)).map(acc => (
-                                        <div
-                                            key={acc.id}
-                                            className={`account-item ${selectedProfile === acc.id ? 'selected' : ''}`}
-                                            onClick={() => setSelectedProfile(acc.id)}
-                                        >
-                                            <div className="acc-avatar"></div>
-                                            <div className="acc-info">
-                                                <b>{acc.accountName || acc.pageName || "Perfil"}</b>
-                                                <span>{acc.provider}</span>
+                                    <>
+                                        {filteredAccounts.map(acc => (
+                                            <div
+                                                key={acc.id}
+                                                className={`account-item ${selectedProfile === acc.id ? 'selected' : ''}`}
+                                                onClick={() => setSelectedProfile(acc.id)}
+                                            >
+                                                <div className="acc-avatar">{getProviderIcon(acc.provider)}</div>
+                                                <div className="acc-info">
+                                                    <b className="acc-name">{acc.accountName || acc.pageName || "Perfil"}</b>
+                                                    <span className="acc-provider">{acc.provider} {acc.pageName ? `• ${acc.pageName}` : ''}</span>
+                                                </div>
+                                                {selectedProfile === acc.id && <div className="selected-check">✓</div>}
                                             </div>
-                                        </div>
-                                    ))
+                                        ))}
+                                        {/* Quick add option inside the list too */}
+                                        <a href="/settings/accounts" className="account-item add-more-item">
+                                            <div className="acc-avatar">+</div>
+                                            <div className="acc-info">
+                                                <b className="acc-name">Conectar otra cuenta</b>
+                                                <span className="acc-provider">Ir a configuraciones</span>
+                                            </div>
+                                        </a>
+                                    </>
                                 )}
                             </div>
                         </div>
@@ -124,20 +163,28 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
 
                     {step === 2 && (
                         <div className="step-content">
-                            <h2>Tipo de alcance</h2>
-                            <p>¿Deseas una publicación orgánica o una campaña de pago?</p>
+                            <h2 className="step-title">Tipo de alcance</h2>
+                            <p className="step-sub">¿Deseas una publicación orgánica o una campaña de pago?</p>
                             <div className="type-toggle">
                                 <button
                                     className={publishType === 'organic' ? 'active' : ''}
                                     onClick={() => setPublishType('organic')}
                                 >
-                                    🍃 Orgánico
+                                    <span className="icon">🍃</span>
+                                    <div className="label">
+                                        <b>Orgánico</b>
+                                        <small>Publicación gratuita</small>
+                                    </div>
                                 </button>
                                 <button
                                     className={publishType === 'paid' ? 'active' : ''}
                                     onClick={() => setPublishType('paid')}
                                 >
-                                    💰 ADS (Pago)
+                                    <span className="icon">💰</span>
+                                    <div className="label">
+                                        <b>ADS (Pago)</b>
+                                        <small>Promoción pagada</small>
+                                    </div>
                                 </button>
                             </div>
                         </div>
@@ -147,10 +194,10 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
                         <div className="step-content">
                             {publishType === 'organic' ? (
                                 <>
-                                    <h2>Destino orgánico</h2>
-                                    <p>¿Dónde quieres que aparezca tu publicación?</p>
+                                    <h2 className="step-title">Destino orgánico</h2>
+                                    <p className="step-sub">¿Dónde quieres que aparezca tu publicación?</p>
                                     <div className="options-grid">
-                                        {["Reels", "Fanpage", "Muro", "Canal"].map(opt => (
+                                        {(platform === 'youtube' ? ["Shorts", "Canal"] : ["Reels", "Stories", "Muro"]).map(opt => (
                                             <button
                                                 key={opt}
                                                 className={organicDestination === opt.toLowerCase() ? 'active' : ''}
@@ -163,18 +210,27 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
                                 </>
                             ) : (
                                 <>
-                                    <h2>Detalles de segmentación</h2>
-                                    <p>Configura el presupuesto y duración de tu anuncio.</p>
+                                    <h2 className="step-title">Configuración de Campaña</h2>
+                                    <p className="step-sub">Tu anuncio se optimizará automáticamente.</p>
                                     <div className="paid-fields">
                                         <div className="field">
-                                            <label>Presupuesto diario ($)</label>
-                                            <input type="number" value={budget} onChange={(e) => setBudget(e.target.value)} />
+                                            <label>Presupuesto diario (€)</label>
+                                            <div className="input-with-icon">
+                                                <span className="prefix">€</span>
+                                                <input type="number" value={budget} onChange={(e) => setBudget(e.target.value)} />
+                                            </div>
                                         </div>
                                         <div className="field">
-                                            <label>Duración (días)</label>
-                                            <input type="number" value={duration} onChange={(e) => setDuration(e.target.value)} />
+                                            <label>Duración estimada (días)</label>
+                                            <div className="input-with-icon">
+                                                <input type="number" value={duration} onChange={(e) => setDuration(e.target.value)} />
+                                                <span className="suffix">DÍAS</span>
+                                            </div>
                                         </div>
-                                        <p className="targeting-note">La segmentación se ha pre-configurado de forma óptima para tu sector.</p>
+                                        <div className="targeting-info">
+                                            <span className="info-icon">✨</span>
+                                            <p>SMM utilizará segmentación <b>Advantage+</b> e intereses de búsqueda inmobiliaria para maximizar el ROI.</p>
+                                        </div>
                                     </div>
                                 </>
                             )}
@@ -183,106 +239,315 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
                 </div>
 
                 <div className="modal-footer">
-                    {step > 1 && <button className="back-btn" onClick={() => setStep(step - 1)}>Anterior</button>}
+                    {step > 1 && <button className="back-btn" onClick={() => setStep(step - 1)}>← Anterior</button>}
                     {step < 3 ? (
-                        <button className="next-btn" onClick={() => setStep(step + 1)}>Siguiente</button>
+                        <button
+                            className="next-btn"
+                            onClick={() => setStep(step + 1)}
+                            disabled={step === 1 && !selectedProfile}
+                        >
+                            Siguiente
+                        </button>
                     ) : (
-                        <button className="publish-btn" onClick={handleFinalPublish} disabled={loading}>
-                            {loading ? "Publicando..." : "🚀 Publicar ahora"}
+                        <button
+                            className="publish-btn"
+                            onClick={handleFinalPublish}
+                            disabled={loading || !selectedProfile}
+                        >
+                            {loading ? "Procesando..." : "🚀 Publicar ahora"}
                         </button>
                     )}
                 </div>
-            </div>
 
-            <style jsx>{`
+                <style jsx>{`
         .publish-modal-overlay {
           position: fixed;
           inset: 0;
-          background: rgba(0,0,0,0.4);
-          backdrop-filter: blur(8px);
-          z-index: 1000;
+          background: rgba(0,0,0,0.7);
+          backdrop-filter: blur(12px);
+          z-index: 2000;
           display: flex;
           align-items: center;
           justify-content: center;
-          animation: fadeIn 0.3s ease-out;
+          padding: 20px;
         }
 
         .modal-card {
-          background: white;
-          width: 100%;
-          max-width: 500px;
-          border-radius: 30px;
-          box-shadow: 0 30px 60px rgba(0,0,0,0.1);
-          padding: 30px;
-          display: flex;
-          flex-direction: column;
-          gap: 30px;
+           width: 100%;
+           max-width: 540px;
+           background: var(--bg-elevated);
+           border: 1px solid var(--glass-border);
+           border-radius: 28px;
+           padding: 32px;
+           color: var(--text-primary);
+           box-shadow: var(--shadow-lg), 0 0 40px rgba(196, 26, 26, 0.1);
+           display: flex;
+           flex-direction: column;
+           gap: 24px;
+           animation: modalSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes modalSlide {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
         .modal-header { display: flex; justify-content: space-between; align-items: center; }
-        .close-btn { font-size: 1.2rem; opacity: 0.3; }
+        .close-btn { 
+            background: rgba(255,255,255,0.05);
+            border: none;
+            color: var(--text-muted);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .close-btn:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
         
-        .stepper { display: flex; gap: 8px; }
-        .stepper div { width: 30px; height: 6px; background: #eee; border-radius: 3px; }
-        .stepper div.active { background: #b08d6d; }
+        .stepper { display: flex; gap: 6px; }
+        .step { 
+            width: 32px; 
+            height: 6px; 
+            background: rgba(255,255,255,0.08); 
+            border-radius: 3px; 
+            font-size: 0;
+            transition: all 0.3s;
+        }
+        .step.active { background: var(--accent-primary); box-shadow: 0 0 10px var(--accent-glow); }
 
-        .step-content h2 { font-size: 1.6rem; margin-bottom: 8px; }
-        .step-content p { font-size: 0.9rem; opacity: 0.5; margin-bottom: 30px; }
+        .header-with-action { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+        .step-title { font-size: 1.75rem; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.02em; }
+        .step-sub { font-size: 0.95rem; color: var(--text-muted); }
+        
+        .add-profile-btn {
+            background: var(--accent-primary);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .add-profile-btn:hover { transform: scale(1.1); box-shadow: var(--shadow-glow-red); }
 
-        .account-list { display: flex; flex-direction: column; gap: 12px; }
+        .account-list { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+            max-height: 320px; 
+            overflow-y: auto;
+            padding-right: 4px;
+            margin-top: 20px;
+        }
+        .account-list::-webkit-scrollbar { width: 4px; }
+        .account-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
         .account-item {
           padding: 16px;
-          border: 2px solid #f5f5f5;
+          background: rgba(255,255,255,0.03);
+          border: 1.5px solid rgba(255,255,255,0.05);
           border-radius: 16px;
           display: flex;
           align-items: center;
-          gap: 16px;
+          gap: 14px;
           cursor: pointer;
-          transition: all 0.2s;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          position: relative;
         }
-        .account-item:hover { border-color: #eee; }
-        .account-item.selected { border-color: #b08d6d; background: #fffdfb; }
-        .acc-avatar { width: 40px; height: 40px; background: #eee; border-radius: 50%; }
-        .acc-info b { display: block; font-size: 0.95rem; }
-        .acc-info span { font-size: 0.75rem; opacity: 0.4; text-transform: uppercase; }
+        .account-item:hover { 
+            background: rgba(255,255,255,0.06); 
+            border-color: rgba(255,255,255,0.1);
+        }
+        .account-item.selected { 
+            background: var(--selection-bg); 
+            border-color: var(--accent-primary);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        
+        .add-more-item { border-style: dashed; opacity: 0.7; }
+        .add-more-item:hover { opacity: 1; border-style: solid; }
+
+        .acc-avatar { 
+            width: 44px; 
+            height: 44px; 
+            background: rgba(255,255,255,0.05); 
+            border-radius: 12px; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        .acc-name { display: block; font-size: 1rem; color: var(--text-primary); }
+        .acc-provider { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+        
+        .selected-check {
+            margin-left: auto;
+            background: var(--accent-primary);
+            color: white;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .empty-state {
+            padding: 40px 20px;
+            text-align: center;
+            background: rgba(255,255,255,0.02);
+            border: 1px dashed rgba(255,255,255,0.1);
+            border-radius: 20px;
+        }
+        .empty-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.3; }
+        .empty-state p { margin-bottom: 8px; font-weight: 600; }
+        .sync-now-link { 
+            color: var(--accent-primary); 
+            font-weight: 700; 
+            font-size: 0.9rem;
+            text-decoration: underline;
+        }
 
         .type-toggle { display: flex; gap: 12px; }
         .type-toggle button {
            flex: 1;
-           padding: 40px 20px;
-           border: 2px solid #f5f5f5;
+           padding: 24px 16px;
+           background: rgba(255,255,255,0.03);
+           border: 1.5px solid rgba(255,255,255,0.05);
            border-radius: 20px;
-           font-weight: 700;
-           font-size: 1rem;
+           color: var(--text-primary);
+           display: flex;
+           flex-direction: column;
+           align-items: center;
+           gap: 10px;
+           transition: all 0.3s;
+           cursor: pointer;
+        }
+        .type-toggle button .icon { font-size: 24px; opacity: 0.7; }
+        .type-toggle button b { display: block; font-size: 1rem; }
+        .type-toggle button small { display: block; font-size: 0.75rem; color: var(--text-muted); font-weight: normal; }
+        
+        .type-toggle button:hover { background: rgba(255,255,255,0.06); }
+        .type-toggle button.active { 
+            background: var(--selection-bg); 
+            border-color: var(--accent-primary); 
+            box-shadow: var(--shadow-glow-red);
+        }
+        .type-toggle button.active .icon { opacity: 1; }
+
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .options-grid button {
+           padding: 16px;
+           background: rgba(255,255,255,0.03);
+           border: 1.5px solid rgba(255,255,255,0.05);
+           border-radius: 14px;
+           color: var(--text-primary);
+           font-weight: 600;
+           font-size: 0.95rem;
+           cursor: pointer;
            transition: all 0.2s;
         }
-        .type-toggle button.active { border-color: #b08d6d; background: #fffdfb; color: #b08d6d; }
+        .options-grid button:hover { background: rgba(255,255,255,0.06); }
+        .options-grid button.active { background: var(--accent-primary); border-color: var(--accent-primary); }
 
-        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .options-grid button {
-           padding: 20px;
-           border: 2px solid #f5f5f5;
-           border-radius: 16px;
-           font-weight: 600;
+        .paid-fields { display: flex; flex-direction: column; gap: 16px; }
+        .field label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary); }
+        
+        .input-with-icon {
+            display: flex;
+            align-items: center;
+            background: rgba(255,255,255,0.04);
+            border: 1.5px solid rgba(255,255,255,0.06);
+            border-radius: 14px;
+            padding: 0 16px;
+            transition: all 0.2s;
         }
-        .options-grid button.active { border-color: #b08d6d; background: #fffdfb; }
+        .input-with-icon:focus-within {
+            border-color: var(--accent-primary);
+            background: rgba(255,255,255,0.06);
+        }
+        .input-with-icon input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            padding: 14px 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            outline: none;
+        }
+        .input-with-icon .prefix, .input-with-icon .suffix {
+            font-weight: 800;
+            font-size: 0.75rem;
+            color: var(--accent-primary);
+            margin-right: 12px;
+        }
+        .input-with-icon .suffix { margin-right: 0; margin-left: 12px; opacity: 0.5; color: white; }
 
-        .paid-fields { display: flex; flex-direction: column; gap: 20px; }
-        .field label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 8px; opacity: 0.6; }
-        .field input { width: 100%; padding: 12px 16px; border: 1px solid #eee; border-radius: 12px; font-size: 1rem; outline: none; }
-        .targeting-note { font-size: 0.75rem; font-style: italic; opacity: 0.4; text-align: center; margin-top: 10px; }
+        .targeting-info {
+            background: rgba(196, 26, 26, 0.05);
+            border: 1px solid rgba(196, 26, 26, 0.15);
+            padding: 14px;
+            border-radius: 12px;
+            display: flex;
+            gap: 12px;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            color: var(--text-secondary);
+        }
+        .targeting-info b { color: var(--accent-primary); }
 
-        .modal-footer { display: flex; justify-content: flex-end; gap: 16px; padding-top: 20px; border-top: 1px solid #f5f5f5; }
-        .back-btn { font-weight: 600; opacity: 0.5; }
+        .modal-footer { 
+            display: flex; 
+            justify-content: flex-end; 
+            align-items: center;
+            gap: 16px; 
+            padding-top: 10px;
+        }
+        
+        .back-btn { 
+            background: none; 
+            border: none; 
+            color: var(--text-muted); 
+            font-weight: 600; 
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .back-btn:hover { color: var(--text-primary); }
+
         .next-btn, .publish-btn {
-           background: #b08d6d;
-           color: white;
-           padding: 12px 32px;
-           border-radius: 30px;
-           font-weight: 700;
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
         }
-        .publish-btn { background: #b08d6d; box-shadow: 0 10px 20px rgba(176, 141, 109, 0.2); }
+        .next-btn:disabled, .publish-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            filter: grayscale(1);
+        }
+        .next-btn:not(:disabled):hover, .publish-btn:not(:disabled):hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow-red);
+            background: var(--accent-hover);
+        }
       `}</style>
+            </div>
         </div>
     );
 }
