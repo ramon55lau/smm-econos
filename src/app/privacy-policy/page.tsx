@@ -43,13 +43,13 @@ export default function PrivacyPolicyPage() {
         <section className={styles.section}>
           <h2>2. Permisos de Google</h2>
           <p>
-            SMM solicita permisos a los servicios de Google para las siguientes funciones específicas:
+            SMM solicita permisos a los servicios de Google para las siguientes funciones específicas. Para poder publicar en YouTube y administrar anuncios, necesitamos que Google nos autorice a actuar en tu nombre de forma segura mediante OAuth 2.0. A continuación explicamos cada permiso solicitado:
           </p>
           <ul>
-            <li><strong>youtube.upload:</strong> Publicar videos de propiedades en tu canal de YouTube únicamente con tu confirmación explícita.</li>
-            <li><strong>youtube.readonly:</strong> Verificar el estado de los videos publicados y mostrar métricas básicas en tu panel.</li>
-            <li><strong>Google Ads (adwords):</strong> Crear y gestionar campañas publicitarias de propiedades bajo tu supervisión directa.</li>
-            <li><strong>openid / email / profile:</strong> Autenticar tu identidad y vincular tu cuenta de Google con tu perfil en SMM.</li>
+            <li><strong>youtube.upload (Publicación en YouTube):</strong> Permite a SMM subir videos de inmuebles a tu canal de YouTube únicamente cuando tú confirmas la publicación de forma explícita. La aplicación nunca sube contenido sin tu aprobación previa.</li>
+            <li><strong>youtube.readonly (Lectura de datos de YouTube):</strong> Nos permite leer el estado y las métricas básicas (título, estado de publicación, vistas) de los videos que hemos subido, para mostrarte el progreso en tu panel de control.</li>
+            <li><strong>Google Ads (adwords):</strong> Usado para crear y gestionar campañas publicitarias que promocionan tus propiedades en los resultados de búsqueda de Google. Cada campaña se crea bajo tu supervisión directa y puedes pausarla en cualquier momento.</li>
+            <li><strong>openid / email / profile (Identificación y Perfil):</strong> Usamos tu nombre y correo de Google únicamente para crear y autenticar tu cuenta en SMM. No accedemos a ningún otro dato personal de tu cuenta de Google ni lo compartimos con terceros.</li>
           </ul>
           <p>
             Para más detalles sobre el uso de datos de Google, consulta nuestra{" "}
