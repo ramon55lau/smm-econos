@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { ScrapedData, Platform } from "./UnifiedFlow";
 
 type Props = {
@@ -99,7 +100,7 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
         return platform.includes(a.provider);
     });
 
-    return (
+    return createPortal(
         <div className="publish-modal-overlay">
             <div className="modal-card glass-panel">
                 <div className="modal-header">
@@ -239,11 +240,34 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
                 </div>
 
                 <div className="modal-footer">
-                    {step > 1 && <button className="back-btn" onClick={() => setStep(step - 1)}>← Anterior</button>}
+                    {step > 1 && (
+                        <button
+                            className="back-btn"
+                            onClick={() => {
+                                if (step === 3 && (platform === 'youtube' || platform === 'google-ads')) {
+                                    setStep(1);
+                                } else {
+                                    setStep(step - 1);
+                                }
+                            }}
+                        >
+                            ← Anterior
+                        </button>
+                    )}
                     {step < 3 ? (
                         <button
                             className="next-btn"
-                            onClick={() => setStep(step + 1)}
+                            onClick={() => {
+                                if (step === 1 && platform === 'youtube') {
+                                    setPublishType('organic');
+                                    setStep(3);
+                                } else if (step === 1 && platform === 'google-ads') {
+                                    setPublishType('paid');
+                                    setStep(3);
+                                } else {
+                                    setStep(step + 1);
+                                }
+                            }}
                             disabled={step === 1 && !selectedProfile}
                         >
                             Siguiente
@@ -548,6 +572,7 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
         }
       `}</style>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
