@@ -85,7 +85,7 @@ export default function UnifiedFlow() {
               min-height: calc(100vh - 80px);
               display: flex;
               flex-direction: column;
-              animation: fadeIn 0.5s ease-out;
+              animation: none;
             }
           `}</style>
             </div>

@@ -1,17 +1,24 @@
 "use client";
 
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import styles from "./Login.module.css";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.push("/dashboard");
+    }
+  }, [status, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +54,7 @@ export default function LoginPage() {
 
         <form className={styles.form} onSubmit={handleSubmit}>
           {error && <div className={styles.error}>{error}</div>}
-          
+
           <div className={styles.formGroup}>
             <label htmlFor="email" className={styles.label}>Correo Electrónico</label>
             <input
@@ -80,7 +87,7 @@ export default function LoginPage() {
             {loading ? "Iniciando sesión..." : "Ingresar"}
           </button>
         </form>
-        
+
         <footer className={styles.footer}>
           <div className={styles.legalLinks}>
             <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className={styles.legalLink}>Política de Privacidad</a>

@@ -679,7 +679,7 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
            align-items: center; 
            border-top: 1px solid #ddd;
            position: relative;
-           z-index: 5;
+           z-index: 1;
         }
         .footer-meta { flex: 1; margin-right: 12px; display: flex; flex-direction: column; }
         .fb-preview-mockup .cta-btn { background: #fff; border: 1px solid #ddd; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; color: #1c1e21; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }

@@ -109,7 +109,23 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
 
     if (!mounted) return null;
 
-    return (
+    const handleSyncPopup = (e: React.MouseEvent) => {
+        e.preventDefault();
+        window.open('/settings/accounts', 'SMMAccountSync', 'width=1000,height=800,scrollbars=yes');
+    };
+
+    const refreshAccounts = () => {
+        setLoading(true);
+        fetch("/api/social/accounts")
+            .then(r => r.json())
+            .then(data => {
+                setAccounts(data);
+                setLoading(false);
+            })
+            .catch(() => setLoading(false));
+    };
+
+    return createPortal(
         <div className="publish-modal-overlay">
             <div className="modal-card glass-panel">
                 <div className="modal-header">
@@ -129,9 +145,9 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
                                     <h2 className="step-title">Selecciona tu perfil</h2>
                                     <p className="step-sub">Elige la cuenta desde la que deseas publicar.</p>
                                 </div>
-                                <a href="/settings/accounts" className="add-profile-btn" title="Conectar nueva cuenta">
+                                <button onClick={handleSyncPopup} className="add-profile-btn" title="Conectar nueva cuenta">
                                     <span className="plus">+</span>
-                                </a>
+                                </button>
                             </div>
 
                             <div className="account-list">
@@ -139,7 +155,10 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
                                     <div className="empty-state">
                                         <div className="empty-icon">🔌</div>
                                         <p>No hay cuentas de {platform} conectadas.</p>
-                                        <a href="/settings/accounts" className="sync-now-link">Sincronizar ahora</a>
+                                        <div className="empty-actions">
+                                            <button onClick={handleSyncPopup} className="sync-now-link">Sincronizar ahora</button>
+                                            <button onClick={refreshAccounts} className="refresh-mini-btn" title="Actualizar lista">🔄</button>
+                                        </div>
                                     </div>
                                 ) : (
                                     <>
@@ -158,13 +177,16 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
                                             </div>
                                         ))}
                                         {/* Quick add option inside the list too */}
-                                        <a href="/settings/accounts" className="account-item add-more-item">
+                                        <button onClick={handleSyncPopup} className="account-item add-more-item">
                                             <div className="acc-avatar">+</div>
                                             <div className="acc-info">
                                                 <b className="acc-name">Conectar otra cuenta</b>
-                                                <span className="acc-provider">Ir a configuraciones</span>
+                                                <span className="acc-provider">Abrir sincronizador</span>
                                             </div>
-                                        </a>
+                                        </button>
+                                        <button onClick={refreshAccounts} className="refresh-list-btn">
+                                            🔄 Actualizar lista de cuentas
+                                        </button>
                                     </>
                                 )}
                             </div>
@@ -303,35 +325,37 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
                     )}
                 </div>
 
-                <style jsx>{`
+                <style jsx global>{`
         .publish-modal-overlay {
           position: fixed !important;
-          top: 0;
-          left: 0;
+          top: 0 !important;
+          left: 0 !important;
+          right: 0 !important;
+          bottom: 0 !important;
           width: 100vw !important;
           height: 100vh !important;
-          background: rgba(0,0,0,0.85);
-          backdrop-filter: blur(10px);
-          z-index: 9999999;
-          display: block;
+          background: rgba(0,0,0,0.85) !important;
+          backdrop-filter: blur(10px) !important;
+          z-index: 999999999 !important;
+          display: flex !important;
+          align-items: center;
+          justify-content: center;
         }
 
         .modal-card {
-           position: fixed !important;
-           top: 50vh !important;
-           left: 50vw !important;
-           transform: translate(-50%, -50%) !important;
+           position: relative !important;
            width: 90% !important;
            max-width: 500px !important;
-           background: #211d19;
-           border: 1px solid var(--glass-border);
-           border-radius: 28px;
-           padding: 32px;
-           box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-           color: white;
+           background: #211d19 !important;
+           border: 1px solid rgba(255,255,255,0.1) !important;
+           border-radius: 28px !important;
+           padding: 32px !important;
+           box-shadow: 0 20px 40px rgba(0,0,0,0.8) !important;
+           color: white !important;
            display: flex;
            flex-direction: column;
            gap: 24px;
+           z-index: 1000000000 !important;
            animation: modalSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
@@ -459,11 +483,25 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
         }
         .empty-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.3; }
         .empty-state p { margin-bottom: 8px; font-weight: 600; }
+        .empty-actions { display: flex; align-items: center; justify-content: center; gap: 12px; }
+        .refresh-mini-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; transition: transform 0.3s; }
+        .refresh-mini-btn:hover { transform: rotate(180deg); }
+        
+        .refresh-list-btn { 
+            width: 100%; padding: 10px; background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.1); 
+            border-radius: 12px; color: var(--text-muted); font-size: 0.8rem; cursor: pointer; transition: all 0.2s;
+            margin-top: 4px;
+        }
+        .refresh-list-btn:hover { background: rgba(255,255,255,0.06); color: white; }
+
         .sync-now-link { 
             color: var(--accent-primary); 
+            background: none;
+            border: none;
             font-weight: 700; 
             font-size: 0.9rem;
             text-decoration: underline;
+            cursor: pointer;
         }
 
         .type-toggle { display: flex; gap: 12px; }
@@ -596,6 +634,7 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
         }
       `}</style>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
