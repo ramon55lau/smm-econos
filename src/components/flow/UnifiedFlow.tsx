@@ -41,6 +41,7 @@ export default function UnifiedFlow() {
     };
 
     const handlePublishClick = () => {
+        console.log("Publish button clicked, showing modal for platform:", selectedPlatform);
         setShowPublishModal(true);
     };
 
@@ -51,31 +52,43 @@ export default function UnifiedFlow() {
     };
 
     return (
-        <div className="unified-flow-container">
-            {step === "input" && (
-                <ScreenLinkInput onScraped={handleDataScraped} />
-            )}
+        <>
+            <div className="unified-flow-container">
+                {step === "input" && (
+                    <ScreenLinkInput onScraped={handleDataScraped} />
+                )}
 
-            {step === "selection" && scrapedData && (
-                <ScreenPlatformSelection
-                    data={scrapedData}
-                    onSelect={handlePlatformSelected}
-                    onBack={() => setStep("input")}
-                />
-            )}
+                {step === "selection" && scrapedData && (
+                    <ScreenPlatformSelection
+                        data={scrapedData}
+                        onSelect={handlePlatformSelected}
+                        onBack={() => setStep("input")}
+                    />
+                )}
 
-            {step === "editor" && scrapedData && selectedPlatform && (
-                <ScreenAdEditor
-                    data={scrapedData}
-                    platform={selectedPlatform}
-                    onPublish={handlePublishClick}
-                    onBack={() => setStep("selection")}
-                />
-            )}
+                {step === "editor" && scrapedData && selectedPlatform && (
+                    <ScreenAdEditor
+                        data={scrapedData}
+                        platform={selectedPlatform}
+                        onPublish={handlePublishClick}
+                        onBack={() => setStep("selection")}
+                    />
+                )}
 
-            {step === "success" && adId && (
-                <SuccessScreen adId={adId} onReset={() => setStep("input")} />
-            )}
+                {step === "success" && adId && (
+                    <SuccessScreen adId={adId} onReset={() => setStep("input")} />
+                )}
+
+                <style jsx>{`
+            .unified-flow-container {
+              width: 100%;
+              min-height: calc(100vh - 80px);
+              display: flex;
+              flex-direction: column;
+              animation: fadeIn 0.5s ease-out;
+            }
+          `}</style>
+            </div>
 
             {showPublishModal && scrapedData && selectedPlatform && (
                 <PublishModal
@@ -85,16 +98,6 @@ export default function UnifiedFlow() {
                     onSuccess={handlePublished}
                 />
             )}
-
-            <style jsx>{`
-        .unified-flow-container {
-          width: 100%;
-          min-height: calc(100vh - 80px);
-          display: flex;
-          flex-direction: column;
-          animation: fadeIn 0.5s ease-out;
-        }
-      `}</style>
-        </div>
+        </>
     );
 }

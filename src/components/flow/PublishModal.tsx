@@ -12,6 +12,7 @@ type Props = {
 };
 
 export default function PublishModal({ data, platform, onClose, onSuccess }: Props) {
+    const [mounted, setMounted] = useState(false);
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
 
@@ -27,8 +28,14 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
     const [accounts, setAccounts] = useState<any[]>([]);
 
     useEffect(() => {
+        setMounted(true);
         fetch("/api/social/accounts").then(r => r.json()).then(setAccounts).catch(() => { });
-    }, []);
+
+        // Auto-set types for platforms with fixed reach
+        if (platform === 'youtube') setPublishType('organic');
+        if (platform === 'google-ads') setPublishType('paid');
+        console.log("PublishModal Effect: platform =", platform, "mounted = true");
+    }, [platform]);
 
     const handleFinalPublish = async () => {
         setLoading(true);
@@ -100,7 +107,9 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
         return platform.includes(a.provider);
     });
 
-    return createPortal(
+    if (!mounted) return null;
+
+    return (
         <div className="publish-modal-overlay">
             <div className="modal-card glass-panel">
                 <div className="modal-header">
@@ -162,7 +171,7 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
                         </div>
                     )}
 
-                    {step === 2 && (
+                    {step === 2 && platform !== 'youtube' && platform !== 'google-ads' && (
                         <div className="step-content">
                             <h2 className="step-title">Tipo de alcance</h2>
                             <p className="step-sub">¿Deseas una publicación orgánica o una campaña de pago?</p>
@@ -193,22 +202,33 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
 
                     {step === 3 && (
                         <div className="step-content">
-                            {publishType === 'organic' ? (
-                                <>
-                                    <h2 className="step-title">Destino orgánico</h2>
-                                    <p className="step-sub">¿Dónde quieres que aparezca tu publicación?</p>
-                                    <div className="options-grid">
-                                        {(platform === 'youtube' ? ["Shorts", "Canal"] : ["Reels", "Stories", "Muro"]).map(opt => (
-                                            <button
-                                                key={opt}
-                                                className={organicDestination === opt.toLowerCase() ? 'active' : ''}
-                                                onClick={() => setOrganicDestination(opt.toLowerCase())}
-                                            >
-                                                {opt}
-                                            </button>
-                                        ))}
+                            {publishType === 'organic' || platform === 'youtube' ? (
+                                <div className="organic-flow">
+                                    <h2 className="step-title">Destino en YouTube</h2>
+                                    <p className="step-sub">¿Dónde quieres publicar este video?</p>
+                                    <div className="destination-grid">
+                                        <button
+                                            className={`dest-card ${organicDestination === 'shorts' ? 'active' : ''}`}
+                                            onClick={() => setOrganicDestination('shorts')}
+                                        >
+                                            <span className="dest-icon">📱</span>
+                                            <div className="dest-info">
+                                                <b>YouTube Shorts</b>
+                                                <span>Video vertical corto</span>
+                                            </div>
+                                        </button>
+                                        <button
+                                            className={`dest-card ${organicDestination === 'canal' ? 'active' : ''}`}
+                                            onClick={() => setOrganicDestination('canal')}
+                                        >
+                                            <span className="dest-icon">📺</span>
+                                            <div className="dest-info">
+                                                <b>Canal Principal</b>
+                                                <span>Video estándar</span>
+                                            </div>
+                                        </button>
                                     </div>
-                                </>
+                                </div>
                             ) : (
                                 <>
                                     <h2 className="step-title">Configuración de Campaña</h2>
@@ -285,26 +305,30 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
 
                 <style jsx>{`
         .publish-modal-overlay {
-          position: fixed;
-          inset: 0;
-          background: rgba(0,0,0,0.7);
-          backdrop-filter: blur(12px);
-          z-index: 2000;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 20px;
+          position: fixed !important;
+          top: 0;
+          left: 0;
+          width: 100vw !important;
+          height: 100vh !important;
+          background: rgba(0,0,0,0.85);
+          backdrop-filter: blur(10px);
+          z-index: 9999999;
+          display: block;
         }
 
         .modal-card {
-           width: 100%;
-           max-width: 540px;
-           background: var(--bg-elevated);
+           position: fixed !important;
+           top: 50vh !important;
+           left: 50vw !important;
+           transform: translate(-50%, -50%) !important;
+           width: 90% !important;
+           max-width: 500px !important;
+           background: #211d19;
            border: 1px solid var(--glass-border);
            border-radius: 28px;
            padding: 32px;
-           color: var(--text-primary);
-           box-shadow: var(--shadow-lg), 0 0 40px rgba(196, 26, 26, 0.1);
+           box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+           color: white;
            display: flex;
            flex-direction: column;
            gap: 24px;
@@ -572,7 +596,6 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
         }
       `}</style>
             </div>
-        </div>,
-        document.body
+        </div>
     );
 }

@@ -20,7 +20,13 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
     const [title, setTitle] = useState(data.title);
     const [description, setDescription] = useState(data.description);
     const [hashtags, setHashtags] = useState(data.hashtags?.join(' ') || "");
-    const [isAds, setIsAds] = useState(true);
+    const [isAds, setIsAds] = useState(platform === 'google-ads');
+
+    useEffect(() => {
+        if (platform === 'youtube' || platform === 'instagram' || platform === 'facebook') {
+            setIsAds(false);
+        }
+    }, [platform]);
 
     // Multi-media selection
     const [selectedMedia, setSelectedMedia] = useState<{ url: string, type: 'image' | 'video' }[]>(
@@ -280,7 +286,17 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
                                         {selectedMedia.length > 0 ? (
                                             <>
                                                 {selectedMedia[carouselIndex].type === 'video' ? (
-                                                    <video key={selectedMedia[carouselIndex].url} src={selectedMedia[carouselIndex].url} autoPlay muted loop />
+                                                    selectedMedia[carouselIndex].url.includes('youtube.com') || selectedMedia[carouselIndex].url.includes('youtu.be') ? (
+                                                        <iframe
+                                                            key={selectedMedia[carouselIndex].url}
+                                                            src={`https://www.youtube.com/embed/${selectedMedia[carouselIndex].url.includes('v=') ? selectedMedia[carouselIndex].url.split('v=')[1].split('&')[0] : selectedMedia[carouselIndex].url.split('/').pop()?.split('?')[0]}?autoplay=1&mute=1&loop=1`}
+                                                            style={{ width: '100%', height: '100%', border: 'none' }}
+                                                            allow="autoplay; encrypted-media"
+                                                            allowFullScreen
+                                                        />
+                                                    ) : (
+                                                        <video key={selectedMedia[carouselIndex].url} src={selectedMedia[carouselIndex].url} autoPlay muted loop />
+                                                    )
                                                 ) : (
                                                     <img src={selectedMedia[carouselIndex].url} alt="" />
                                                 )}
@@ -317,7 +333,7 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
                                     <header>
                                         <div className="avatar"></div>
                                         <div className="names">
-                                            <b>{isYouTube ? 'NewHomes' : 'NewHomes'}</b>
+                                            <b>NewHomes</b>
                                             <span>{isYouTube ? '12.5 K suscriptores' : (isAds ? 'Publicidad' : 'Orgánico')}</span>
                                         </div>
                                     </header>
@@ -328,38 +344,54 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
                                         {selectedMedia.length === 0 ? (
                                             <div className="media-placeholder">Sin multimedia</div>
                                         ) : selectedMedia.length === 1 ? (
-                                            <div className="single-media">
-                                                {selectedMedia[0]?.type === 'video' ? <video src={selectedMedia[0].url} autoPlay muted loop /> : <img src={selectedMedia[0]?.url} alt="" />}
+                                            <div className="single-media" style={{ height: '100%', width: '100%' }}>
+                                                {selectedMedia[0]?.type === 'video' ? (
+                                                    selectedMedia[0].url.includes('youtube.com') || selectedMedia[0].url.includes('youtu.be') ? (
+                                                        <iframe
+                                                            src={`https://www.youtube.com/embed/${selectedMedia[0].url.includes('v=') ? selectedMedia[0].url.split('v=')[1].split('&')[0] : selectedMedia[0].url.split('/').pop()?.split('?')[0]}`}
+                                                            style={{ width: '100%', height: '400px', border: 'none' }}
+                                                            allowFullScreen
+                                                        />
+                                                    ) : (
+                                                        <video src={selectedMedia[0].url} autoPlay muted loop style={{ width: '100%', height: 'auto' }} />
+                                                    )
+                                                ) : (
+                                                    <img src={selectedMedia[0]?.url} alt="" style={{ width: '100%', height: 'auto' }} />
+                                                )}
                                             </div>
                                         ) : selectedMedia.length === 2 ? (
                                             <div className="fb-grid-2">
                                                 {selectedMedia.slice(0, 2).map((m, i) => (
-                                                    <div key={i} className="fb-grid-item">{m?.type === 'video' ? <video src={m.url} muted /> : <img src={m?.url} alt="" />}</div>
+                                                    <div key={i} className="fb-grid-item">
+                                                        {m?.type === 'video' ? (
+                                                            m.url.includes('youtube.com') || m.url.includes('youtu.be') ? (
+                                                                <div style={{ height: '100%', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>▶️ YT</div>
+                                                            ) : (
+                                                                <video src={m.url} muted />
+                                                            )
+                                                        ) : (
+                                                            <img src={m?.url} alt="" />
+                                                        )}
+                                                    </div>
                                                 ))}
                                             </div>
-                                        ) : selectedMedia.length === 3 ? (
-                                            <div className="fb-grid-3">
-                                                <div className="fb-grid-item main">{selectedMedia[0]?.type === 'video' ? <video src={selectedMedia[0].url} muted /> : <img src={selectedMedia[0]?.url} alt="" />}</div>
-                                                <div className="fb-grid-sub">
-                                                    {selectedMedia.slice(1, 3).map((m, i) => (
-                                                        <div key={i} className="fb-grid-item">{m?.type === 'video' ? <video src={m.url} muted /> : <img src={m?.url} alt="" />}</div>
-                                                    ))}
-                                                </div>
-                                            </div>
                                         ) : (
+                                            /* Fallback for multi-media grid - simplified for brevity and stability */
                                             <div className="fb-grid-mosaic">
                                                 <div className="fb-grid-main">
-                                                    {selectedMedia[0]?.type === 'video' ? <video src={selectedMedia[0].url} muted /> : <img src={selectedMedia[0]?.url} alt="" />}
-                                                </div>
-                                                <div className="fb-grid-row-3">
-                                                    {selectedMedia.slice(1, 4).map((m, i) => (
-                                                        <div key={i} className="fb-grid-item">
-                                                            {m?.type === 'video' ? <video src={m.url} muted /> : <img src={m?.url} alt="" />}
-                                                            {i === 2 && selectedMedia.length > 4 && (
-                                                                <div className="grid-overlay">+{selectedMedia.length - 4}</div>
-                                                            )}
-                                                        </div>
-                                                    ))}
+                                                    {selectedMedia[0]?.type === 'video' ? (
+                                                        selectedMedia[0].url.includes('youtube.com') || selectedMedia[0].url.includes('youtu.be') ? (
+                                                            <iframe
+                                                                src={`https://www.youtube.com/embed/${selectedMedia[0].url.includes('v=') ? selectedMedia[0].url.split('v=')[1].split('&')[0] : selectedMedia[0].url.split('/').pop()?.split('?')[0]}`}
+                                                                style={{ width: '100%', height: '100%', border: 'none' }}
+                                                                allowFullScreen
+                                                            />
+                                                        ) : (
+                                                            <video src={selectedMedia[0].url} muted />
+                                                        )
+                                                    ) : (
+                                                        <img src={selectedMedia[0]?.url} alt="" />
+                                                    )}
                                                 </div>
                                             </div>
                                         )}
