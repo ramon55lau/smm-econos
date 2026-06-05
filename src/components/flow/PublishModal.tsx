@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { ScrapedData, Platform } from "./UnifiedFlow";
 
@@ -26,16 +26,32 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
     const [duration, setDuration] = useState("7");
 
     const [accounts, setAccounts] = useState<any[]>([]);
+    const syncPopupRef = useRef<Window | null>(null);
+    const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+    const fetchAccounts = useCallback(async () => {
+        try {
+            const res = await fetch("/api/social/accounts");
+            if (res.ok) {
+                const data = await res.json();
+                return Array.isArray(data) ? data : [];
+            }
+        } catch { }
+        return [];
+    }, []);
 
     useEffect(() => {
         setMounted(true);
-        fetch("/api/social/accounts").then(r => r.json()).then(setAccounts).catch(() => { });
+        fetchAccounts().then(setAccounts);
 
         // Auto-set types for platforms with fixed reach
         if (platform === 'youtube') setPublishType('organic');
         if (platform === 'google-ads') setPublishType('paid');
-        console.log("PublishModal Effect: platform =", platform, "mounted = true");
-    }, [platform]);
+
+        return () => {
+            if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+        };
+    }, [platform, fetchAccounts]);
 
     const handleFinalPublish = async () => {
         setLoading(true);
@@ -111,18 +127,41 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
 
     const handleSyncPopup = (e: React.MouseEvent) => {
         e.preventDefault();
-        window.open('/settings/accounts', 'SMMAccountSync', 'width=1000,height=800,scrollbars=yes');
+        const popup = window.open('/settings/accounts', 'SMMAccountSync', 'width=1000,height=800,scrollbars=yes');
+        syncPopupRef.current = popup;
+
+        // Start polling to detect new accounts
+        const initialCount = accounts.length;
+        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = setInterval(async () => {
+            // Check if popup was closed
+            if (syncPopupRef.current && syncPopupRef.current.closed) {
+                // Popup closed, do a final refresh
+                const fresh = await fetchAccounts();
+                setAccounts(fresh);
+                if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+                pollIntervalRef.current = null;
+                return;
+            }
+            // Poll for new accounts
+            const fresh = await fetchAccounts();
+            if (fresh.length > initialCount) {
+                setAccounts(fresh);
+                // Auto-close popup and stop polling
+                if (syncPopupRef.current && !syncPopupRef.current.closed) {
+                    syncPopupRef.current.close();
+                }
+                if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+                pollIntervalRef.current = null;
+            }
+        }, 2000);
     };
 
-    const refreshAccounts = () => {
+    const refreshAccounts = async () => {
         setLoading(true);
-        fetch("/api/social/accounts")
-            .then(r => r.json())
-            .then(data => {
-                setAccounts(data);
-                setLoading(false);
-            })
-            .catch(() => setLoading(false));
+        const fresh = await fetchAccounts();
+        setAccounts(fresh);
+        setLoading(false);
     };
 
     return createPortal(

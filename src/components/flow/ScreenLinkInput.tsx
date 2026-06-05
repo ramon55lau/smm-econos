@@ -4,84 +4,100 @@ import { useState } from "react";
 import Image from "next/image";
 
 type Props = {
-    onScraped: (data: any) => void;
+  onScraped: (data: any) => void;
 };
 
 export default function ScreenLinkInput({ onScraped }: Props) {
-    const [url, setUrl] = useState("");
-    const [loading, setLoading] = useState(false);
+  const [url, setUrl] = useState("");
+  const [loading, setLoading] = useState(false);
 
-    const handleGo = async () => {
-        if (!url.trim() || !url.startsWith("http")) return;
+  const handleGo = async () => {
+    if (!url.trim() || !url.startsWith("http")) return;
 
-        setLoading(true);
-        try {
-            const res = await fetch("/api/scrape", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ url }),
-            });
+    setLoading(true);
+    try {
+      const res = await fetch("/api/scrape", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
 
-            if (res.ok) {
-                const data = await res.json();
-                onScraped(data);
-            } else {
-                alert("No se pudo extraer información del enlace.");
-            }
-        } catch (error) {
-            console.error("Scrape error:", error);
-            alert("Error al procesar el enlace.");
-        } finally {
-            setLoading(false);
-        }
-    };
+      if (res.ok) {
+        const data = await res.json();
+        onScraped(data);
+      } else {
+        alert("No se pudo extraer información del enlace.");
+      }
+    } catch (error) {
+      console.error("Scrape error:", error);
+      alert("Error al procesar el enlace.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return (
-        <div className="link-input-screen">
-            <div className="content">
-                <div className="header">
-                    <div className="logo-group">
-                        <span className="econos-text">ECONOS</span>
-                        <span className="smm-text">SMM</span>
-                    </div>
-                </div>
+  return (
+    <div className="link-input-screen">
+      <div className="content">
+        <div className="header">
+          <div className="logo-group">
+            <span className="econos-text">ECONOS</span>
+            <span className="smm-text">SMM</span>
+          </div>
+        </div>
 
-                <div className="hero">
-                    <h1>Publica tu propiedad <br /> <span>en todos los canales</span></h1>
-                    <p>Pega la URL de tu inmueble y creamos las campañas automáticamente para ti.</p>
-                </div>
+        <div className="hero">
+          <h1>Publica tu propiedad <br /> <span>en todos los canales</span></h1>
+          <p>Pega la URL de tu inmueble y creamos las campañas automáticamente para ti.</p>
+        </div>
 
-                <div className="input-container">
-                    <div className="input-wrapper">
-                        <span className="link-icon">🔗</span>
-                        <input
-                            type="text"
-                            placeholder="Pega la URL del inmueble o producto..."
-                            value={url}
-                            onChange={(e) => setUrl(e.target.value)}
-                            onKeyDown={(e) => e.key === "Enter" && handleGo()}
-                        />
-                        <button className="go-btn" onClick={handleGo} disabled={loading}>
-                            {loading ? "..." : "GO"}
-                        </button>
-                    </div>
-                </div>
+        <div className="input-container">
+          <div className="input-wrapper">
+            <span className="link-icon">🔗</span>
+            <input
+              type="text"
+              placeholder="Pega la URL del inmueble o producto..."
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleGo()}
+            />
+            <button className="go-btn" onClick={handleGo} disabled={loading}>
+              {loading ? "..." : "GO"}
+            </button>
+          </div>
+        </div>
 
-                <div className="footer-info">
-                    <p>Compatible con</p>
-                    <div className="platforms">
-                        <span>Meta | </span>
-                        <span>Facebook | </span>
-                        <span>Instagram | </span>
-                        <span>Google | </span>
-                        <span>YouTube | </span>
-                        <span>Display</span>
-                    </div>
-                    <p className="secure">🛡️ Conectado. Seguro. Efectivo.</p>
-                </div>
-            </div>
+        <div className="or-divider">
+          <span>o</span>
+        </div>
 
-            <style jsx>{`
+        <button className="manual-btn" onClick={() => onScraped({
+          title: "",
+          description: "",
+          images: [],
+          videos: [],
+          hashtags: [],
+          suggestedComment: "",
+          linkUrl: "",
+        })}>
+          ✍️ Publicar sin enlace
+        </button>
+
+        <div className="footer-info">
+          <p>Compatible con</p>
+          <div className="platforms">
+            <span>Meta | </span>
+            <span>Facebook | </span>
+            <span>Instagram | </span>
+            <span>Google | </span>
+            <span>YouTube | </span>
+            <span>Display</span>
+          </div>
+          <p className="secure">🛡️ Conectado. Seguro. Efectivo.</p>
+        </div>
+      </div>
+
+      <style jsx>{`
         .link-input-screen {
           flex: 1;
           display: flex;
@@ -224,13 +240,65 @@ export default function ScreenLinkInput({ onScraped }: Props) {
           font-weight: 500;
         }
 
+        .or-divider {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          margin-bottom: 20px;
+          opacity: 0.4;
+        }
+        .or-divider::before, .or-divider::after {
+          content: '';
+          flex: 1;
+          height: 1px;
+          background: #4a3f35;
+        }
+        .or-divider span {
+          font-size: 0.85rem;
+          font-weight: 600;
+          text-transform: uppercase;
+        }
+
+        .manual-btn {
+          background: transparent;
+          border: 2px dashed #b08d6d;
+          color: #b08d6d;
+          padding: 16px 40px;
+          border-radius: 60px;
+          font-size: 1rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.25s ease;
+          margin-bottom: 40px;
+        }
+        .manual-btn:hover {
+          background: #b08d6d;
+          color: white;
+          transform: translateY(-2px);
+        }
+
         @media (max-width: 768px) {
-          .hero h1 { font-size: 2.2rem; }
-          .hero p { font-size: 1rem; }
-          .input-wrapper { padding: 6px 10px 6px 20px; }
+          .hero h1 { font-size: 2rem; }
+          .hero p { font-size: 0.9rem; margin-bottom: 30px; }
+          .input-wrapper { padding: 6px 8px 6px 16px; }
           .go-btn { width: 50px; height: 50px; font-size: 0.9rem; }
+          .header { position: relative; top: 0; left: 0; margin-bottom: 30px; }
+          .link-input-screen { padding: 16px; }
+          .content { padding: 0 8px; }
+          .manual-btn { padding: 12px 24px; font-size: 0.9rem; }
+        }
+
+        @media (max-width: 480px) {
+          .hero h1 { font-size: 1.6rem; }
+          .hero p { font-size: 0.85rem; margin-bottom: 20px; }
+          .input-wrapper { flex-direction: column; border-radius: 16px; padding: 12px; gap: 10px; }
+          .go-btn { width: 100%; border-radius: 12px; height: 48px; }
+          .link-icon { display: none; }
+          input { font-size: 0.95rem; text-align: center; }
+          .platforms span { font-size: 0.75rem; }
+          .header { margin-bottom: 20px; }
         }
       `}</style>
-        </div>
-    );
+    </div>
+  );
 }
