@@ -61,16 +61,19 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    title: data.title,
-                    description: data.description,
+                    title: data.title || "Sin título",
+                    description: data.description || "",
                     mediaType: data.videos?.length ? "video" : "image",
                     mediaUrl: data.videos?.length ? data.videos[0].url : (data.images?.length ? data.images[0] : ""),
-                    linkUrl: data.linkUrl,
+                    linkUrl: data.linkUrl || "",
                     campaignId: "default",
                 })
             });
 
-            if (!adSaveRes.ok) throw new Error("Error saving ad");
+            if (!adSaveRes.ok) {
+                const errBody = await adSaveRes.json().catch(() => ({}));
+                throw new Error(errBody.error || `Error guardando anuncio (HTTP ${adSaveRes.status})`);
+            }
             const ad = await adSaveRes.json();
 
             // Then publish
@@ -79,6 +82,7 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     adId: ad.id,
+                    socialAccountId: selectedProfile,
                     destinations: [
                         {
                             platform: platform === "google-ads" ? "youtube" : platform.split("-")[0],
@@ -92,15 +96,16 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
                 })
             });
 
+            const result = await publishRes.json().catch(() => ({ error: "Respuesta inválida del servidor" }));
+
             if (publishRes.ok) {
                 onSuccess(ad.id);
             } else {
-                const error = await publishRes.json();
-                alert(`Error al publicar: ${error.error || "Error desconocido"}`);
+                alert(`Error al publicar: ${result.error || "Error desconocido"}`);
             }
-        } catch (err) {
-            console.error(err);
-            alert("Error de conexión al publicar.");
+        } catch (err: any) {
+            console.error("Publish error:", err);
+            alert(`Error al publicar: ${err.message || "Error de conexión"}`);
         } finally {
             setLoading(false);
         }

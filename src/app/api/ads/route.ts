@@ -32,35 +32,45 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { campaignId, title, description, mediaType, mediaUrl, thumbnailUrl, hashtags, firstComment, linkUrl } = body;
 
-    if (!campaignId || !title || !mediaType) {
-      return NextResponse.json({ error: "Missing required fields (campaignId, title, mediaType)" }, { status: 400 });
-    }
+    let targetCampaignId = campaignId;
 
-    // Verify ownership of campaign
-    const campaign = await prisma.campaign.findUnique({ where: { id: campaignId } });
-    if (!campaign || campaign.userId !== session.user.id) {
-      return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
+    if (!targetCampaignId || targetCampaignId === "default") {
+      let generalCampaign = await prisma.campaign.findFirst({
+        where: { userId: session.user.id, name: "General" }
+      });
+      if (!generalCampaign) {
+        generalCampaign = await prisma.campaign.create({
+          data: { name: "General", userId: session.user.id }
+        });
+      }
+      targetCampaignId = generalCampaign.id;
+    } else {
+      // Verify ownership of campaign
+      const campaign = await prisma.campaign.findUnique({ where: { id: targetCampaignId } });
+      if (!campaign || campaign.userId !== session.user.id) {
+        return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
+      }
     }
 
     // Update campaign with the new hashtags and firstComment if provided
     if (hashtags !== undefined || firstComment !== undefined) {
       await prisma.campaign.update({
-        where: { id: campaignId },
+        where: { id: targetCampaignId },
         data: {
-          hashtags: hashtags !== undefined ? hashtags : campaign.hashtags,
-          firstComment: firstComment !== undefined ? firstComment : campaign.firstComment,
+          hashtags: hashtags !== undefined ? hashtags : undefined,
+          firstComment: firstComment !== undefined ? firstComment : undefined,
         }
       });
     }
 
     console.log(`[AD_CREATE] Creating ad "${title}" with ${mediaUrl?.split(",").length || 0} media items. Raw:`, mediaUrl);
-    
+
     const ad = await prisma.ad.create({
       data: {
-        campaignId,
-        title,
+        campaignId: targetCampaignId,
+        title: title || "Sin título",
         description: description || "",
-        mediaType,
+        mediaType: mediaType || "image",
         mediaUrl: mediaUrl || null,
         thumbnailUrl: thumbnailUrl || null,
         linkUrl: linkUrl || null,

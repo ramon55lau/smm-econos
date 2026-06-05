@@ -71,15 +71,7 @@ export default function ScreenLinkInput({ onScraped }: Props) {
           <span>o</span>
         </div>
 
-        <button className="manual-btn" onClick={() => onScraped({
-          title: "",
-          description: "",
-          images: [],
-          videos: [],
-          hashtags: [],
-          suggestedComment: "",
-          linkUrl: "",
-        })}>
+        <button className="manual-btn" onClick={() => window.location.href = "/ads/new"}>
           ✍️ Publicar sin enlace
         </button>
 

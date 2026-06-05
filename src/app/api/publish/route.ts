@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { adId, destinations } = body;
+    const { adId, destinations, socialAccountId } = body;
 
     if (!adId || !Array.isArray(destinations) || destinations.length === 0) {
       return NextResponse.json({ error: "adId and destinations[] are required" }, { status: 400 });
@@ -164,7 +164,10 @@ export async function POST(req: NextRequest) {
 
     for (const d of destinations) {
       const { platform, destination, adsConfig } = d;
-      const account = socialAccounts.find((acc) => acc.provider === platform);
+      let account = socialAccountId
+        ? socialAccounts.find(acc => acc.id === socialAccountId)
+        : socialAccounts.find((acc) => acc.provider === platform);
+
       const message = applyUtmTracking(rawMessage, platform, destination, adId);
 
       const publication = await prisma.publication.create({
