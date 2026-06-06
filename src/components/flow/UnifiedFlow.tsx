@@ -33,6 +33,7 @@ export default function UnifiedFlow({ initialStep = "input", initialData = null 
     const [scrapedData, setScrapedData] = useState<ScrapedData | null>(initialData);
     const [selectedPlatform, setSelectedPlatform] = useState<Platform | null>(null);
     const [adId, setAdId] = useState<string | null>(null);
+    const [publishedUrl, setPublishedUrl] = useState<string>("");
     const [showPublishModal, setShowPublishModal] = useState(false);
 
     // Transitions
@@ -59,8 +60,9 @@ export default function UnifiedFlow({ initialStep = "input", initialData = null 
         setShowPublishModal(true);
     };
 
-    const handlePublished = (id: string) => {
+    const handlePublished = (id: string, url: string) => {
         setAdId(id);
+        setPublishedUrl(url);
         setShowPublishModal(false);
         setStep("success");
     };
@@ -93,7 +95,7 @@ export default function UnifiedFlow({ initialStep = "input", initialData = null 
                 )}
 
                 {step === "success" && adId && (
-                    <SuccessScreen adId={adId} onReset={() => setStep("input")} />
+                    <SuccessScreen adId={adId} postUrl={publishedUrl} onReset={() => setStep("input")} />
                 )}
 
                 <style jsx>{`

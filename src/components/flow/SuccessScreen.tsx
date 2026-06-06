@@ -3,25 +3,31 @@
 import Link from "next/link";
 
 type Props = {
-    adId: string;
-    onReset: () => void;
+  adId: string;
+  postUrl?: string;
+  onReset: () => void;
 };
 
-export default function SuccessScreen({ adId, onReset }: Props) {
-    return (
-        <div className="success-screen">
-            <div className="content">
-                <div className="icon">✅</div>
-                <h1>¡Publicado con éxito!</h1>
-                <p>Tu anuncio ha sido enviado a la red social y estará activo en breve.</p>
+export default function SuccessScreen({ adId, postUrl, onReset }: Props) {
+  return (
+    <div className="success-screen">
+      <div className="content">
+        <div className="icon">✅</div>
+        <h1>¡Publicado con éxito!</h1>
+        <p>Tu anuncio ha sido enviado a la red social y estará activo en breve.</p>
 
-                <div className="actions">
-                    <Link href={`/ads`} className="view-link">Ver mis anuncios</Link>
-                    <button className="new-btn" onClick={onReset}>Crear otro anuncio</button>
-                </div>
-            </div>
+        <div className="actions">
+          {postUrl && (
+            <a href={postUrl} target="_blank" rel="noopener noreferrer" className="published-link">
+              🔗 Ver publicación en vivo
+            </a>
+          )}
+          <Link href={`/ads`} className="view-link">Ver mis anuncios</Link>
+          <button className="new-btn" onClick={onReset}>Crear otro anuncio</button>
+        </div>
+      </div>
 
-            <style jsx>{`
+      <style jsx>{`
         .success-screen {
           flex: 1;
           display: flex;
@@ -73,6 +79,24 @@ export default function SuccessScreen({ adId, onReset }: Props) {
           box-shadow: 0 10px 20px rgba(176, 141, 109, 0.2);
         }
 
+        .published-link {
+          color: #b08d6d;
+          font-weight: 700;
+          text-decoration: none;
+          padding: 12px 24px;
+          border: 2px solid #b08d6d;
+          border-radius: 30px;
+          transition: all 0.3s;
+          margin-bottom: 8px;
+          width: 100%;
+          max-width: 320px;
+        }
+
+        .published-link:hover {
+          background: #b08d6d;
+          color: white;
+        }
+
         .new-btn {
           font-weight: 600;
           opacity: 0.5;
@@ -84,6 +108,6 @@ export default function SuccessScreen({ adId, onReset }: Props) {
           to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
-        </div>
-    );
+    </div>
+  );
 }

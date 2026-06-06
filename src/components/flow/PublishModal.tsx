@@ -8,7 +8,7 @@ type Props = {
     data: ScrapedData;
     platform: Platform;
     onClose: () => void;
-    onSuccess: (id: string) => void;
+    onSuccess: (id: string, url: string) => void;
 };
 
 export default function PublishModal({ data, platform, onClose, onSuccess }: Props) {
@@ -104,7 +104,8 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
             const result = await publishRes.json().catch(() => ({ error: "Respuesta inválida del servidor" }));
 
             if (publishRes.ok) {
-                onSuccess(ad.id);
+                const postUrl = result.results?.[0]?.postUrl || "";
+                onSuccess(ad.id, postUrl);
             } else {
                 alert(`Error al publicar: ${result.error || "Error desconocido"}`);
             }

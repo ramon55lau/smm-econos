@@ -573,7 +573,24 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        results.push({ platform, destination, status: "published", postId });
+        let postUrl = "";
+        if (postId) {
+          if (platform === "facebook") {
+            postUrl = `https://www.facebook.com/${postId}`;
+          } else if (platform === "instagram") {
+            try {
+              const igRes = await fetch(`https://graph.facebook.com/v19.0/${postId}?fields=permalink&access_token=${account.accessToken}`);
+              const igData = await igRes.json();
+              if (igData.permalink) postUrl = igData.permalink;
+            } catch (e) {
+              console.error("[IG_PERMALINK_ERROR]", e);
+            }
+          } else if (platform === "youtube") {
+            postUrl = `https://www.youtube.com/watch?v=${postId}`;
+          }
+        }
+
+        results.push({ platform, destination, status: "published", postId, postUrl });
       } catch (err: any) {
         console.error(`[Publish Error] ${platform}/${destination}:`, err.message);
 
