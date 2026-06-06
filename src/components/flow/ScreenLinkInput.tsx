@@ -5,9 +5,10 @@ import Image from "next/image";
 
 type Props = {
   onScraped: (data: any) => void;
+  onManual: () => void;
 };
 
-export default function ScreenLinkInput({ onScraped }: Props) {
+export default function ScreenLinkInput({ onScraped, onManual }: Props) {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -71,7 +72,7 @@ export default function ScreenLinkInput({ onScraped }: Props) {
           <span>o</span>
         </div>
 
-        <button className="manual-btn" onClick={() => window.location.href = "/ads/new"}>
+        <button className="manual-btn" onClick={onManual}>
           ✍️ Publicar sin enlace
         </button>
 

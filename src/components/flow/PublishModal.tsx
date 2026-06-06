@@ -64,8 +64,13 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
                     title: data.title || "Sin título",
                     description: data.description || "",
                     mediaType: data.videos?.length ? "video" : "image",
-                    mediaUrl: data.videos?.length ? data.videos[0].url : (data.images?.length ? data.images[0] : ""),
+                    mediaUrl: [
+                        ...(data.videos?.map(v => v.url) || []),
+                        ...(data.images || [])
+                    ].join(","),
                     linkUrl: data.linkUrl || "",
+                    hashtags: data.hashtags?.join(" ") || "",
+                    firstComment: data.suggestedComment || "",
                     campaignId: "default",
                 })
             });

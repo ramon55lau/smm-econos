@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ScrapedData, Platform } from "./UnifiedFlow";
 
 type Props = {
     data: ScrapedData;
     platform: Platform;
-    onPublish: () => void;
+    onPublish: (updatedData: ScrapedData) => void;
     onBack: () => void;
 };
 
@@ -79,6 +79,24 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
     // Carousel state for preview
     const [carouselIndex, setCarouselIndex] = useState(0);
 
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [extraMedia, setExtraMedia] = useState<{ url: string, type: 'image' | 'video' }[]>([]);
+
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files) return;
+
+        const newMedia: { url: string, type: 'image' | 'video' }[] = [];
+        Array.from(files).forEach(file => {
+            const url = URL.createObjectURL(file);
+            const type = file.type.startsWith('video') ? 'video' : ('image' as const);
+            newMedia.push({ url, type });
+        });
+
+        setExtraMedia(prev => [...prev, ...newMedia]);
+        setSelectedMedia(prev => [...prev, ...newMedia]);
+    };
+
     useEffect(() => {
         if (carouselIndex >= selectedMedia.length) {
             setCarouselIndex(0);
@@ -87,6 +105,49 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
 
     const nextMedia = () => setCarouselIndex((prev) => (prev + 1) % selectedMedia.length);
     const prevMedia = () => setCarouselIndex((prev) => (prev - 1 + selectedMedia.length) % selectedMedia.length);
+
+    const handleSuggestHashtags = () => {
+        const text = `${title} ${description}`.toLowerCase();
+        const keywords: string[] = [];
+
+        // Basic keyword extraction
+        const commonHashtags = ["smm", "publicidad", "marketing"];
+        if (text.includes("venta") || text.includes("vende")) keywords.push("venta");
+        if (text.includes("alquiler") || text.includes("renta")) keywords.push("alquiler");
+        if (text.includes("casa") || text.includes("hogar")) keywords.push("casa", "home");
+        if (text.includes("apto") || text.includes("apartamento")) keywords.push("apartamento", "apt");
+        if (text.includes("lujo") || text.includes("luxury")) keywords.push("lujo", "luxury", "exclusive");
+        if (text.includes("nuevo") || text.includes("estrenar")) keywords.push("estreno", "newhome");
+        if (text.includes("oportunidad") || text.includes("rebajado")) keywords.push("oportunidad", "oferta");
+
+        // Location detection (simple)
+        const cityMatch = text.match(/(en|en el|en la)\s+([a-z]+)/);
+        if (cityMatch && cityMatch[2]) {
+            const city = cityMatch[2].replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
+            if (city.length > 3) keywords.push(city);
+        }
+
+        const words = text.split(/\s+/).filter(w => w.length > 5).slice(0, 3);
+        const autoTags = words.map(w => w.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, ""));
+
+        const finalTags = Array.from(new Set([...commonHashtags, ...keywords, ...autoTags]))
+            .map(t => `#${t}`)
+            .join(' ');
+
+        setHashtags(prev => prev ? `${prev} ${finalTags}` : finalTags);
+    };
+
+    const handlePublishLocal = () => {
+        onPublish({
+            ...data,
+            title,
+            description,
+            hashtags: hashtags.split(' ').filter(t => t.trim() !== ''),
+            linkUrl: destinationUrl,
+            images: selectedMedia.filter(m => m.type === 'image').map(m => m.url),
+            videos: selectedMedia.filter(m => m.type === 'video').map(m => ({ url: m.url })),
+        });
+    };
 
     if (!isMounted) return <div className="ad-editor-screen loading-placeholder"></div>;
 
@@ -119,6 +180,19 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
                                 <div className="form-section">
                                     <label>Fondo / Media ({selectedMedia.length})</label>
                                     <div className="media-gallery">
+                                        <input
+                                            type="file"
+                                            ref={fileInputRef}
+                                            style={{ display: 'none' }}
+                                            multiple
+                                            accept="image/*,video/*"
+                                            onChange={handleFileUpload}
+                                        />
+                                        <div className="gallery-item upload-card" onClick={() => fileInputRef.current?.click()}>
+                                            <span className="plus-icon">+</span>
+                                            <span className="upload-label">Subir</span>
+                                        </div>
+
                                         {data.videos && data.videos.length > 0 && (
                                             <div
                                                 className={`gallery-item ${selectedMedia.some(m => m.url === data.videos[0].url) ? 'active' : ''}`}
@@ -129,6 +203,18 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
                                                 {selectedMedia.some(m => m.url === data.videos[0].url) && <span className="check-box">✓</span>}
                                             </div>
                                         )}
+                                        {extraMedia.map((m, i) => (
+                                            <div
+                                                key={`extra-${i}`}
+                                                className={`gallery-item ${selectedMedia.some(s => s.url === m.url) ? 'active' : ''}`}
+                                                onClick={() => toggleMedia(m.url, m.type)}
+                                            >
+                                                {m.type === 'video' ? <video src={m.url} muted /> : <img src={m.url} alt="" />}
+                                                {m.type === 'video' && <span className="play-badge">▶</span>}
+                                                {selectedMedia.some(s => s.url === m.url) && <span className="check-box">✓</span>}
+                                            </div>
+                                        ))}
+
                                         {data.images.slice(0, 12).map((img, i) => (
                                             <div
                                                 key={i}
@@ -159,7 +245,10 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
                                 </div>
 
                                 <div className="form-section">
-                                    <label>Hashtags</label>
+                                    <div className="label-with-action">
+                                        <label>Hashtags</label>
+                                        <button className="suggest-btn" onClick={handleSuggestHashtags}>✨ Sugerir con I.A.</button>
+                                    </div>
                                     <textarea
                                         className="hashtags-input"
                                         value={hashtags}
@@ -437,7 +526,7 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
 
             <div className="publish-footer">
                 <button className="program-btn">📅 Programar</button>
-                <button className="publish-now-btn" onClick={onPublish}>🚀 Publicar ahora</button>
+                <button className="publish-now-btn" onClick={handlePublishLocal}>🚀 Publicar ahora</button>
             </div>
 
             <style jsx>{`
@@ -533,6 +622,17 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
            position: relative;
            transition: all 0.2s;
         }
+        .upload-card {
+            border: 2px dashed #b08d6d;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #b08d6d;
+        }
+        .plus-icon { font-size: 1.2rem; font-weight: bold; line-height: 1; }
+        .upload-label { font-size: 0.6rem; text-transform: uppercase; font-weight: 700; margin-top: 2px; }
 
         .gallery-item.active {
            border-color: var(--accent-primary);
@@ -573,6 +673,27 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
            outline: none;
            resize: vertical;
         }
+
+        .label-with-action {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .label-with-action label { margin-bottom: 0 !important; }
+        
+        .suggest-btn {
+            background: none;
+            border: none;
+            color: var(--accent-primary);
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .suggest-btn:hover { background: var(--accent-glow); }
 
         .input-with-limit { position: relative; }
         .input-with-limit input, .input-with-limit textarea {

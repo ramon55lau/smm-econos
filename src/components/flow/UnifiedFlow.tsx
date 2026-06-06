@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import ScreenLinkInput from "./ScreenLinkInput";
 import ScreenPlatformSelection from "./ScreenPlatformSelection";
 import ScreenAdEditor from "./ScreenAdEditor";
@@ -22,9 +23,14 @@ export type ScrapedData = {
 export type FlowStep = "input" | "selection" | "editor" | "success";
 export type Platform = "facebook" | "instagram" | "youtube" | "google-ads" | "display";
 
-export default function UnifiedFlow() {
-    const [step, setStep] = useState<FlowStep>("input");
-    const [scrapedData, setScrapedData] = useState<ScrapedData | null>(null);
+type Props = {
+    initialStep?: FlowStep;
+    initialData?: ScrapedData | null;
+};
+
+export default function UnifiedFlow({ initialStep = "input", initialData = null }: Props) {
+    const [step, setStep] = useState<FlowStep>(initialStep);
+    const [scrapedData, setScrapedData] = useState<ScrapedData | null>(initialData);
     const [selectedPlatform, setSelectedPlatform] = useState<Platform | null>(null);
     const [adId, setAdId] = useState<string | null>(null);
     const [showPublishModal, setShowPublishModal] = useState(false);
@@ -35,13 +41,21 @@ export default function UnifiedFlow() {
         setStep("selection");
     };
 
+    const router = useRouter();
+
+    const handleManual = () => {
+        router.push("/ads/new");
+    };
+
     const handlePlatformSelected = (platform: Platform) => {
         setSelectedPlatform(platform);
         setStep("editor");
     };
 
-    const handlePublishClick = () => {
-        console.log("Publish button clicked, showing modal for platform:", selectedPlatform);
+    const handlePublishClick = (updatedData?: ScrapedData) => {
+        if (updatedData) {
+            setScrapedData(updatedData);
+        }
         setShowPublishModal(true);
     };
 
@@ -55,14 +69,17 @@ export default function UnifiedFlow() {
         <>
             <div className="unified-flow-container">
                 {step === "input" && (
-                    <ScreenLinkInput onScraped={handleDataScraped} />
+                    <ScreenLinkInput onScraped={handleDataScraped} onManual={handleManual} />
                 )}
 
                 {step === "selection" && scrapedData && (
                     <ScreenPlatformSelection
                         data={scrapedData}
                         onSelect={handlePlatformSelected}
-                        onBack={() => setStep("input")}
+                        onBack={() => {
+                            if (initialStep === "selection") router.push("/dashboard");
+                            else setStep("input");
+                        }}
                     />
                 )}
 
