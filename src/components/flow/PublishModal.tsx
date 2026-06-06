@@ -378,8 +378,8 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
           bottom: 0 !important;
           width: 100vw !important;
           height: 100vh !important;
-          background: rgba(0,0,0,0.85) !important;
-          backdrop-filter: blur(10px) !important;
+          background: rgba(74, 63, 53, 0.4) !important;
+          backdrop-filter: blur(16px) !important;
           z-index: 999999999 !important;
           display: flex !important;
           align-items: center;
@@ -390,17 +390,17 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
            position: relative !important;
            width: 90% !important;
            max-width: 500px !important;
-           background: #211d19 !important;
-           border: 1px solid rgba(255,255,255,0.1) !important;
+           background: #ffffff !important;
+           border: 1px solid var(--border-color) !important;
            border-radius: 28px !important;
            padding: 32px !important;
-           box-shadow: 0 20px 40px rgba(0,0,0,0.8) !important;
-           color: white !important;
+           box-shadow: var(--shadow-lg) !important;
+           color: var(--text-primary) !important;
            display: flex;
            flex-direction: column;
            gap: 24px;
            z-index: 1000000000 !important;
-           animation: modalSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+           animation: modalSlide 0.4s var(--transition-spring);
         }
 
         @keyframes modalSlide {
@@ -410,7 +410,7 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
 
         .modal-header { display: flex; justify-content: space-between; align-items: center; }
         .close-btn { 
-            background: rgba(255,255,255,0.05);
+            background: var(--bg-tertiary);
             border: none;
             color: var(--text-muted);
             width: 36px;
@@ -422,13 +422,13 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
             cursor: pointer;
             transition: all 0.2s;
         }
-        .close-btn:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
+        .close-btn:hover { background: var(--bg-primary); color: var(--text-primary); }
         
         .stepper { display: flex; gap: 6px; }
         .step { 
             width: 32px; 
             height: 6px; 
-            background: rgba(255,255,255,0.08); 
+            background: var(--bg-tertiary); 
             border-radius: 3px; 
             font-size: 0;
             transition: all 0.3s;
@@ -436,7 +436,7 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
         .step.active { background: var(--accent-primary); box-shadow: 0 0 10px var(--accent-glow); }
 
         .header-with-action { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-        .step-title { font-size: 1.75rem; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.02em; }
+        .step-title { font-size: 1.75rem; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.02em; color: var(--text-primary); }
         .step-sub { font-size: 0.95rem; color: var(--text-muted); }
         
         .add-profile-btn {
@@ -452,7 +452,7 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
             font-weight: bold;
             transition: all 0.2s;
         }
-        .add-profile-btn:hover { transform: scale(1.1); box-shadow: var(--shadow-glow-red); }
+        .add-profile-btn:hover { transform: scale(1.1); box-shadow: var(--shadow-glow-gold); }
 
         .account-list { 
             display: flex; 
@@ -464,12 +464,12 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
             margin-top: 20px;
         }
         .account-list::-webkit-scrollbar { width: 4px; }
-        .account-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        .account-list::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
 
         .account-item {
           padding: 16px;
-          background: rgba(255,255,255,0.03);
-          border: 1.5px solid rgba(255,255,255,0.05);
+          background: #ffffff;
+          border: 1.5px solid var(--border-color);
           border-radius: 16px;
           display: flex;
           align-items: center;
@@ -479,13 +479,13 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
           position: relative;
         }
         .account-item:hover { 
-            background: rgba(255,255,255,0.06); 
-            border-color: rgba(255,255,255,0.1);
+            background: var(--bg-primary); 
+            border-color: var(--border-hover);
         }
         .account-item.selected { 
-            background: var(--selection-bg); 
+            background: var(--bg-primary); 
             border-color: var(--accent-primary);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 20px rgba(176, 141, 109, 0.08);
         }
         
         .add-more-item { border-style: dashed; opacity: 0.7; }
@@ -494,7 +494,7 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
         .acc-avatar { 
             width: 44px; 
             height: 44px; 
-            background: rgba(255,255,255,0.05); 
+            background: var(--bg-tertiary); 
             border-radius: 12px; 
             display: flex;
             align-items: center;
@@ -521,22 +521,22 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
         .empty-state {
             padding: 40px 20px;
             text-align: center;
-            background: rgba(255,255,255,0.02);
-            border: 1px dashed rgba(255,255,255,0.1);
+            background: var(--bg-primary);
+            border: 1px dashed var(--border-color);
             border-radius: 20px;
         }
         .empty-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.3; }
-        .empty-state p { margin-bottom: 8px; font-weight: 600; }
+        .empty-state p { margin-bottom: 8px; font-weight: 600; color: var(--text-primary); }
         .empty-actions { display: flex; align-items: center; justify-content: center; gap: 12px; }
         .refresh-mini-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; transition: transform 0.3s; }
         .refresh-mini-btn:hover { transform: rotate(180deg); }
         
         .refresh-list-btn { 
-            width: 100%; padding: 10px; background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.1); 
+            width: 100%; padding: 10px; background: var(--bg-primary); border: 1px dashed var(--border-color); 
             border-radius: 12px; color: var(--text-muted); font-size: 0.8rem; cursor: pointer; transition: all 0.2s;
             margin-top: 4px;
         }
-        .refresh-list-btn:hover { background: rgba(255,255,255,0.06); color: white; }
+        .refresh-list-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 
         .sync-now-link { 
             color: var(--accent-primary); 
@@ -552,8 +552,8 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
         .type-toggle button {
            flex: 1;
            padding: 24px 16px;
-           background: rgba(255,255,255,0.03);
-           border: 1.5px solid rgba(255,255,255,0.05);
+           background: #ffffff;
+           border: 1.5px solid var(--border-color);
            border-radius: 20px;
            color: var(--text-primary);
            display: flex;
@@ -567,19 +567,19 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
         .type-toggle button b { display: block; font-size: 1rem; }
         .type-toggle button small { display: block; font-size: 0.75rem; color: var(--text-muted); font-weight: normal; }
         
-        .type-toggle button:hover { background: rgba(255,255,255,0.06); }
+        .type-toggle button:hover { background: var(--bg-primary); border-color: var(--border-hover); }
         .type-toggle button.active { 
-            background: var(--selection-bg); 
+            background: var(--bg-primary); 
             border-color: var(--accent-primary); 
-            box-shadow: var(--shadow-glow-red);
+            box-shadow: 0 4px 20px rgba(176, 141, 109, 0.12);
         }
         .type-toggle button.active .icon { opacity: 1; }
 
         .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .options-grid button {
            padding: 16px;
-           background: rgba(255,255,255,0.03);
-           border: 1.5px solid rgba(255,255,255,0.05);
+           background: #ffffff;
+           border: 1.5px solid var(--border-color);
            border-radius: 14px;
            color: var(--text-primary);
            font-weight: 600;
@@ -587,8 +587,8 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
            cursor: pointer;
            transition: all 0.2s;
         }
-        .options-grid button:hover { background: rgba(255,255,255,0.06); }
-        .options-grid button.active { background: var(--accent-primary); border-color: var(--accent-primary); }
+        .options-grid button:hover { background: var(--bg-primary); }
+        .options-grid button.active { background: var(--accent-primary); border-color: var(--accent-primary); color: white; }
 
         .paid-fields { display: flex; flex-direction: column; gap: 16px; }
         .field label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary); }
@@ -596,21 +596,21 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
         .input-with-icon {
             display: flex;
             align-items: center;
-            background: rgba(255,255,255,0.04);
-            border: 1.5px solid rgba(255,255,255,0.06);
+            background: #ffffff;
+            border: 1.5px solid var(--border-color);
             border-radius: 14px;
             padding: 0 16px;
             transition: all 0.2s;
         }
         .input-with-icon:focus-within {
             border-color: var(--accent-primary);
-            background: rgba(255,255,255,0.06);
+            background: var(--bg-primary);
         }
         .input-with-icon input {
             flex: 1;
             background: transparent;
             border: none;
-            color: white;
+            color: var(--text-primary);
             padding: 14px 0;
             font-size: 1.1rem;
             font-weight: 600;
@@ -622,11 +622,11 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
             color: var(--accent-primary);
             margin-right: 12px;
         }
-        .input-with-icon .suffix { margin-right: 0; margin-left: 12px; opacity: 0.5; color: white; }
+        .input-with-icon .suffix { margin-right: 0; margin-left: 12px; opacity: 0.5; color: var(--text-muted); }
 
         .targeting-info {
-            background: rgba(196, 26, 26, 0.05);
-            border: 1px solid rgba(196, 26, 26, 0.15);
+            background: rgba(176, 141, 109, 0.05);
+            border: 1px solid var(--border-accent);
             padding: 14px;
             border-radius: 12px;
             display: flex;
@@ -673,7 +673,7 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
         }
         .next-btn:not(:disabled):hover, .publish-btn:not(:disabled):hover {
             transform: translateY(-2px);
-            box-shadow: var(--shadow-glow-red);
+            box-shadow: var(--shadow-glow-gold);
             background: var(--accent-hover);
         }
       `}</style>

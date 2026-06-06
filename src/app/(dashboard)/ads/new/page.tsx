@@ -297,114 +297,8 @@ export default function NewAdPage() {
             <Link href="/campaigns" className={styles.btnSecondary} style={{ padding: "0.4rem 1rem", fontSize: "0.8rem" }}>← Volver</Link>
           </div>
 
-          {/* Card 1: Scraper & Translation Tools */}
-          <div className={styles.configCard}>
-            <div className={styles.cardHeader}>
-              <span className={styles.cardTitle}>🛠️ Herramientas de Contenido</span>
-              <span className={styles.toolBadge}>IA Power</span>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Importar desde URL</label>
-              <div style={{ display: "flex", gap: "0.5rem" }}>
-                <input
-                  className={styles.input}
-                  placeholder="https://..."
-                  value={scrapeUrl}
-                  onChange={(e) => setScrapeUrl(e.target.value)}
-                  disabled={scrapingLoading}
-                />
-                <button type="button" className={styles.btnPrimary} onClick={handleScrapeLink} disabled={scrapingLoading}>
-                  {scrapingLoading ? "..." : "🔗"}
-                </button>
-              </div>
-            </div>
-
-            <div className={styles.formGroup} style={{ marginTop: "0.5rem" }}>
-              <label className={styles.label}>Idioma</label>
-              <div style={{ display: "flex", gap: "0.4rem" }}>
-                {[
-                  { code: "es", label: "ESP" },
-                  { code: "en", label: "ENG" },
-                  { code: "sv", label: "SVE" }
-                ].map(lang => (
-                  <button
-                    key={lang.code}
-                    type="button"
-                    onClick={() => handleTranslate(lang.code)}
-                    disabled={!!isTranslating || !title}
-                    className={styles.btnSecondary}
-                    style={{ flex: 1, padding: "0.5rem 0", fontSize: "0.75rem", background: isTranslating === lang.code ? "var(--meta-accent-blue)" : "" }}
-                  >
-                    {lang.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {scrapedImages.length > 0 && (
-              <div style={{ marginTop: "0.5rem" }}>
-                <p className={styles.label} style={{ marginBottom: "0.5rem" }}>Imágenes detectadas:</p>
-                <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", maxHeight: "150px", overflowY: "auto" }}>
-                  {scrapedImages.map((img, idx) => (
-                    <img
-                      key={idx}
-                      src={img}
-                      alt={`Scraped ${idx}`}
-                      onClick={() => {
-                        if (mediaUrls.includes(img)) {
-                          handleRemoveMedia(img);
-                        } else {
-                          handleAddMedia(img);
-                          setMediaType("image");
-                        }
-                      }}
-                      style={{
-                        width: "60px", height: "60px", objectFit: "cover", borderRadius: "4px",
-                        cursor: "pointer", border: (mediaUrls.includes(img) && mediaType === 'image') ? "2px solid var(--meta-accent-blue)" : "1px solid var(--meta-border)",
-                        opacity: (mediaUrls.includes(img) && mediaType === 'image') ? 1 : 0.6
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {scrapedVideos.length > 0 && (
-              <div style={{ marginTop: "0.5rem" }}>
-                <p className={styles.label} style={{ marginBottom: "0.5rem" }}>Videos detectados:</p>
-                <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", maxHeight: "150px", overflowY: "auto" }}>
-                  {scrapedVideos.map((vid, idx) => {
-                    const isSelected = mediaUrl === vid.url && mediaType === 'video';
-                    return (
-                      <div
-                        key={idx}
-                        onClick={() => {
-                          setMediaUrl(vid.url);
-                          setMediaType("video");
-                        }}
-                        style={{
-                          width: "80px", height: "60px", position: "relative",
-                          cursor: "pointer", borderRadius: "4px", overflow: "hidden",
-                          border: isSelected ? "2px solid var(--meta-accent-blue)" : "1px solid var(--meta-border)",
-                          opacity: isSelected ? 1 : 0.6
-                        }}
-                      >
-                        {vid.thumbnail ? (
-                          <img src={vid.thumbnail} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        ) : (
-                          <div style={{ width: "100%", height: "100%", background: "#333", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "10px" }}>VIDEO</div>
-                        )}
-                        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.2)" }}>
-                          <span style={{ fontSize: "14px" }}>▶</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
+          {/* Padding for spacing */}
+          <div style={{ height: "10px" }} />
 
           {/* Card 2: Ad Identity */}
           <div className={styles.configCard}>
@@ -542,7 +436,7 @@ export default function NewAdPage() {
               {previewTab === 'instagram' && (
                 <div className={styles.igPreview}>
                   <div className={styles.igHeader}>
-                    <div className={styles.igAvatar} />
+                    <img src="/images/instagram.png" alt="IG" className={styles.igAvatarImg} />
                     <span className={styles.igName}>tu_marca</span>
                   </div>
                   <div className={styles.igMedia}>

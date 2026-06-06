@@ -95,60 +95,67 @@ export default function ScreenLinkInput({ onScraped }: Props) {
           display: flex;
           align-items: center;
           justify-content: center;
-          background-color: #f7f3f0; /* Soft beige from reference */
-          color: #4a3f35; /* Dark brown text */
+          background-color: #f7f3f0; /* Original beige */
+          color: #4a3f35; /* Original dark brown */
           font-family: 'Inter', sans-serif;
-          padding: 20px;
+          padding: 2rem;
+          min-height: 80vh;
         }
 
         .content {
           max-width: 800px;
           width: 100%;
           text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
         }
 
         .header {
-          position: absolute;
-          top: 40px;
-          left: 40px;
+          margin-bottom: 3rem;
         }
 
         .logo-group {
           display: flex;
           flex-direction: column;
-          align-items: flex-start;
+          align-items: center;
         }
 
         .econos-text {
           font-weight: 800;
-          letter-spacing: 2px;
-          font-size: 1.2rem;
+          letter-spacing: 4px;
+          font-size: 1.5rem;
+          color: #4a3f35;
         }
 
         .smm-text {
-          font-size: 0.8rem;
+          font-size: 0.9rem;
           opacity: 0.6;
           margin-top: -4px;
+          letter-spacing: 2px;
         }
 
         .hero h1 {
-          font-size: 3.5rem;
+          font-size: clamp(2rem, 5vw, 3.5rem);
           font-weight: 700;
           line-height: 1.1;
           margin-bottom: 24px;
+          color: #4a3f35;
         }
 
         .hero h1 span {
-          color: #b08d6d; /* Golden/brown accent */
+          color: #b08d6d; /* Golden accent */
         }
 
         .hero p {
           font-size: 1.1rem;
           opacity: 0.7;
           margin-bottom: 60px;
+          max-width: 600px;
         }
 
         .input-container {
+          width: 100%;
           display: flex;
           justify-content: center;
           margin-bottom: 60px;
@@ -216,35 +223,23 @@ export default function ScreenLinkInput({ onScraped }: Props) {
           cursor: not-allowed;
         }
 
-        .footer-info {
-          margin-top: 40px;
-          opacity: 0.6;
-        }
-
-        .platforms {
-          margin: 10px 0 30px 0;
-          font-size: 0.9rem;
-          font-weight: 500;
-        }
-
-        .secure {
-          font-size: 0.8rem;
-          font-weight: 500;
-        }
-
         .or-divider {
           display: flex;
           align-items: center;
           gap: 16px;
           margin-bottom: 20px;
           opacity: 0.4;
+          width: 100%;
+          max-width: 400px;
         }
+
         .or-divider::before, .or-divider::after {
           content: '';
           flex: 1;
           height: 1px;
           background: #4a3f35;
         }
+
         .or-divider span {
           font-size: 0.85rem;
           font-weight: 600;
@@ -263,32 +258,56 @@ export default function ScreenLinkInput({ onScraped }: Props) {
           transition: all 0.25s ease;
           margin-bottom: 40px;
         }
+
         .manual-btn:hover {
           background: #b08d6d;
           color: white;
           transform: translateY(-2px);
         }
 
+        .footer-info {
+          margin-top: 40px;
+          opacity: 0.6;
+        }
+
+        .platforms {
+          margin: 10px 0 30px 0;
+          font-size: 0.9rem;
+          font-weight: 500;
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 0.5rem;
+        }
+
+        .secure {
+          font-size: 0.8rem;
+          font-weight: 500;
+        }
+
         @media (max-width: 768px) {
+          .link-input-screen { padding: 1.5rem; }
           .hero h1 { font-size: 2rem; }
           .hero p { font-size: 0.9rem; margin-bottom: 30px; }
           .input-wrapper { padding: 6px 8px 6px 16px; }
           .go-btn { width: 50px; height: 50px; font-size: 0.9rem; }
-          .header { position: relative; top: 0; left: 0; margin-bottom: 30px; }
-          .link-input-screen { padding: 16px; }
-          .content { padding: 0 8px; }
+          .header { margin-bottom: 30px; }
           .manual-btn { padding: 12px 24px; font-size: 0.9rem; }
         }
 
         @media (max-width: 480px) {
           .hero h1 { font-size: 1.6rem; }
           .hero p { font-size: 0.85rem; margin-bottom: 20px; }
-          .input-wrapper { flex-direction: column; border-radius: 16px; padding: 12px; gap: 10px; }
+          .input-wrapper { 
+            flex-direction: column; 
+            border-radius: 16px; 
+            padding: 12px; 
+            gap: 10px; 
+          }
           .go-btn { width: 100%; border-radius: 12px; height: 48px; }
           .link-icon { display: none; }
           input { font-size: 0.95rem; text-align: center; }
-          .platforms span { font-size: 0.75rem; }
-          .header { margin-bottom: 20px; }
+          .or-divider { margin: 10px 0; }
         }
       `}</style>
     </div>

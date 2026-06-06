@@ -276,7 +276,9 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
                                 <div className={`ig-preview-mockup ${variant}`}>
                                     <div className="status-bar"></div>
                                     <header>
-                                        <div className="avatar"></div>
+                                        <div className="avatar">
+                                            <img src="/images/instagram.png" alt="IG" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                                        </div>
                                         <div className="names">
                                             <b>NewHomes</b>
                                             <span>{variant === 'reels' ? 'Original Audio' : (isAds ? 'Publicidad' : 'Orgánico')}</span>
@@ -443,8 +445,8 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
           flex: 1;
           display: flex;
           flex-direction: column;
-          background: #fbf9f7;
-          color: #4a3f35;
+          background-color: var(--bg-primary);
+          color: var(--text-primary);
           height: 100vh;
           overflow: hidden;
         }
@@ -482,12 +484,12 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
         .type-toggle button.active {
            background: white;
            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-           color: #b08d6d;
+           color: var(--accent-primary);
         }
 
         .header-actions { display: flex; align-items: center; gap: 16px; }
         .secondary-action { border: 1px solid #eee; padding: 6px 16px; border-radius: 20px; font-size: 0.8rem; }
-        .avatar { width: 32px; height: 32px; background: #b08d6d; color: white; border-radius: 50%; font-size: 0.7rem; font-weight: 700; }
+        .avatar { width: 32px; height: 32px; background: var(--accent-primary); color: white; border-radius: 50%; font-size: 0.7rem; font-weight: 700; }
 
         .main-layout {
           flex: 1;
@@ -533,7 +535,7 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
         }
 
         .gallery-item.active {
-           border-color: #b08d6d;
+           border-color: var(--accent-primary);
            transform: scale(0.95);
         }
 
@@ -547,7 +549,7 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
            position: absolute;
            top: 5px;
            right: 5px;
-           background: #b08d6d;
+           background: var(--accent-primary);
            color: white;
            width: 18px;
            height: 18px;
@@ -567,7 +569,7 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
            padding: 12px 16px;
            border-radius: 8px;
            font-size: 0.9rem;
-           color: #b08d6d;
+           color: var(--accent-primary);
            outline: none;
            resize: vertical;
         }
@@ -598,19 +600,19 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
            cursor: pointer; 
            align-items: center;
         }
-        .advanced-item:hover { opacity: 1; color: #b08d6d; }
+        .advanced-item:hover { opacity: 1; color: var(--accent-primary); }
         .adv-label { display: flex; align-items: center; gap: 12px; }
         .adv-icon { font-size: 1.1rem; }
 
         .section-panel { display: flex; flex-direction: column; }
-        .panel-back { background: none; border: none; color: #b08d6d; font-weight: 700; text-align: left; margin-bottom: 20px; cursor: pointer; }
+        .panel-back { background: none; border: none; color: var(--accent-primary); font-weight: 700; text-align: left; margin-bottom: 20px; cursor: pointer; }
         .control-group { margin-bottom: 24px; }
         .control-group label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 8px; }
         .color-grid { display: flex; gap: 8px; }
         .color-box { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .tag-list { display: flex; flex-wrap: wrap; gap: 8px; }
         .tag { background: #f5f5f5; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; }
-        .tag.active { background: #b08d6d; color: white; }
+        .tag.active { background: var(--accent-primary); color: white; }
 
         .sidebar-footer { padding: 20px 30px; border-top: 1px solid #f5f5f5; }
         .save-draft { font-size: 0.85rem; opacity: 0.5; font-weight: 600; }

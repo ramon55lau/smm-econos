@@ -36,7 +36,7 @@ export default function ScreenPlatformSelection({ data, onSelect, onBack }: Prop
             <div className="cards-row">
               <div className="plat-card facebook" onClick={() => onSelect('facebook')}>
                 <div className="card-icon-wrapper fb">
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg" alt="Facebook" />
+                  <img src="/images/facebook.png" alt="Facebook" />
                 </div>
                 <div className="card-info">
                   <h3>Facebook</h3>
@@ -47,7 +47,7 @@ export default function ScreenPlatformSelection({ data, onSelect, onBack }: Prop
 
               <div className="plat-card instagram" onClick={() => onSelect('instagram')}>
                 <div className="card-icon-wrapper ig">
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/Instagram_logo_2016.svg" alt="Instagram" />
+                  <img src="/images/instagram.png" alt="Instagram" width={44} height={44} style={{ objectFit: 'contain' }} />
                 </div>
                 <div className="card-info">
                   <h3>Instagram</h3>
@@ -79,7 +79,7 @@ export default function ScreenPlatformSelection({ data, onSelect, onBack }: Prop
 
               <div className="plat-card youtube" onClick={() => onSelect('youtube')}>
                 <div className="card-icon-wrapper yt">
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/0/09/YouTube_full-color_icon_%282017%29.svg" alt="YouTube" />
+                  <img src="/images/youtube.png" alt="YouTube" />
                 </div>
                 <div className="card-info">
                   <h3>YouTube</h3>
@@ -103,8 +103,8 @@ export default function ScreenPlatformSelection({ data, onSelect, onBack }: Prop
           flex: 1;
           display: flex;
           flex-direction: column;
-          background-color: #f7f3f0;
-          color: #2c241e;
+          background-color: var(--bg-primary);
+          color: var(--text-primary);
           min-height: 100vh;
           padding-bottom: 60px;
         }
@@ -124,23 +124,23 @@ export default function ScreenPlatformSelection({ data, onSelect, onBack }: Prop
           align-items: center;
           width: 100%;
           max-width: 580px;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.04);
-          border: 1px solid rgba(0,0,0,0.02);
+          box-shadow: var(--shadow-sm);
+          border: 1px solid var(--border-color);
         }
 
         .current-url {
           flex: 1;
           font-size: 0.9rem;
           margin: 0 12px;
-          color: #4a3f35;
-          opacity: 0.6;
+          color: var(--text-muted);
+          opacity: 0.7;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
         }
 
         .url-preview .go-btn {
-          background: #b08d6d;
+          background: var(--accent-primary);
           color: white;
           border: none;
           padding: 10px 24px;
@@ -171,12 +171,12 @@ export default function ScreenPlatformSelection({ data, onSelect, onBack }: Prop
           font-weight: 800;
           margin-bottom: 12px;
           letter-spacing: -0.02em;
+          color: var(--text-primary);
         }
 
         .subtitle {
           font-size: 1.1rem;
-          color: #4a3f35;
-          opacity: 0.6;
+          color: var(--text-muted);
         }
 
         .selection-grid {
@@ -201,14 +201,15 @@ export default function ScreenPlatformSelection({ data, onSelect, onBack }: Prop
            font-size: 0.75rem;
            font-weight: 800;
            letter-spacing: 0.1em;
-           color: #b08d6d;
+           color: var(--accent-primary);
            white-space: nowrap;
         }
 
         .label-line {
            flex: 1;
            height: 1px;
-           background: rgba(176, 141, 109, 0.2);
+           background: var(--border-accent);
+           opacity: 0.4;
         }
 
         .cards-row {
@@ -226,16 +227,16 @@ export default function ScreenPlatformSelection({ data, onSelect, onBack }: Prop
            gap: 20px;
            cursor: pointer;
            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-           border: 1px solid rgba(0,0,0,0.03);
-           box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+           border: 1px solid var(--border-color);
+           box-shadow: var(--shadow-sm);
            position: relative;
            overflow: hidden;
         }
 
         .plat-card:hover {
            transform: translateY(-5px);
-           box-shadow: 0 20px 40px rgba(176, 141, 109, 0.12);
-           border-color: rgba(176, 141, 109, 0.3);
+           box-shadow: var(--shadow-lg);
+           border-color: var(--accent-primary);
         }
 
         .plat-card:hover .arrow {
@@ -246,7 +247,7 @@ export default function ScreenPlatformSelection({ data, onSelect, onBack }: Prop
         .card-icon-wrapper {
            width: 64px;
            height: 64px;
-           background: #fbf9f7;
+           background: var(--bg-primary);
            border-radius: 18px;
            display: flex;
            align-items: center;
@@ -264,11 +265,12 @@ export default function ScreenPlatformSelection({ data, onSelect, onBack }: Prop
            font-size: 1.25rem;
            font-weight: 700;
            margin-bottom: 4px;
+           color: var(--text-primary);
         }
 
         .card-info p {
            font-size: 0.85rem;
-           opacity: 0.5;
+           color: var(--text-muted);
            font-weight: 500;
         }
 
@@ -278,7 +280,7 @@ export default function ScreenPlatformSelection({ data, onSelect, onBack }: Prop
            opacity: 0.2;
            transition: all 0.3s;
            font-weight: 700;
-           color: #b08d6d;
+           color: var(--accent-primary);
         }
 
         .bottom-actions {
@@ -291,17 +293,16 @@ export default function ScreenPlatformSelection({ data, onSelect, onBack }: Prop
           border: none;
           font-size: 0.9rem;
           font-weight: 600;
-          color: #4a3f35;
-          opacity: 0.4;
+          color: var(--text-muted);
           cursor: pointer;
-          transition: opacity 0.2s;
+          transition: all 0.2s;
           display: inline-flex;
           align-items: center;
           gap: 8px;
         }
 
         .back-link:hover {
-          opacity: 1;
+          color: var(--text-primary);
         }
 
         @media (max-width: 768px) {
