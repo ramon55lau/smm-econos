@@ -95,7 +95,7 @@
   letter-spacing: 0.05em;
 }
 
-.tabsSmall {
+.tabsDesktop {
   display: flex;
   gap: 0.5rem;
   background: var(--bg-primary);
@@ -106,8 +106,26 @@
   scrollbar-width: none;
 }
 
-.tabsSmall::-webkit-scrollbar {
+.tabsDesktop::-webkit-scrollbar {
   display: none;
+}
+
+.mobileSelect {
+  display: none;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 1.25rem;
+  cursor: pointer;
 }
 
 .tabSmall {
@@ -356,12 +374,12 @@
     width: 100%;
   }
 
-  .tabsSmall {
-    width: 100%;
+  .tabsDesktop {
+    display: none;
   }
 
-  .tabSmall {
-    text-align: center;
+  .mobileSelect {
+    display: block;
   }
 
   .tableWrapper {

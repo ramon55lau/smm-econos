@@ -137,7 +137,7 @@ function AdsList() {
       <div className={styles.filterSection}>
         <div className={styles.filterGroup}>
           <label>Categoría</label>
-          <div className={styles.tabsSmall}>
+          <div className={styles.tabsDesktop}>
             {["all", "ads", "organic", "drafts"].map(t => (
               <button
                 key={t}
@@ -148,11 +148,21 @@ function AdsList() {
               </button>
             ))}
           </div>
+          <select
+            className={styles.mobileSelect}
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+          >
+            <option value="all">Todos</option>
+            <option value="ads">Ads</option>
+            <option value="organic">Orgánico</option>
+            <option value="drafts">Borradores</option>
+          </select>
         </div>
 
         <div className={styles.filterGroup}>
           <label>Plataforma</label>
-          <div className={styles.tabsSmall}>
+          <div className={styles.tabsDesktop}>
             {["all", "facebook", "instagram", "youtube"].map(p => (
               <button
                 key={p}
@@ -163,6 +173,16 @@ function AdsList() {
               </button>
             ))}
           </div>
+          <select
+            className={styles.mobileSelect}
+            value={platformFilter}
+            onChange={(e) => setPlatformFilter(e.target.value)}
+          >
+            <option value="all">Todas</option>
+            <option value="facebook">Facebook</option>
+            <option value="instagram">Instagram</option>
+            <option value="youtube">YouTube</option>
+          </select>
         </div>
       </div>
 
