@@ -90,14 +90,23 @@ function AdsList() {
       }];
     }
     return ad.publications.map(p => {
-      const platform = p.platform || "Unknown";
+      let platform = p.platform || "Unknown";
+
+      // Normalize platform name
+      if (platform.toLowerCase().includes("facebook")) platform = "Facebook";
+      else if (platform.toLowerCase().includes("instagram")) platform = "Instagram";
+      else if (platform.toLowerCase().includes("youtube")) platform = "YouTube";
+      else if (platform.toLowerCase().includes("google")) platform = "Google Ads";
+      else platform = platform.charAt(0).toUpperCase() + platform.slice(1);
+
       let postUrl = p.externalPostUrl;
 
       // Fallback for older publications that only have externalPostId
       if (!postUrl && p.externalPostId) {
         const postId = p.externalPostId;
-        if (platform.toLowerCase() === "facebook") postUrl = `https://www.facebook.com/${postId}`;
-        else if (platform.toLowerCase() === "youtube") postUrl = `https://www.youtube.com/watch?v=${postId}`;
+        const lowPlat = platform.toLowerCase();
+        if (lowPlat.includes("facebook")) postUrl = `https://www.facebook.com/${postId}`;
+        else if (lowPlat.includes("youtube")) postUrl = `https://www.youtube.com/watch?v=${postId}`;
       }
 
       return {
@@ -178,10 +187,11 @@ function AdsList() {
             value={platformFilter}
             onChange={(e) => setPlatformFilter(e.target.value)}
           >
-            <option value="all">Todas</option>
+            <option value="all">Todas las redes</option>
             <option value="facebook">Facebook</option>
             <option value="instagram">Instagram</option>
             <option value="youtube">YouTube</option>
+            <option value="google-ads">Google Ads</option>
           </select>
         </div>
       </div>

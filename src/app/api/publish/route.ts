@@ -176,6 +176,7 @@ export async function POST(req: NextRequest) {
           platform,
           destination,
           status: "pending",
+          type: destination === "ads" ? "paid" : "organic",
         },
       });
 
