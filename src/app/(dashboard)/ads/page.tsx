@@ -20,6 +20,9 @@ type Ad = {
     id: string;
     type: string; // "paid", "organic"
     status: string;
+    platform: string;
+    externalPostId?: string;
+    externalPostUrl?: string;
   }[];
 };
 
@@ -82,18 +85,30 @@ function AdsList() {
         platform: "None",
         type: "draft",
         status: "draft",
-        externalPostUrl: null,
+        externalPostUrl: undefined,
         isAd: false
       }];
     }
-    return ad.publications.map(p => ({
-      ...ad,
-      platform: (p as any).platform || "Unknown",
-      type: p.type,
-      status: p.status,
-      externalPostUrl: (p as any).externalPostUrl,
-      isAd: true
-    }));
+    return ad.publications.map(p => {
+      const platform = p.platform || "Unknown";
+      let postUrl = p.externalPostUrl;
+
+      // Fallback for older publications that only have externalPostId
+      if (!postUrl && p.externalPostId) {
+        const postId = p.externalPostId;
+        if (platform.toLowerCase() === "facebook") postUrl = `https://www.facebook.com/${postId}`;
+        else if (platform.toLowerCase() === "youtube") postUrl = `https://www.youtube.com/watch?v=${postId}`;
+      }
+
+      return {
+        ...ad,
+        platform,
+        type: p.type,
+        status: p.status,
+        externalPostUrl: postUrl,
+        isAd: true
+      };
+    });
   });
 
   const filteredReports = adReports.filter(report => {
