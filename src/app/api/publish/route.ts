@@ -542,12 +542,30 @@ export async function POST(req: NextRequest) {
           }
         }
 
+        let postUrl = "";
+        if (postId) {
+          if (platform === "facebook") {
+            postUrl = `https://www.facebook.com/${postId}`;
+          } else if (platform === "instagram") {
+            try {
+              const igRes = await fetch(`https://graph.facebook.com/v19.0/${postId}?fields=permalink&access_token=${account.accessToken}`);
+              const igData = await igRes.json();
+              if (igData.permalink) postUrl = igData.permalink;
+            } catch (e) {
+              console.error("[IG_PERMALINK_ERROR]", e);
+            }
+          } else if (platform === "youtube") {
+            postUrl = `https://www.youtube.com/watch?v=${postId}`;
+          }
+        }
+
         // Finalize Publication status in DB
         await prisma.publication.update({
           where: { id: publication.id },
           data: {
             status: "published",
             externalPostId: postId,
+            externalPostUrl: postUrl,
             publishedAt: new Date(),
           },
         });
@@ -570,23 +588,6 @@ export async function POST(req: NextRequest) {
                 body: JSON.stringify({ message: ad.campaign.firstComment, access_token: account.accessToken })
               });
             } catch (e) { console.error("Comment failed", e); }
-          }
-        }
-
-        let postUrl = "";
-        if (postId) {
-          if (platform === "facebook") {
-            postUrl = `https://www.facebook.com/${postId}`;
-          } else if (platform === "instagram") {
-            try {
-              const igRes = await fetch(`https://graph.facebook.com/v19.0/${postId}?fields=permalink&access_token=${account.accessToken}`);
-              const igData = await igRes.json();
-              if (igData.permalink) postUrl = igData.permalink;
-            } catch (e) {
-              console.error("[IG_PERMALINK_ERROR]", e);
-            }
-          } else if (platform === "youtube") {
-            postUrl = `https://www.youtube.com/watch?v=${postId}`;
           }
         }
 

@@ -27,8 +27,10 @@ function AdsList() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialFilter = searchParams.get("filter") || "all";
-  
+
   const [ads, setAds] = useState<Ad[]>([]);
+  const [platformFilter, setPlatformFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
   const [filter, setFilter] = useState(initialFilter);
   const [loading, setLoading] = useState(true);
   const [viewingAd, setViewingAd] = useState<Ad | null>(null);
@@ -37,6 +39,7 @@ function AdsList() {
 
   useEffect(() => {
     setFilter(searchParams.get("filter") || "all");
+    setTypeFilter(searchParams.get("filter") || "all");
   }, [searchParams]);
 
   const fetchAds = async () => {
@@ -71,93 +74,154 @@ function AdsList() {
 
   if (loading) return <div className={styles.container}>Cargando anuncios...</div>;
 
-  const filteredAds = ads.filter(ad => {
-    if (filter === "ads") return ad.publications.some(p => p.type === "paid");
-    if (filter === "organic") return ad.publications.some(p => p.type === "organic");
-    if (filter === "drafts") return ad.publications.length === 0;
-    return true; // "all"
+  // Flatten ads into a list of publications for reporting
+  const adReports = ads.flatMap(ad => {
+    if (ad.publications.length === 0) {
+      return [{
+        ...ad,
+        platform: "None",
+        type: "draft",
+        status: "draft",
+        externalPostUrl: null,
+        isAd: false
+      }];
+    }
+    return ad.publications.map(p => ({
+      ...ad,
+      platform: (p as any).platform || "Unknown",
+      type: p.type,
+      status: p.status,
+      externalPostUrl: (p as any).externalPostUrl,
+      isAd: true
+    }));
+  });
+
+  const filteredReports = adReports.filter(report => {
+    // Type Filter
+    const matchesType = typeFilter === "all" ||
+      (typeFilter === "ads" && report.type === "paid") ||
+      (typeFilter === "organic" && report.type === "organic") ||
+      (typeFilter === "drafts" && report.type === "draft");
+
+    // Platform Filter
+    const matchesPlatform = platformFilter === "all" ||
+      report.platform.toLowerCase() === platformFilter.toLowerCase();
+
+    return matchesType && matchesPlatform;
   });
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h2 className={styles.title}>Mis Anuncios</h2>
+        <h2 className={styles.title}>Reportes de Anuncios</h2>
         <Link href="/ads/new" className={styles.addBtn}>
           <span>+</span> Crear Anuncio
         </Link>
       </div>
 
-      <div className={styles.tabs}>
-        <button 
-          className={`${styles.tab} ${filter === "ads" ? styles.activeTab : ""}`}
-          onClick={() => router.push("/ads?filter=ads")}
-        >
-          🎯 Anuncios (Ads)
-        </button>
-        <button 
-          className={`${styles.tab} ${filter === "organic" ? styles.activeTab : ""}`}
-          onClick={() => router.push("/ads?filter=organic")}
-        >
-          🍃 Publicaciones Orgánicas
-        </button>
-        <button 
-          className={`${styles.tab} ${filter === "drafts" ? styles.activeTab : ""}`}
-          onClick={() => router.push("/ads?filter=drafts")}
-        >
-          📝 Borradores
-        </button>
-        <button 
-          className={`${styles.tab} ${filter === "all" ? styles.activeTab : ""}`}
-          onClick={() => router.push("/ads?filter=all")}
-        >
-          📢 Todas las Pubs
-        </button>
+      <div className={styles.filterSection}>
+        <div className={styles.filterGroup}>
+          <label>Categoría</label>
+          <div className={styles.tabsSmall}>
+            {["all", "ads", "organic", "drafts"].map(t => (
+              <button
+                key={t}
+                className={`${styles.tabSmall} ${typeFilter === t ? styles.activeTab : ""}`}
+                onClick={() => setTypeFilter(t)}
+              >
+                {t === "all" ? "Todos" : t === "ads" ? "Ads" : t === "organic" ? "Orgánico" : "Borradores"}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className={styles.filterGroup}>
+          <label>Plataforma</label>
+          <div className={styles.tabsSmall}>
+            {["all", "facebook", "instagram", "youtube"].map(p => (
+              <button
+                key={p}
+                className={`${styles.tabSmall} ${platformFilter === p ? styles.activeTab : ""}`}
+                onClick={() => setPlatformFilter(p)}
+              >
+                {p.charAt(0).toUpperCase() + p.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {filteredAds.length === 0 ? (
+      {filteredReports.length === 0 ? (
         <div className={`glass-panel ${styles.empty}`}>
           <div className={styles.emptyIcon}>🔍</div>
-          <p>No se encontraron creativos en esta categoría.</p>
+          <p>No se encontraron registros con estos filtros.</p>
         </div>
       ) : (
-        <div className={styles.grid}>
-          {filteredAds.map(ad => (
-            <div 
-              key={ad.id} 
-              className={`glass-panel ${styles.card}`}
-              onClick={() => { setViewingAd(ad); setViewingIndex(0); }}
-            >
-              {ad.mediaUrl && ad.mediaType === "image" && (
-                <img src={ad.mediaUrl.split(',')[0]} alt={ad.title} className={styles.cardMedia} />
-              )}
-              {ad.mediaUrl && ad.mediaType === "video" && (
-                <video src={ad.mediaUrl} className={styles.cardMediaVideo} muted />
-              )}
-              {!ad.mediaUrl && (
-                <div className={styles.cardMedia} style={{ display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2rem", color: "var(--text-muted)" }}>🖼️</div>
-              )}
-              <div className={styles.cardBody}>
-                <div className={styles.cardTitle}>{ad.title}</div>
-                {ad.description && <div className={styles.cardDesc}>{ad.description}</div>}
-                <div className={styles.cardMeta}>
-                  <span>📁 {ad.campaign.name}</span>
-                  <span className={styles.mediaBadge}>{ad.mediaType}</span>
-                </div>
-                <div className={styles.cardActions}>
-                  <button className={styles.iconBtn} onClick={(e) => { e.stopPropagation(); setViewingAd(ad); setViewingIndex(0); }}>👁️ Ver</button>
-                  <button className={styles.iconBtn} onClick={(e) => { e.stopPropagation(); router.push(`/ads/${ad.id}`); }}>✏️ Editar</button>
-                  <button className={`${styles.iconBtn} ${styles.iconBtnPublish}`} onClick={(e) => { e.stopPropagation(); router.push(`/ads/${ad.id}/publish`); }}>🚀 Publicar</button>
-                  <button 
-                    className={`${styles.iconBtn} ${styles.iconBtnDanger}`} 
-                    onClick={(e) => { e.stopPropagation(); handleDelete(ad.id); }}
-                    disabled={deleting === ad.id}
-                  >
-                    {deleting === ad.id ? "..." : "🗑️"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+        <div className={`glass-panel ${styles.tableWrapper}`}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Contenido</th>
+                <th>Campaña</th>
+                <th>Plataforma</th>
+                <th>Tipo</th>
+                <th>Estado</th>
+                <th>Link</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredReports.map((report, idx) => (
+                <tr key={`${report.id}-${idx}`}>
+                  <td>
+                    <div className={styles.contentCell}>
+                      {report.mediaUrl ? (
+                        <img src={report.mediaUrl.split(',')[0]} className={styles.miniMedia} alt="" />
+                      ) : (
+                        <div className={styles.miniMediaPlaceholder}>🖼️</div>
+                      )}
+                      <div className={styles.contentText}>
+                        <div className={styles.reportTitle}>{report.title}</div>
+                        <div className={styles.reportDate}>{new Date(report.createdAt).toLocaleDateString()}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td><span className={styles.campaignName}>{report.campaign.name}</span></td>
+                  <td>
+                    <span className={`${styles.platformBadge} ${styles[report.platform.toLowerCase()]}`}>
+                      {report.platform}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={report.type === "paid" ? styles.typePaid : styles.typeOrganic}>
+                      {report.type === "paid" ? "🎯 ADS" : report.type === "organic" ? "🍃 Orgánico" : "📝 Borrador"}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={`${styles.statusBadge} ${styles[report.status]}`}>
+                      {report.status === "published" ? "✅ Activo" : report.status === "failed" ? "❌ Error" : "⏳ Pendiente"}
+                    </span>
+                  </td>
+                  <td>
+                    {report.externalPostUrl ? (
+                      <a href={report.externalPostUrl} target="_blank" rel="noopener noreferrer" className={styles.liveLink}>
+                        🔗 Ver Online
+                      </a>
+                    ) : (
+                      <span className={styles.noLink}>-</span>
+                    )}
+                  </td>
+                  <td>
+                    <div className={styles.rowActions}>
+                      <button className={styles.rowBtn} onClick={() => setViewingAd(report as any)}>👁️</button>
+                      <button className={styles.rowBtn} onClick={() => router.push(`/ads/${report.id}`)}>✏️</button>
+                      <button className={`${styles.rowBtn} ${styles.rowBtnDanger}`} onClick={() => handleDelete(report.id)}>🗑️</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 
@@ -190,7 +254,7 @@ function AdsList() {
               );
             })()}
             {viewingAd.mediaUrl && viewingAd.mediaType === "video" && (
-              <video src={viewingAd.mediaUrl} controls className={styles.modalMedia} style={{width: "100%"}} />
+              <video src={viewingAd.mediaUrl} controls className={styles.modalMedia} style={{ width: "100%" }} />
             )}
             {!viewingAd.mediaUrl && (
               <div className={styles.modalMediaPlaceholder}>🖼️</div>
@@ -217,8 +281,8 @@ function AdsList() {
                 <button className={styles.modalBtn} onClick={() => { setViewingAd(null); router.push(`/ads/${viewingAd.id}/publish`); }}>
                   🚀 Publicar
                 </button>
-                <button 
-                  className={`${styles.modalBtn} ${styles.modalBtnDanger}`} 
+                <button
+                  className={`${styles.modalBtn} ${styles.modalBtnDanger}`}
                   onClick={() => handleDelete(viewingAd.id)}
                   disabled={deleting === viewingAd.id}
                 >

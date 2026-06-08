@@ -160,6 +160,7 @@ model Publication {
   status         String    @default("pending") // "pending", "published", "failed"
   destination    String?   // "feed", "fanpage", "both", "reels", "stories", "shorts", "ads"
   externalPostId String?
+  externalPostUrl String?
   publishedAt    DateTime?
   errorLog       String?
   
