@@ -86,7 +86,7 @@ const navItems = [
       { name: "Campañas Dinámicas", href: "/real-estate" },
     ]
   },
-  { name: "Anuncios", href: "/ads", icon: <IconAds /> },
+  { name: "Reportes", href: "/ads", icon: <IconAds /> },
   { name: "Cuentas Sociales", href: "/settings/accounts", icon: <IconSocial /> },
 ];
 

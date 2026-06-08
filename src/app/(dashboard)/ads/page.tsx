@@ -172,72 +172,123 @@ function AdsList() {
           <p>No se encontraron registros con estos filtros.</p>
         </div>
       ) : (
-        <div className={`glass-panel ${styles.tableWrapper}`}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Contenido</th>
-                <th>Campaña</th>
-                <th>Plataforma</th>
-                <th>Tipo</th>
-                <th>Estado</th>
-                <th>Link</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredReports.map((report, idx) => (
-                <tr key={`${report.id}-${idx}`}>
-                  <td>
-                    <div className={styles.contentCell}>
-                      {report.mediaUrl ? (
-                        <img src={report.mediaUrl.split(',')[0]} className={styles.miniMedia} alt="" />
-                      ) : (
-                        <div className={styles.miniMediaPlaceholder}>🖼️</div>
-                      )}
-                      <div className={styles.contentText}>
-                        <div className={styles.reportTitle}>{report.title}</div>
-                        <div className={styles.reportDate}>{new Date(report.createdAt).toLocaleDateString()}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td><span className={styles.campaignName}>{report.campaign.name}</span></td>
-                  <td>
-                    <span className={`${styles.platformBadge} ${styles[report.platform.toLowerCase()]}`}>
-                      {report.platform}
-                    </span>
-                  </td>
-                  <td>
-                    <span className={report.type === "paid" ? styles.typePaid : styles.typeOrganic}>
-                      {report.type === "paid" ? "🎯 ADS" : report.type === "organic" ? "🍃 Orgánico" : "📝 Borrador"}
-                    </span>
-                  </td>
-                  <td>
-                    <span className={`${styles.statusBadge} ${styles[report.status]}`}>
-                      {report.status === "published" ? "✅ Activo" : report.status === "failed" ? "❌ Error" : "⏳ Pendiente"}
-                    </span>
-                  </td>
-                  <td>
-                    {report.externalPostUrl ? (
-                      <a href={report.externalPostUrl} target="_blank" rel="noopener noreferrer" className={styles.liveLink}>
-                        🔗 Ver Online
-                      </a>
-                    ) : (
-                      <span className={styles.noLink}>-</span>
-                    )}
-                  </td>
-                  <td>
-                    <div className={styles.rowActions}>
-                      <button className={styles.rowBtn} onClick={() => setViewingAd(report as any)}>👁️</button>
-                      <button className={styles.rowBtn} onClick={() => router.push(`/ads/${report.id}`)}>✏️</button>
-                      <button className={`${styles.rowBtn} ${styles.rowBtnDanger}`} onClick={() => handleDelete(report.id)}>🗑️</button>
-                    </div>
-                  </td>
+        <>
+          <div className={`glass-panel ${styles.tableWrapper}`}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Contenido</th>
+                  <th>Campaña</th>
+                  <th>Plataforma</th>
+                  <th>Tipo</th>
+                  <th>Estado</th>
+                  <th>Link</th>
+                  <th>Acciones</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filteredReports.map((report, idx) => (
+                  <tr key={`${report.id}-${idx}`}>
+                    <td>
+                      <div className={styles.contentCell}>
+                        {report.mediaUrl ? (
+                          <img src={report.mediaUrl.split(',')[0]} className={styles.miniMedia} alt="" />
+                        ) : (
+                          <div className={styles.miniMediaPlaceholder}>🖼️</div>
+                        )}
+                        <div className={styles.contentText}>
+                          <div className={styles.reportTitle}>{report.title}</div>
+                          <div className={styles.reportDate}>{new Date(report.createdAt).toLocaleDateString()}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td><span className={styles.campaignName}>{report.campaign.name}</span></td>
+                    <td>
+                      <span className={`${styles.platformBadge} ${styles[report.platform.toLowerCase()]}`}>
+                        {report.platform}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={report.type === "paid" ? styles.typePaid : styles.typeOrganic}>
+                        {report.type === "paid" ? "🎯 ADS" : report.type === "organic" ? "🍃 Orgánico" : "📝 Borrador"}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`${styles.statusBadge} ${styles[report.status]}`}>
+                        {report.status === "published" ? "✅ Activo" : report.status === "failed" ? "❌ Error" : "⏳ Pendiente"}
+                      </span>
+                    </td>
+                    <td>
+                      {report.externalPostUrl ? (
+                        <a href={report.externalPostUrl} target="_blank" rel="noopener noreferrer" className={styles.liveLink}>
+                          🔗 Ver Online
+                        </a>
+                      ) : (
+                        <span className={styles.noLink}>-</span>
+                      )}
+                    </td>
+                    <td>
+                      <div className={styles.rowActions}>
+                        <button className={styles.rowBtn} onClick={() => setViewingAd(report as any)}>👁️</button>
+                        <button className={styles.rowBtn} onClick={() => router.push(`/ads/${report.id}`)}>✏️</button>
+                        <button className={`${styles.rowBtn} ${styles.rowBtnDanger}`} onClick={() => handleDelete(report.id)}>🗑️</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Cards */}
+          <div className={styles.mobileCards}>
+            {filteredReports.map((report, idx) => (
+              <div key={`m-${report.id}-${idx}`} className={`glass-panel ${styles.mobileCard}`}>
+                <div className={styles.mobileCardHeader}>
+                  {report.mediaUrl ? (
+                    <img src={report.mediaUrl.split(',')[0]} className={styles.mobileCardImg} alt="" />
+                  ) : (
+                    <div className={styles.mobileCardImgPlaceholder}>🖼️</div>
+                  )}
+                  <div className={styles.mobileCardInfo}>
+                    <div className={styles.mobileCardTitle}>{report.title}</div>
+                    <div className={styles.mobileCardDate}>{new Date(report.createdAt).toLocaleDateString()}</div>
+                  </div>
+                </div>
+                <div className={styles.mobileCardRow}>
+                  <span className={styles.mobileLabel}>Campaña</span>
+                  <span className={styles.campaignName}>{report.campaign.name}</span>
+                </div>
+                <div className={styles.mobileCardRow}>
+                  <span className={styles.mobileLabel}>Plataforma</span>
+                  <span className={`${styles.platformBadge} ${styles[report.platform.toLowerCase()]}`}>{report.platform}</span>
+                </div>
+                <div className={styles.mobileCardRow}>
+                  <span className={styles.mobileLabel}>Tipo</span>
+                  <span className={report.type === "paid" ? styles.typePaid : styles.typeOrganic}>
+                    {report.type === "paid" ? "🎯 ADS" : report.type === "organic" ? "🍃 Orgánico" : "📝 Borrador"}
+                  </span>
+                </div>
+                <div className={styles.mobileCardRow}>
+                  <span className={styles.mobileLabel}>Estado</span>
+                  <span className={`${styles.statusBadge} ${styles[report.status]}`}>
+                    {report.status === "published" ? "✅ Activo" : report.status === "failed" ? "❌ Error" : "⏳ Pendiente"}
+                  </span>
+                </div>
+                {report.externalPostUrl && (
+                  <a href={report.externalPostUrl} target="_blank" rel="noopener noreferrer" className={styles.mobileCardLink}>
+                    🔗 Ver publicación en vivo
+                  </a>
+                )}
+                <div className={styles.mobileCardActions}>
+                  <button className={styles.rowBtn} onClick={() => setViewingAd(report as any)}>👁️</button>
+                  <button className={styles.rowBtn} onClick={() => router.push(`/ads/${report.id}`)}>✏️</button>
+                  <button className={`${styles.rowBtn} ${styles.rowBtnDanger}`} onClick={() => handleDelete(report.id)}>🗑️</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {/* Preview Modal */}

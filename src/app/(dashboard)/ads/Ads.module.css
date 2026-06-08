@@ -323,8 +323,13 @@
   border-color: var(--danger);
 }
 
+.mobileCards {
+  display: none;
+}
+
 @media (max-width: 1024px) {
   .tableWrapper {
+    display: block;
     overflow-x: auto;
   }
 
@@ -350,6 +355,100 @@
   .tabSmall {
     flex: 1;
     text-align: center;
+  }
+
+  .tableWrapper {
+    display: none;
+  }
+
+  .mobileCards {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .mobileCard {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .mobileCardHeader {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .mobileCardImg {
+    width: 60px;
+    height: 60px;
+    border-radius: var(--radius-md);
+    object-fit: cover;
+  }
+
+  .mobileCardImgPlaceholder {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-primary);
+    border-radius: var(--radius-md);
+    font-size: 1.5rem;
+  }
+
+  .mobileCardTitle {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text-primary);
+  }
+
+  .mobileCardDate {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .mobileCardRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+  }
+
+  .mobileLabel {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  .mobileCardLink {
+    margin-top: 0.5rem;
+    padding: 0.6rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-md);
+    text-align: center;
+    color: var(--accent-primary);
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-decoration: none;
+    border: 1px solid var(--border-color);
+  }
+
+  .mobileCardActions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .mobileCardActions .rowBtn {
+    flex: 1;
   }
 }
 

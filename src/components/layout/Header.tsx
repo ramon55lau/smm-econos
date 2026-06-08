@@ -44,7 +44,7 @@ export function Header({ onMenuToggle, isCollapsed }: HeaderProps) {
       const labels: Record<string, string> = {
         dashboard: "Dashboard",
         campaigns: "Campañas",
-        ads: "Anuncios",
+        ads: "Reportes",
         settings: "Configuración",
         accounts: "Cuentas",
         admin: "Admin",
