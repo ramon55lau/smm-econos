@@ -254,7 +254,13 @@ function AdsList() {
               );
             })()}
             {viewingAd.mediaUrl && viewingAd.mediaType === "video" && (
-              <video src={viewingAd.mediaUrl} controls className={styles.modalMedia} style={{ width: "100%" }} />
+              <video
+                src={viewingAd.mediaUrl.split(',')[0]}
+                poster={viewingAd.thumbnailUrl || undefined}
+                controls
+                className={styles.modalMedia}
+                style={{ width: "100%" }}
+              />
             )}
             {!viewingAd.mediaUrl && (
               <div className={styles.modalMediaPlaceholder}>🖼️</div>
@@ -262,10 +268,17 @@ function AdsList() {
 
             <div className={styles.modalBody}>
               <h3 className={styles.modalTitle}>{viewingAd.title}</h3>
+
+              {(viewingAd as any).externalPostUrl && (
+                <a href={(viewingAd as any).externalPostUrl} target="_blank" rel="noopener noreferrer" className={styles.modalLiveLink}>
+                  🌐 Ver publicación en vivo ({(viewingAd as any).platform})
+                </a>
+              )}
+
               {viewingAd.description && <p className={styles.modalDesc}>{viewingAd.description}</p>}
               {viewingAd.linkUrl && (
                 <a href={viewingAd.linkUrl} target="_blank" rel="noopener noreferrer" className={styles.modalLink}>
-                  🔗 {viewingAd.linkUrl}
+                  🔗 Enlace de destino: {viewingAd.linkUrl}
                 </a>
               )}
               <div className={styles.modalMeta}>

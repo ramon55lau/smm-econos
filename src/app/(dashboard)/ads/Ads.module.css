@@ -479,6 +479,26 @@
   color: var(--accent-primary);
 }
 
+.modalLiveLink {
+  display: block;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover));
+  color: white !important;
+  text-decoration: none;
+  border-radius: var(--radius-lg);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-align: center;
+  margin-bottom: 0.5rem;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(196, 26, 26, 0.2);
+}
+
+.modalLiveLink:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(196, 26, 26, 0.3);
+}
+
 .modalMeta {
   display: flex;
   gap: 0.75rem;
