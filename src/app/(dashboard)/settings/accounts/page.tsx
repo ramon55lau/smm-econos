@@ -54,6 +54,7 @@ export default function AccountsPage() {
   const [accounts, setAccounts] = useState<SocialAccount[]>([]);
   const [limits, setLimits] = useState<UserLimits | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showPrivacyInfo, setShowPrivacyInfo] = useState(false);
 
   const fetchAccounts = async () => {
     try {
@@ -61,7 +62,7 @@ export default function AccountsPage() {
         fetch("/api/social/accounts"),
         fetch("/api/users/me")
       ]);
-      
+
       if (accRes.ok) setAccounts(await accRes.json());
       if (limitRes.ok) setLimits(await limitRes.json());
     } finally {
@@ -72,6 +73,11 @@ export default function AccountsPage() {
   useEffect(() => { fetchAccounts(); }, []);
 
   const handleConnect = async (provider: string) => {
+    if (provider === "youtube" && !showPrivacyInfo) {
+      setShowPrivacyInfo(true);
+      return;
+    }
+
     try {
       const connectProvider = provider === "instagram" ? "facebook" : provider;
       const res = await fetch(`/api/social/connect?provider=${connectProvider}`);
@@ -103,7 +109,7 @@ export default function AccountsPage() {
 
   const getPlatformData = (provider: string) => {
     const platformAccounts = accounts.filter(a => a.provider === provider);
-    
+
     // Group by providerAccountId (Titular)
     const titularsMap = new Map();
     platformAccounts.forEach(acc => {
@@ -184,7 +190,7 @@ export default function AccountsPage() {
                           )}
                         </div>
                       </div>
-                      <button 
+                      <button
                         className={styles.miniDisconnectBtn}
                         onClick={() => handleDisconnect(acc.providerAccountId, acc.provider)}
                       >
@@ -238,6 +244,62 @@ export default function AccountsPage() {
           </div>
         </div>
       </div>
+
+      {showPrivacyInfo && (
+        <div className={styles.privacyOverlay}>
+          <div className={styles.privacyModal}>
+            <div className={styles.privacyTitle}>
+              <img src="/images/youtube.png" alt="YouTube" style={{ width: 24, height: 24 }} />
+              Información de Privacidad y Permisos
+            </div>
+
+            <p className={styles.providerDesc} style={{ marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+              Para que SMM pueda gestionar tu canal, Google te solicitará conceder los siguientes permisos:
+            </p>
+
+            <div className={styles.privacyContent}>
+              <div className={styles.privacyItem}>
+                <div className={styles.privacyIcon}>🎬</div>
+                <div>
+                  <div className={styles.privacyItemTitle}>Publicación de Videos</div>
+                  <div className={styles.privacyItemDesc}>Permite subir tus videos directamente desde SMM a tu canal de YouTube (Videos y Shorts).</div>
+                </div>
+              </div>
+
+              <div className={styles.privacyItem}>
+                <div className={styles.privacyIcon}>📊</div>
+                <div>
+                  <div className={styles.privacyItemTitle}>Lectura de Métricas</div>
+                  <div className={styles.privacyItemDesc}>Permite mostrarte estadísticas de tus videos (views, likes) en tu panel de reportes de SMM.</div>
+                </div>
+              </div>
+
+              <div className={styles.privacyItem}>
+                <div className={styles.privacyIcon}>🎯</div>
+                <div>
+                  <div className={styles.privacyItemTitle}>Gestión de Google Ads</div>
+                  <div className={styles.privacyItemDesc}>Permite crear y monitorear campañas publicitarias para promocionar tus videos de propiedades.</div>
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.privacyActions}>
+              <button
+                className={styles.privacyCancelBtn}
+                onClick={() => setShowPrivacyInfo(false)}
+              >
+                Cancelar
+              </button>
+              <button
+                className={styles.privacyConfirmBtn}
+                onClick={() => handleConnect("youtube")}
+              >
+                Entendido, conectar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

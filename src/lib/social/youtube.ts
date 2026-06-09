@@ -24,7 +24,7 @@ export function getYouTubeOAuthUrl(redirectUri: string): string {
 
   const scopes = [
     "https://www.googleapis.com/auth/youtube.upload",
-    "https://www.googleapis.com/auth/youtube",
+    "https://www.googleapis.com/auth/youtube.readonly",
     "https://www.googleapis.com/auth/userinfo.email",
     "https://www.googleapis.com/auth/adwords",
   ].join(" ");
@@ -183,12 +183,12 @@ export async function publishToYouTube(
         const errReason = errJson?.error?.errors?.[0]?.reason || "";
         const errDomain = errJson?.error?.errors?.[0]?.domain || "";
         const errLocation = errJson?.error?.errors?.[0]?.location || "";
-        
+
         let hint = "";
         if (errReason === "badRequest" && privacyStatus !== "private") {
           hint = " HINT: Los proyectos de Google Cloud no verificados solo pueden subir videos como 'private'. Cambia privacyStatus a 'private' o verifica tu proyecto en https://support.google.com/youtube/contact/yt_api_form";
         }
-        
+
         console.error(`[YouTube API] Error details → reason: ${errReason}, domain: ${errDomain}, location: ${errLocation}`);
         return { success: false, error: `YouTube API (${metadataRes.status}): ${errMsg}${errReason ? ` [${errReason}]` : ""}${hint}` };
       } catch {
@@ -253,10 +253,10 @@ export async function publishToYouTubeShorts(
   videoBuffer: Buffer,
   privacyStatus: "private" | "public" | "unlisted" = "public"
 ): Promise<YouTubePublishResult> {
-  const shortDescription = description.includes("#Shorts") 
-    ? description 
+  const shortDescription = description.includes("#Shorts")
+    ? description
     : `${description}\n\n#Shorts`;
-    
+
   return publishToYouTube(accessToken, title, shortDescription, videoBuffer, privacyStatus);
 }
 
