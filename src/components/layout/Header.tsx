@@ -105,6 +105,10 @@ export function Header({ onMenuToggle, isCollapsed }: HeaderProps) {
       </div>
 
       <div className={styles.actions}>
+        <div className={styles.versionBadge} title="Versión de la aplicación">
+          v1.2.5
+        </div>
+
         <button className={styles.notifBtn} title="Notificaciones">
           <IconBell />
           <span className={styles.notifBadge} />
