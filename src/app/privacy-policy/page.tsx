@@ -74,18 +74,35 @@ export default function PrivacyPolicyPage() {
         <section className={styles.section}>
           <h2>4. Almacenamiento y Seguridad</h2>
           <p>
-            Los tokens de acceso de Google y Meta se almacenan cifrados en nuestra base de datos. Solo se utilizan para ejecutar
-            las acciones que tú autorizas dentro de SMM. Puedes revocar el acceso en cualquier momento desde la
-            configuración de tu cuenta de Google (
-            <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent-primary)", textDecoration: "underline" }}>
-              myaccount.google.com/permissions
-            </a>
-            ) o de Meta.
+            En SMM, implementamos rigurosas medidas técnicas y organizativas para garantizar la protección de tus datos sensibles (como tokens de acceso y contenido de campañas):
+          </p>
+          <ul>
+            <li><strong>Cifrado en Tránsito:</strong> Toda la comunicación entre tu navegador y nuestros servidores se realiza a través de protocolos seguros HTTPS utilizando cifrado TLS 1.2 o superior.</li>
+            <li><strong>Cifrado en Reposo:</strong> Los tokens de acceso de Google y Meta se almacenan cifrados en nuestra base de datos utilizando estándares de la industria (AES-256).</li>
+            <li><strong>Control de Acceso:</strong> El acceso a los datos sensibles está estrictamente limitado a los procesos automatizados del sistema necesarios para la publicación. Ningún empleado de Econos tiene acceso a tus tokens de usuario o credenciales privadas de redes sociales.</li>
+            <li><strong>Retención de Datos:</strong> Solo conservamos los datos mientras tu cuenta esté activa. Si decides desconectar una cuenta o eliminar tu perfil, los tokens asociados se eliminan permanentemente de nuestros registros de forma inmediata.</li>
+          </ul>
+          <p>
+            Puedes revocar el acceso de SMM en cualquier momento desde la configuración de seguridad de tu cuenta:
+            <br />
+            - Google: <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent-primary)", textDecoration: "underline" }}>myaccount.google.com/permissions</a>
+            <br />
+            - Meta: <a href="https://www.facebook.com/settings?tab=business_tools" target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent-primary)", textDecoration: "underline" }}>Configuración de Business Tools</a>
           </p>
         </section>
 
         <section className={styles.section}>
-          <h2>5. Uso Compartido de Datos</h2>
+          <h2>5. Política de Uso Limitado de Google</h2>
+          <p>
+            El uso y la transferencia de la información recibida de las APIs de Google por parte de SMM se adherirán a la{" "}
+            <a href="https://developers.google.com/terms/api-services-user-data-policy#additional_requirements_for_specific_api_scopes" target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent-primary)", textDecoration: "underline" }}>
+              Política de Datos del Usuario de los Servicios de API de Google
+            </a>, incluidos los requisitos de Uso Limitado. Solo utilizamos estos datos para las funciones descritas en la sección 2 y no los compartimos con terceros excepto cuando sea necesario para proporcionar o mejorar estas funciones, previo cumplimiento de las políticas de Google.
+          </p>
+        </section>
+
+        <section className={styles.section}>
+          <h2>6. Uso Compartido de Datos</h2>
           <p>
             No vendemos, alquilamos ni compartimos tus datos personales o de campaña con terceros para fines ajenos a la
             operativa técnica del servicio. Tus datos se utilizan exclusivamente para ejecutar las funcionalidades que tú
@@ -94,7 +111,7 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section className={styles.section}>
-          <h2>6. Tus Derechos</h2>
+          <h2>7. Tus Derechos</h2>
           <ul>
             <li>Acceder a los datos que tenemos sobre tu cuenta.</li>
             <li>Solicitar la eliminación de tu cuenta y todos tus datos asociados.</li>
@@ -103,7 +120,7 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section className={styles.section}>
-          <h2>7. Contacto</h2>
+          <h2>8. Contacto</h2>
           <p>
             Si tienes alguna pregunta sobre esta política, escríbenos a:{" "}
             <a href="mailto:soporte@econos.com" style={{ color: "var(--accent-primary)", textDecoration: "underline" }}>

@@ -59,7 +59,7 @@ export default function GooglePrivacyPolicyPage() {
                     <p className={styles.subtitle}>
                         Esta página detalla cómo SMM hace uso de los permisos de Google que solicita al momento de iniciar sesión con tu cuenta.
                     </p>
-                    <p className={styles.date}>Vigente desde: 29 de mayo de 2026</p>
+                    <p className={styles.date}>Vigente desde: 10 de junio de 2026</p>
                 </header>
 
                 {/* Intro */}
@@ -91,9 +91,26 @@ export default function GooglePrivacyPolicyPage() {
 
                 {/* Security */}
                 <section className={styles.section}>
-                    <h2 className={styles.sectionTitle}>Seguridad y almacenamiento</h2>
+                    <h2 className={styles.sectionTitle}>Protección de Datos y Seguridad</h2>
                     <p className={styles.text}>
-                        Los tokens de acceso de Google se almacenan de forma cifrada en nuestra base de datos. Son usados únicamente para las acciones descritas arriba. Puedes revocar el acceso en cualquier momento desde <a className={styles.link} href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer">myaccount.google.com/permissions</a>.
+                        En SMM, la seguridad de tus datos de Google es nuestra prioridad. Implementamos los siguientes mecanismos de protección:
+                    </p>
+                    <ul className={styles.text}>
+                        <li><strong>Cifrado en Tránsito:</strong> Protegemos la transferencia de datos mediante TLS 1.2 o superior en todas las conexiones.</li>
+                        <li><strong>Cifrado en Reposo:</strong> Los tokens de acceso y actualización de Google se almacenan cifrados en nuestra base de datos utilizando el estándar AES-256.</li>
+                        <li><strong>Restricción de Acceso:</strong> El acceso a los tokens de Google está limitado únicamente a los procesos automatizados necesarios para las funciones de la plataforma. Ningún personal tiene acceso a tus credenciales privadas.</li>
+                        <li><strong>Eliminación Automática:</strong> Al desconectar tu cuenta de Google o eliminar tu perfil de SMM, todos los tokens y datos asociados se borran permanentemente de forma inmediata.</li>
+                    </ul>
+                    <p className={styles.text} style={{ marginTop: '1rem' }}>
+                        Puedes revocar el acceso en cualquier momento desde <a className={styles.link} href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer">myaccount.google.com/permissions</a>.
+                    </p>
+                </section>
+
+                {/* Limited Use */}
+                <section className={styles.section}>
+                    <h2 className={styles.sectionTitle}>Uso Limitado (Limited Use)</h2>
+                    <p className={styles.text}>
+                        SMM cumple estrictamente con la <a className={styles.link} href="https://developers.google.com/terms/api-services-user-data-policy#additional_requirements_for_specific_api_scopes" target="_blank" rel="noopener noreferrer">Política de Datos del Usuario de los Servicios de API de Google</a>. La información obtenida a través de las APIs de Google se utiliza exclusivamente para proporcionar y mejorar las funciones de publicación de videos y gestión de anuncios dentro de la aplicación, y no se transfiere a terceros salvo para el cumplimiento legal o la mejora directa de estas funcionalidades.
                     </p>
                 </section>
 
