@@ -68,7 +68,13 @@ export default function ScreenPlatformSelection({ data, onSelect, onBack }: Prop
             <div className="cards-row">
               <div className="plat-card google-ads" onClick={() => onSelect('google-ads')}>
                 <div className="card-icon-wrapper gads">
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/c/c7/Google_Ads_logo.svg" alt="Google Ads" />
+                  <svg viewBox="0 0 256 256" width="36" height="36" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M57.2 178.3L104.5 96.6L151.8 178.3Z" fill="#FBBC04" />
+                    <path d="M198.8 178.3L104.5 178.3L151.6 96.6Z" fill="#4285F4" />
+                    <ellipse cx="104.5" cy="178.3" rx="47.3" ry="47.3" fill="#34A853" />
+                    <path d="M151.6 96.6L198.8 178.3L104.5 178.3Z" fill="#4285F4" />
+                    <path d="M151.6 96.6L198.8 14.9L246.1 96.6Z" fill="#EA4335" />
+                  </svg>
                 </div>
                 <div className="card-info">
                   <h3>Google Ads</h3>
