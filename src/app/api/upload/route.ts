@@ -20,6 +20,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
 
+    // Enforce 50MB file size limit (DoS protection)
+    const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: "El archivo supera el límite de 50MB" }, { status: 400 });
+    }
+
     // Validate file type
     const allowedTypes = [
       "image/jpeg", "image/png", "image/gif", "image/webp",

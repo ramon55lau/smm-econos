@@ -8,9 +8,17 @@ import os from "os";
  * Resolve clean filename, content type, and file path from the route params
  */
 function resolveFile(filename: string) {
-  const cleanFilename = filename.split("?")[0];
+  // Enforce basename extraction to discard path sequences (e.g., ../ or \..\)
+  const cleanFilename = path.basename(filename.split("?")[0]);
   const uploadDir = path.join(os.tmpdir(), "smm-uploads");
   const filepath = path.join(uploadDir, cleanFilename);
+
+  const resolvedPath = path.resolve(filepath);
+  const resolvedUploadDir = path.resolve(uploadDir);
+
+  if (!resolvedPath.startsWith(resolvedUploadDir)) {
+    throw new Error("Intento de directory traversal bloqueado");
+  }
 
   const ext = cleanFilename.split(".").pop()?.toLowerCase() || "";
   const contentTypeMap: Record<string, string> = {

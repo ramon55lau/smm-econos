@@ -73,17 +73,35 @@
   background-color: rgba(16, 185, 129, 0.1);
   color: var(--success);
 }
+
 .badgeAdmin {
   background-color: rgba(183, 6, 6, 0.1);
   color: var(--accent-primary);
 }
+
 .badgeEditor {
   background-color: rgba(245, 158, 11, 0.1);
   color: var(--warning);
 }
+
 .badgeViewer {
   background-color: rgba(148, 163, 184, 0.1);
   color: var(--text-muted);
+}
+
+.badgeApproved {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+}
+
+.badgePending {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: var(--warning);
+}
+
+.badgeBlocked {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
 }
 
 .actions {
@@ -149,6 +167,7 @@
   color: var(--text-muted);
   transition: color var(--transition-fast);
 }
+
 .closeBtn:hover {
   color: var(--text-primary);
 }
@@ -165,7 +184,8 @@
   color: var(--text-secondary);
 }
 
-.input, .select {
+.input,
+.select {
   width: 100%;
   padding: 0.75rem 1rem;
   background-color: var(--bg-primary);
@@ -174,7 +194,14 @@
   color: var(--text-primary);
   font-size: 0.875rem;
 }
-.input:focus, .select:focus {
+
+.select option {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.input:focus,
+.select:focus {
   outline: none;
   border-color: var(--accent-primary);
 }
@@ -192,6 +219,7 @@
   font-weight: 500;
   border-radius: var(--radius-md);
 }
+
 .cancelBtn:hover {
   background-color: var(--bg-tertiary);
 }
@@ -204,9 +232,11 @@
   font-weight: 500;
   transition: background-color var(--transition-fast);
 }
+
 .submitBtn:hover {
   background-color: var(--accent-hover);
 }
+
 .submitBtn:disabled {
   opacity: 0.6;
   cursor: not-allowed;

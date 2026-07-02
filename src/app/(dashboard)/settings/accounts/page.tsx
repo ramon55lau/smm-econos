@@ -56,21 +56,100 @@ export default function AccountsPage() {
   const [loading, setLoading] = useState(true);
   const [showPrivacyInfo, setShowPrivacyInfo] = useState(false);
 
+  // MFA States
+  const [mfaEnabled, setMfaEnabled] = useState(false);
+  const [mfaLoading, setMfaLoading] = useState(false);
+  const [qrCode, setQrCode] = useState("");
+  const [mfaSecret, setMfaSecret] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+
   const fetchAccounts = async () => {
     try {
-      const [accRes, limitRes] = await Promise.all([
+      const [accRes, limitRes, mfaRes] = await Promise.all([
         fetch("/api/social/accounts"),
-        fetch("/api/users/me")
+        fetch("/api/users/me"),
+        fetch("/api/auth/mfa/status")
       ]);
 
       if (accRes.ok) setAccounts(await accRes.json());
       if (limitRes.ok) setLimits(await limitRes.json());
+      if (mfaRes.ok) {
+        const mfaData = await mfaRes.json();
+        setMfaEnabled(mfaData.mfaEnabled);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => { fetchAccounts(); }, []);
+
+  const handleSetupMfa = async () => {
+    setMfaLoading(true);
+    try {
+      const res = await fetch("/api/auth/mfa/setup", { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        setQrCode(data.qrCode);
+        setMfaSecret(data.secret);
+      } else {
+        const data = await res.json();
+        alert(data.error || "Error iniciando configuración MFA");
+      }
+    } catch {
+      alert("Error de red al configurar MFA");
+    } finally {
+      setMfaLoading(false);
+    }
+  };
+
+  const handleVerifyMfa = async () => {
+    if (verificationCode.length !== 6) {
+      alert("Introduce tu código de verificación de 6 dígitos.");
+      return;
+    }
+    setMfaLoading(true);
+    try {
+      const res = await fetch("/api/auth/mfa/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: verificationCode })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        alert(data.message || "MFA activado correctamente");
+        setMfaEnabled(true);
+        setQrCode("");
+        setMfaSecret("");
+        setVerificationCode("");
+      } else {
+        const data = await res.json();
+        alert(data.error || "Código incorrecto");
+      }
+    } catch {
+      alert("Error verificando código");
+    } finally {
+      setMfaLoading(false);
+    }
+  };
+
+  const handleDisableMfa = async () => {
+    if (!confirm("¿Estás seguro de que deseas desactivar la autenticación en dos pasos (MFA)? Tu cuenta será menos segura.")) return;
+    setMfaLoading(true);
+    try {
+      const res = await fetch("/api/auth/mfa/disable", { method: "POST" });
+      if (res.ok) {
+        alert("MFA desactivado correctamente");
+        setMfaEnabled(false);
+      } else {
+        alert("Error al desactivar MFA");
+      }
+    } catch {
+      alert("Error de red al desactivar MFA");
+    } finally {
+      setMfaLoading(false);
+    }
+  };
 
   const handleConnect = async (provider: string) => {
     if (provider === "youtube" && !showPrivacyInfo) {
@@ -220,6 +299,99 @@ export default function AccountsPage() {
             </div>
           );
         })}
+      </div>
+
+      {/* ── MFA Settings ── */}
+      <div className={`glass-panel ${styles.mfaCard}`}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
+          <div>
+            <h3 style={{ fontSize: "1.15rem", fontWeight: "600", margin: 0 }}>Autenticación en Dos Pasos (MFA)</h3>
+            <p className={styles.providerDesc} style={{ marginTop: "0.25rem", margin: 0 }}>
+              Añade una capa extra de seguridad a tu cuenta usando una aplicación de autenticación (Google Authenticator, Authy, etc.).
+            </p>
+          </div>
+          <div className={styles.mfaStatus}>
+            Estado:{" "}
+            {mfaEnabled ? (
+              <span className={styles.mfaStatusActive}>● Activado</span>
+            ) : (
+              <span className={styles.mfaStatusInactive}>○ Desactivado</span>
+            )}
+          </div>
+        </div>
+
+        <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "1rem", marginTop: "0.5rem" }}>
+          {mfaEnabled ? (
+            <button
+              className={styles.disconnectBtn}
+              onClick={handleDisableMfa}
+              disabled={mfaLoading}
+            >
+              {mfaLoading ? "Desactivando..." : "Desactivar MFA"}
+            </button>
+          ) : !qrCode ? (
+            <button
+              className={`${styles.connectBtn} ${styles.connectBtnFb}`}
+              style={{ background: "var(--accent-primary)" }}
+              onClick={handleSetupMfa}
+              disabled={mfaLoading}
+            >
+              {mfaLoading ? "Generando..." : "Configurar MFA con Authenticator"}
+            </button>
+          ) : (
+            <div className={styles.mfaSetupBox}>
+              <p style={{ fontSize: "0.9rem", fontWeight: "500", margin: "0 0 0.5rem 0" }}>
+                1. Escanea este código QR con tu aplicación de autenticación:
+              </p>
+              <div className={styles.qrContainer}>
+                <img src={qrCode} alt="MFA QR Code" style={{ width: 180, height: 180, display: "block" }} />
+              </div>
+              <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", maxWidth: "360px", margin: "0.5rem 0 0 0" }}>
+                Si no puedes escanear la imagen, ingresa esta clave manualmente en tu aplicación:
+                <br />
+                <code style={{ fontSize: "0.95rem", fontWeight: "600", color: "var(--accent-primary)", marginTop: "0.25rem", display: "inline-block" }}>
+                  {mfaSecret}
+                </code>
+              </p>
+
+              <p style={{ fontSize: "0.9rem", fontWeight: "500", marginTop: "1.5rem", margin: "1.5rem 0 0.5rem 0" }}>
+                2. Introduce el código de 6 dígitos para verificar y activar:
+              </p>
+              <input
+                type="text"
+                maxLength={6}
+                placeholder="000000"
+                className={`${styles.miniDisconnectBtn} ${styles.mfaInput}`}
+                style={{ background: "rgba(255, 255, 255, 0.05)", border: "1px solid var(--border-color)", padding: "0.5rem", borderRadius: "var(--radius-sm)", color: "var(--text-primary)" }}
+                value={verificationCode}
+                onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ""))}
+                disabled={mfaLoading}
+              />
+
+              <div style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
+                <button
+                  className={styles.disconnectBtn}
+                  onClick={() => {
+                    setQrCode("");
+                    setMfaSecret("");
+                    setVerificationCode("");
+                  }}
+                  disabled={mfaLoading}
+                >
+                  Cancelar
+                </button>
+                <button
+                  className={`${styles.connectBtn} ${styles.connectBtnFb}`}
+                  style={{ background: "var(--success)" }}
+                  onClick={handleVerifyMfa}
+                  disabled={mfaLoading}
+                >
+                  {mfaLoading ? "Verificando..." : "Confirmar y Activar"}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className={styles.infoBox}>

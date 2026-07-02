@@ -21,9 +21,7 @@ export async function GET() {
         name: true,
         email: true,
         role: true,
-        maxFacebookAccounts: true,
-        maxInstagramAccounts: true,
-        maxYouTubeAccounts: true,
+        package: true,
       }
     });
 

@@ -166,11 +166,16 @@ async function extractInstagramVideo(url: string): Promise<ExtractedVideo | null
 async function extractGenericVideo(url: string, providedHtml?: string): Promise<ExtractedVideo | null> {
     let html = providedHtml;
     if (!html) {
-        const res = await fetch(url, {
-            headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" }
-        });
-        if (!res.ok) return null;
-        html = await res.text();
+        try {
+            const res = await fetch(url, {
+                headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" }
+            });
+            if (!res.ok) return null;
+            html = await res.text();
+        } catch (err) {
+            console.warn(`[Video Extraction] Failed to fetch html for generic video: ${err}`);
+            return null;
+        }
     }
 
     // 1. OG Video / Twitter Stream

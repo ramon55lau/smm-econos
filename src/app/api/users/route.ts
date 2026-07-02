@@ -6,7 +6,7 @@ import { authOptions } from "@/lib/auth";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
-  
+
   if (!session || (session.user?.role !== "SUPER_ADMIN" && session.user?.role !== "ADMIN")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -18,9 +18,9 @@ export async function GET() {
         name: true,
         email: true,
         role: true,
-        maxFacebookAccounts: true,
-        maxInstagramAccounts: true,
-        maxYouTubeAccounts: true,
+        packageId: true,
+        package: true,
+        status: true,
         createdAt: true,
       },
       orderBy: { createdAt: "desc" },
@@ -33,7 +33,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  
+
   if (!session || session.user?.role !== "SUPER_ADMIN") {
     // Only SUPER_ADMIN can create users in this simple RBAC
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { email, name, password, role, maxFacebookAccounts, maxInstagramAccounts, maxYouTubeAccounts } = body;
+    const { email, name, password, role, packageId } = body;
 
     if (!email || !password || !name) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -63,9 +63,7 @@ export async function POST(req: NextRequest) {
         name,
         password: hashedPassword,
         role: role || "VIEWER",
-        maxFacebookAccounts: maxFacebookAccounts || 1,
-        maxInstagramAccounts: maxInstagramAccounts || 1,
-        maxYouTubeAccounts: maxYouTubeAccounts || 1,
+        packageId: packageId || null,
       },
       select: {
         id: true,

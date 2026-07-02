@@ -49,15 +49,14 @@ export default function ScreenLinkInput({ onScraped, onManual }: Props) {
 
         <div className="hero">
           <h1>Publica tu propiedad <br /> <span>en todos los canales</span></h1>
-          <p>Pega la URL de tu inmueble y creamos las campañas automáticamente para ti.</p>
         </div>
 
-        <div className="input-container">
+        <div className="input-container" style={{ marginTop: "1.5rem" }}>
           <div className="input-wrapper">
             <span className="link-icon">🔗</span>
             <input
               type="text"
-              placeholder="Pega la URL del inmueble o producto..."
+              placeholder="Pega la URL del inmueble..."
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleGo()}
@@ -66,10 +65,6 @@ export default function ScreenLinkInput({ onScraped, onManual }: Props) {
               {loading ? "..." : "GO"}
             </button>
           </div>
-        </div>
-
-        <div className="or-divider">
-          <span>o</span>
         </div>
 
         <button className="manual-btn" onClick={onManual}>

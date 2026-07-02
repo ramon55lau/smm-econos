@@ -256,6 +256,12 @@
   display: flex !important;
 }
 
+@media (min-width: 1025px) {
+  .menuBtnVisible {
+    display: none !important;
+  }
+}
+
 @media (max-width: 1024px) {
   .menuBtn {
     display: flex;

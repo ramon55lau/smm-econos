@@ -1,0 +1,304 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma-client"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  password      String?
+  image         String?
+  role          String    @default("VIEWER") // SUPER_ADMIN, ADMIN, EDITOR, VIEWER
+  status        String    @default("PENDING") // PENDING, APPROVED, BLOCKED
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // MFA (Two-Factor Authentication)
+  mfaSecret  String?
+  mfaEnabled Boolean @default(false)
+
+  // Relationship with Package
+  packageId String?
+  package   Package? @relation(fields: [packageId], references: [id])
+
+  accounts            Account[]
+  sessions            Session[]
+  userPermissions     UserPermission[]
+  socialAccounts      SocialAccount[]
+  campaigns           Campaign[]
+  passwordResetTokens PasswordResetToken[]
+}
+
+model Package {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  maxFacebook  Int      @default(1)
+  maxInstagram Int      @default(1)
+  maxYouTube   Int      @default(1)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  users User[]
+}
+
+// NextAuth models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expires   DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// SMM specific models
+model Permission {
+  id          String  @id @default(cuid())
+  name        String  @unique // e.g., "create_ads", "publish_facebook"
+  description String?
+
+  userPermissions UserPermission[]
+}
+
+model UserPermission {
+  id           String @id @default(cuid())
+  userId       String
+  permissionId String
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, permissionId])
+}
+
+model SocialAccount {
+  id                String    @id @default(cuid())
+  userId            String
+  provider          String // "facebook", "instagram", "youtube"
+  providerAccountId String
+  accessToken       String
+  refreshToken      String?
+  expiresAt         DateTime?
+  accountName       String? // Display name from the platform
+  pageId            String? // Facebook Page ID (for fanpage publishing)
+  pageName          String? // Facebook Page display name
+  igAccountId       String? // Instagram Business Account ID
+  adAccountId       String? // Meta Ad Account ID (act_...)
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  publications Publication[]
+
+  @@unique([provider, providerAccountId])
+}
+
+model Campaign {
+  id           String   @id @default(cuid())
+  name         String
+  userId       String
+  status       String   @default("draft") // "draft", "scheduled", "published", "failed"
+  hashtags     String? // comma-separated hashtags, e.g. "#sale,#promo"
+  firstComment String? // first comment to post after publishing
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ads  Ad[]
+}
+
+model Ad {
+  id           String   @id @default(cuid())
+  campaignId   String
+  title        String
+  description  String?
+  mediaType    String // "image", "video"
+  mediaUrl     String?
+  thumbnailUrl String?
+  linkUrl      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  campaign     Campaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  publications Publication[]
+}
+
+model Publication {
+  id              String    @id @default(cuid())
+  adId            String
+  platform        String // "facebook", "instagram", "youtube"
+  type            String    @default("organic") // "organic", "paid"
+  status          String    @default("pending") // "pending", "published", "failed"
+  destination     String? // "feed", "fanpage", "both", "reels", "stories", "shorts", "ads"
+  externalPostId  String?
+  externalPostUrl String?
+  publishedAt     DateTime?
+  errorLog        String?
+
+  // Analytics fields
+  clicks            Int       @default(0)
+  impressions       Int       @default(0)
+  reach             Int       @default(0)
+  spend             Float     @default(0)
+  insightsUpdatedAt DateTime?
+
+  ad              Ad             @relation(fields: [adId], references: [id], onDelete: Cascade)
+  socialAccountId String? // ID of the specific account used (Phase 11)
+  socialAccount   SocialAccount? @relation(fields: [socialAccountId], references: [id], onDelete: SetNull)
+  adBudget        AdBudget?
+}
+
+model AdBudget {
+  id             String    @id @default(cuid())
+  publicationId  String    @unique
+  dailyBudget    Float?
+  totalBudget    Float?
+  startDate      DateTime?
+  endDate        DateTime?
+  targetAudience String? // JSON string (country, age, gender, interests)
+
+  publication Publication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+}
+
+model DataDeletionRequest {
+  id                String   @id @default(cuid())
+  providerAccountId String
+  confirmationCode  String   @unique
+  status            String   @default("completed")
+  createdAt         DateTime @default(now())
+}
+
+/// ============================================
+/// MÓDULO: Catálogo Inmobiliario (Advantage+)
+/// ============================================
+
+model PropertyCatalog {
+  id            String    @id @default(cuid())
+  userId        String
+  name          String
+  metaCatalogId String?
+  metaFeedId    String?
+  feedUrl       String?
+  status        String    @default("draft")
+  syncError     String?
+  lastSyncAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  properties Property[]
+
+  @@index([userId])
+}
+
+model Property {
+  id        String @id @default(cuid())
+  catalogId String
+
+  name         String
+  description  String
+  price        Float
+  currency     String @default("EUR")
+  availability String @default("for_sale")
+
+  address    String
+  city       String
+  state      String?
+  country    String  @default("ES")
+  postalCode String?
+  latitude   Float?
+  longitude  Float?
+
+  propertyType String @default("house")
+  bedrooms     Int?
+  bathrooms    Int?
+  areaSqm      Float?
+  yearBuilt    Int?
+
+  imageUrl       String
+  images         String?
+  virtualTourUrl String?
+  listingUrl     String?
+
+  metaItemId String?
+  syncStatus String  @default("pending")
+  syncError  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  publications PropertyPublication[]
+
+  catalog PropertyCatalog @relation(fields: [catalogId], references: [id], onDelete: Cascade)
+
+  @@index([catalogId])
+  @@index([syncStatus])
+}
+
+/// ============================================
+/// Publicaciones de Propiedades (Orgánico/Ads/Sync)
+/// ============================================
+
+model PropertyPublication {
+  id             String    @id @default(cuid())
+  propertyId     String
+  catalogId      String
+  platform       String // "facebook", "instagram"
+  type           String    @default("organic") // "organic", "ads", "catalog_sync"
+  status         String    @default("pending") // "pending", "published", "failed"
+  destination    String? // "feed", "fanpage", "carousel", "reels", "ads", "catalog_sync"
+  externalPostId String?
+  publishedAt    DateTime?
+  errorLog       String?
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([propertyId])
+  @@index([catalogId])
+}

@@ -344,9 +344,6 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
                         )}
                     </div>
 
-                    <div className="sidebar-footer">
-                        <button className="save-draft">Guardar borrador</button>
-                    </div>
                 </aside>
 
                 {/* CENTER: PREVIEW */}
@@ -360,13 +357,61 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
                             </div>
                         </div>
 
-                        <div className={`preview-mockup ${variant}`}>
-                            {['story', 'reels', 'shorts'].includes(variant) ? (
+                        <div className={`preview-mockup ${variant} ${isGoogleAds ? 'google-ads-preview' : ''}`}>
+                            {isGoogleAds ? (
+                                <>
+                                    {variant === 'search' ? (
+                                        <div className="google-search-ad">
+                                            <div className="google-sponsored">
+                                                <span>Patrocinado</span>
+                                                <span className="dots-menu">⋮</span>
+                                            </div>
+                                            <div className="google-site-info">
+                                                <div className="google-favicon">
+                                                    <img src="/images/solo smm.png" alt="Favicon" />
+                                                </div>
+                                                <div className="google-site-names">
+                                                    <span className="google-domain">{destinationUrl ? destinationUrl.replace('https://', '').split('/')[0] : 'mhestate.es'}</span>
+                                                    <span className="google-path">{destinationUrl ? '/' + destinationUrl.replace('https://', '').split('/').slice(1).join('/') : ''}</span>
+                                                </div>
+                                            </div>
+                                            <h3 className="google-title">
+                                                {title ? title : 'Título del anuncio'} | Inmobiliaria de confianza
+                                            </h3>
+                                            <p className="google-desc">
+                                                {description ? description : 'Descripción del anuncio de Google Ads. Introduce detalles importantes para atraer clics.'}
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="google-display-ad">
+                                            <div className="display-banner-image">
+                                                {selectedMedia.length > 0 ? (
+                                                    <img src={selectedMedia[0].url} alt="Banner" />
+                                                ) : (
+                                                    <div className="display-banner-placeholder">Carga o selecciona una imagen</div>
+                                                )}
+                                            </div>
+                                            <div className="display-banner-content">
+                                                <div className="display-banner-header">
+                                                    <img src="/images/solo smm.png" className="display-logo" alt="Logo" />
+                                                    <span className="display-brand">NewHomes</span>
+                                                </div>
+                                                <h4 className="display-headline">{title ? title : 'Título del anuncio'}</h4>
+                                                <p className="display-description">{description ? description : 'Descripción corta del banner.'}</p>
+                                                <button className="display-cta-btn">{cta} ➔</button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
+                            ) : ['story', 'reels', 'shorts'].includes(variant) ? (
                                 <div className={`ig-preview-mockup ${variant}`}>
                                     <div className="status-bar"></div>
                                     <header>
-                                        <div className="avatar">
-                                            <img src="/images/instagram.png" alt="IG" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                                        <div className="avatar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                                            {isFacebook && <img src="/images/facebook.png" alt="Facebook" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />}
+                                            {isInstagram && <img src="/images/instagram.png" alt="Instagram" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />}
+                                            {isYouTube && <img src="/images/youtube.png" alt="YouTube" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />}
+                                            {!isFacebook && !isInstagram && !isYouTube && <img src="/images/solo smm.png" alt="SMM" style={{ width: '100%', height: '100%', objectFit: 'scale-down' }} />}
                                         </div>
                                         <div className="names">
                                             <b>NewHomes</b>
@@ -422,7 +467,12 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
                             ) : (
                                 <div className={`fb-preview-mockup ${variant}`}>
                                     <header>
-                                        <div className="avatar"></div>
+                                        <div className="avatar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                                            {isFacebook && <img src="/images/facebook.png" alt="Facebook" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />}
+                                            {isInstagram && <img src="/images/instagram.png" alt="Instagram" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />}
+                                            {isYouTube && <img src="/images/youtube.png" alt="YouTube" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />}
+                                            {!isFacebook && !isInstagram && !isYouTube && <img src="/images/solo smm.png" alt="SMM" style={{ width: '100%', height: '100%', objectFit: 'scale-down' }} />}
+                                        </div>
                                         <div className="names">
                                             <b>NewHomes</b>
                                             <span>{isYouTube ? '12.5 K suscriptores' : (isAds ? 'Publicidad' : 'Orgánico')}</span>
@@ -431,65 +481,95 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
                                     <div className="text-content">
                                         {title}
                                     </div>
-                                    <div className="media-container fb-grid">
+                                    <div className="media-container fb-mosaic-grid">
                                         {selectedMedia.length === 0 ? (
                                             <div className="media-placeholder">Sin multimedia</div>
                                         ) : selectedMedia.length === 1 ? (
-                                            <div className="single-media" style={{ height: '100%', width: '100%' }}>
+                                            /* Single image — full width */
+                                            <div className="mosaic-single">
                                                 {selectedMedia[0]?.type === 'video' ? (
                                                     selectedMedia[0].url.includes('youtube.com') || selectedMedia[0].url.includes('youtu.be') ? (
                                                         <iframe
                                                             src={`https://www.youtube.com/embed/${selectedMedia[0].url.includes('v=') ? selectedMedia[0].url.split('v=')[1].split('&')[0] : selectedMedia[0].url.split('/').pop()?.split('?')[0]}`}
-                                                            style={{ width: '100%', height: '400px', border: 'none' }}
+                                                            style={{ width: '100%', height: '100%', border: 'none' }}
                                                             allowFullScreen
                                                         />
                                                     ) : (
-                                                        <video src={selectedMedia[0].url} autoPlay muted loop style={{ width: '100%', height: 'auto' }} />
+                                                        <video src={selectedMedia[0].url} autoPlay muted loop />
                                                     )
                                                 ) : (
-                                                    <img src={selectedMedia[0]?.url} alt="" style={{ width: '100%', height: 'auto' }} />
+                                                    <img src={selectedMedia[0]?.url} alt="" />
                                                 )}
                                             </div>
                                         ) : selectedMedia.length === 2 ? (
-                                            <div className="fb-grid-2">
+                                            /* 2 images — side by side */
+                                            <div className="mosaic-row-2">
                                                 {selectedMedia.slice(0, 2).map((m, i) => (
-                                                    <div key={i} className="fb-grid-item">
-                                                        {m?.type === 'video' ? (
-                                                            m.url.includes('youtube.com') || m.url.includes('youtu.be') ? (
-                                                                <div style={{ height: '100%', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>▶️ YT</div>
-                                                            ) : (
-                                                                <video src={m.url} muted />
-                                                            )
-                                                        ) : (
-                                                            <img src={m?.url} alt="" />
-                                                        )}
+                                                    <div key={i} className="mosaic-cell">
+                                                        {m.type === 'video' ? <video src={m.url} muted /> : <img src={m.url} alt="" />}
                                                     </div>
                                                 ))}
                                             </div>
-                                        ) : (
-                                            /* Fallback for multi-media grid - simplified for brevity and stability */
-                                            <div className="fb-grid-mosaic">
-                                                <div className="fb-grid-main">
-                                                    {selectedMedia[0]?.type === 'video' ? (
-                                                        selectedMedia[0].url.includes('youtube.com') || selectedMedia[0].url.includes('youtu.be') ? (
-                                                            <iframe
-                                                                src={`https://www.youtube.com/embed/${selectedMedia[0].url.includes('v=') ? selectedMedia[0].url.split('v=')[1].split('&')[0] : selectedMedia[0].url.split('/').pop()?.split('?')[0]}`}
-                                                                style={{ width: '100%', height: '100%', border: 'none' }}
-                                                                allowFullScreen
-                                                            />
-                                                        ) : (
-                                                            <video src={selectedMedia[0].url} muted />
-                                                        )
-                                                    ) : (
-                                                        <img src={selectedMedia[0]?.url} alt="" />
-                                                    )}
+                                        ) : selectedMedia.length === 3 ? (
+                                            /* 3 images — 2 top, 1 bottom full */
+                                            <>
+                                                <div className="mosaic-row-2">
+                                                    {selectedMedia.slice(0, 2).map((m, i) => (
+                                                        <div key={i} className="mosaic-cell">
+                                                            {m.type === 'video' ? <video src={m.url} muted /> : <img src={m.url} alt="" />}
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                            </div>
+                                                <div className="mosaic-row-3">
+                                                    <div className="mosaic-cell">
+                                                        {selectedMedia[2].type === 'video' ? <video src={selectedMedia[2].url} muted /> : <img src={selectedMedia[2].url} alt="" />}
+                                                    </div>
+                                                </div>
+                                            </>
+                                        ) : selectedMedia.length === 4 ? (
+                                            /* 4 images — 2 top, 2 bottom */
+                                            <>
+                                                <div className="mosaic-row-2">
+                                                    {selectedMedia.slice(0, 2).map((m, i) => (
+                                                        <div key={i} className="mosaic-cell">
+                                                            {m.type === 'video' ? <video src={m.url} muted /> : <img src={m.url} alt="" />}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <div className="mosaic-row-2">
+                                                    {selectedMedia.slice(2, 4).map((m, i) => (
+                                                        <div key={i} className="mosaic-cell">
+                                                            {m.type === 'video' ? <video src={m.url} muted /> : <img src={m.url} alt="" />}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </>
+                                        ) : (
+                                            /* 5+ images — 2 top, 3 bottom with +N overlay on last */
+                                            <>
+                                                <div className="mosaic-row-2">
+                                                    {selectedMedia.slice(0, 2).map((m, i) => (
+                                                        <div key={i} className="mosaic-cell">
+                                                            {m.type === 'video' ? <video src={m.url} muted /> : <img src={m.url} alt="" />}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <div className="mosaic-row-3">
+                                                    {selectedMedia.slice(2, 5).map((m, i) => (
+                                                        <div key={i} className="mosaic-cell" style={{ position: 'relative' }}>
+                                                            {m.type === 'video' ? <video src={m.url} muted /> : <img src={m.url} alt="" />}
+                                                            {i === 2 && selectedMedia.length > 5 && (
+                                                                <div className="mosaic-overlay">+{selectedMedia.length - 5}</div>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </>
                                         )}
                                     </div>
                                     <footer>
                                         <div className="footer-meta">
-                                            <b>{destinationUrl.replace('https://', '').split('/')[0]}</b>
+                                            <b>{destinationUrl ? destinationUrl.replace('https://', '').split('/')[0] : 'enlace'}</b>
                                             <h3 style={{ fontSize: '1rem', margin: '4px 0' }}>{title}</h3>
                                             <p style={{ fontSize: '0.8rem', opacity: 0.7 }}>{description} <span style={{ color: '#b08d6d' }}>{hashtags}</span></p>
                                         </div>
@@ -517,6 +597,10 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
                         ))}
                     </div>
 
+                    <button className="publish-now-btn sidebar-publish" onClick={handlePublishLocal}>
+                        🚀 Publicar ahora
+                    </button>
+
                     <div className="ai-tip">
                         <span className="ai-icon">✨</span>
                         <p>Hemos optimizado el diseño para {variant}. Puedes editar textos y elementos para que se adapten a tu marca.</p>
@@ -524,10 +608,12 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
                 </aside>
             </div>
 
-            <div className="publish-footer">
-                <button className="program-btn">📅 Programar</button>
-                <button className="publish-now-btn" onClick={handlePublishLocal}>🚀 Publicar ahora</button>
+            {/* Mobile/Tablet Fallback Publish Button */}
+            <div className="mobile-publish-footer">
+                <button className="publish-now-btn" style={{ minWidth: '220px' }} onClick={handlePublishLocal}>🚀 Publicar ahora</button>
             </div>
+
+
 
             <style jsx>{`
         .ad-editor-screen {
@@ -742,9 +828,9 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
           flex: 1;
           background: #f7f3f0;
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           justify-content: center;
-          padding: 40px;
+          padding: 20px 40px;
         }
 
         .preview-container {
@@ -760,7 +846,7 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
         .view-controls .active { opacity: 1; color: #b08d6d; }
 
         .preview-mockup {
-           margin: auto;
+           margin: 0 auto;
            background: white;
            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
            border-radius: 20px;
@@ -807,25 +893,56 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
         .footer-meta { flex: 1; margin-right: 12px; display: flex; flex-direction: column; }
         .fb-preview-mockup .cta-btn { background: #fff; border: 1px solid #ddd; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; color: #1c1e21; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
 
-        /* FB MOSAIC GRID */
-        .fb-grid { background: white !important; }
-        .fb-grid-item { position: relative; overflow: hidden; border: 1px solid white; }
-        .fb-grid-item img, .fb-grid-item video { width: 100%; height: 100%; object-fit: cover; display: block; }
-        
-        .fb-grid-2 { display: grid; grid-template-columns: 1fr 1fr; height: 300px; }
-        
-        .fb-grid-3 { display: flex; height: 350px; }
-        .fb-grid-3 .main { flex: 2; height: 100%; }
-        .fb-grid-3 .fb-grid-sub { flex: 1; display: flex; flex-direction: column; height: 100%; }
-        
-        .fb-grid-multi, .fb-grid-mosaic { display: flex; flex-direction: column; min-height: 400px; }
-        .fb-grid-top { display: grid; grid-template-columns: 1fr 1fr; height: 250px; }
-        .fb-grid-bottom { display: grid; grid-template-columns: 1fr 1fr 1fr; height: 150px; }
-        
-        .fb-grid-main { height: 250px; border-bottom: 2px solid white; }
-        .fb-grid-main img, .fb-grid-main video { width: 100%; height: 100%; object-fit: cover; }
-        .fb-grid-row-3 { display: grid; grid-template-columns: repeat(3, 1fr); height: 150px; }
-        
+        /* FB MOSAIC GRID — new */
+        .fb-mosaic-grid {
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+          background: #f0f2f5;
+        }
+
+        .mosaic-single {
+          width: 100%;
+          height: 350px;
+        }
+        .mosaic-single img,
+        .mosaic-single video,
+        .mosaic-single iframe { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        .mosaic-row-2 {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 3px;
+          height: 200px;
+        }
+
+        .mosaic-row-3 {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 3px;
+          height: 150px;
+        }
+
+        .mosaic-cell {
+          overflow: hidden;
+          position: relative;
+        }
+        .mosaic-cell img,
+        .mosaic-cell video { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        .mosaic-overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.55);
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.8rem;
+          font-weight: 700;
+          letter-spacing: 1px;
+        }
+
         .grid-overlay {
            position: absolute;
            inset: 0;
@@ -837,6 +954,7 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
            font-size: 1.5rem;
            font-weight: 700;
         }
+
 
         /* CAROUSEL COMMON */
         .carousel-controls, .carousel-nav-fb {
@@ -916,24 +1034,258 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
         .ai-icon { font-size: 1.5rem; display: block; margin-bottom: 12px; }
         .ai-tip p { font-size: 0.75rem; line-height: 1.5; opacity: 0.6; }
 
-        .publish-footer {
-          height: 80px;
-          background: white;
-          border-top: 1px solid rgba(0,0,0,0.05);
-          display: flex;
-          align-items: center;
-          justify-content: flex-end;
-          padding: 0 40px;
-          gap: 16px;
+        .sidebar-publish {
+          width: 100%;
+          margin-top: 20px;
+          margin-bottom: 20px;
+          padding: 14px 24px;
+          font-size: 1rem;
+          cursor: pointer;
+          text-align: center;
+          display: block;
         }
 
-        .program-btn { font-weight: 600; font-size: 0.9rem; opacity: 0.7; padding: 12px 24px; border: 1px solid #eee; border-radius: 30px; }
+        .mobile-publish-footer {
+          display: none;
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 70px;
+          background: white;
+          border-top: 1px solid rgba(0,0,0,0.05);
+          align-items: center;
+          justify-content: center;
+          padding: 0 20px;
+          z-index: 999;
+          box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+        }
+
         .publish-now-btn { background: #b08d6d; color: white; border: none; padding: 12px 32px; border-radius: 30px; font-weight: 700; font-size: 0.9rem; box-shadow: 0 10px 20px rgba(176, 141, 109, 0.2); transition: all 0.2s; }
         .publish-now-btn:hover { background: #9a7b5d; transform: translateY(-2px); box-shadow: 0 12px 24px rgba(176, 141, 109, 0.3); }
 
+
+        /* GOOGLE ADS SEARCH MOCKUP - wrapper override */
+        .preview-mockup.google-ads-preview.search {
+            width: 500px;
+            min-height: unset !important;
+            height: auto !important;
+            border-radius: 12px;
+            padding: 16px;
+            background: white;
+            box-sizing: border-box;
+            border: 1px solid #dadce0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+            font-family: Arial, sans-serif;
+            text-align: left;
+        }
+        .google-sponsored {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: #202124;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+        .google-site-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+        .google-favicon {
+            width: 18.01px;
+            height: 18.01px;
+            border-radius: 50%;
+            background: #f1f3f4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .google-favicon img {
+            width: 12px;
+            height: 12px;
+            object-fit: contain;
+        }
+        .google-site-names {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+        .google-domain {
+            font-size: 12px;
+            color: #202124;
+            font-weight: 500;
+        }
+        .google-path {
+            font-size: 11px;
+            color: #5f6368;
+        }
+        .google-title {
+            font-size: 20px;
+            color: #1a0dab;
+            font-weight: 400;
+            margin: 4px 0 6px 0;
+            font-family: Roboto, Arial, sans-serif;
+            line-height: 1.3;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .google-title:hover {
+            text-decoration: underline;
+        }
+        .google-desc {
+            font-size: 14px;
+            color: #4d5156;
+            line-height: 1.57;
+            margin: 0;
+        }
+
+        /* GOOGLE ADS DISPLAY MOCKUP - wrapper override */
+        .preview-mockup.google-ads-preview.display {
+            width: 500px;
+            min-height: unset !important;
+            height: 250px !important;
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            background: #f8f9fa;
+            border: 1px solid #dadce0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+            font-family: Roboto, Arial, sans-serif;
+            text-align: left;
+        }
+        .google-display-ad {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+        .display-banner-image {
+            flex: 1.2;
+            height: 100%;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .display-banner-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .display-banner-placeholder {
+            color: #888;
+            font-size: 12px;
+            text-align: center;
+            padding: 10px;
+        }
+        .display-banner-content {
+            flex: 1;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background: white;
+            border-left: 1px solid #f1f3f4;
+            box-sizing: border-box;
+        }
+        .display-banner-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+        .display-logo {
+            width: 16px;
+            height: 16px;
+            object-fit: contain;
+        }
+        .display-brand {
+            font-size: 11px;
+            font-weight: bold;
+            color: #5f6368;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .display-headline {
+            font-size: 15px;
+            font-weight: 500;
+            color: #202124;
+            margin: 0 0 6px 0;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .display-description {
+            font-size: 12px;
+            color: #5f6368;
+            margin: 0;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .display-cta-btn {
+            align-self: flex-start;
+            background: #1a73e8;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 8px;
+        }
+        .display-cta-btn:hover {
+            background: #1557b0;
+        }
+
         @media (max-width: 1200px) {
            .variant-sidebar { display: none; }
+           .mobile-publish-footer { 
+             display: flex; 
+             position: sticky; 
+             bottom: 0; 
+             background: white;
+             z-index: 999;
+             padding: 15px;
+             border-top: 1px solid rgba(0,0,0,0.05);
+           }
         }
+
+        @media (max-width: 900px) {
+          .ad-editor-screen {
+            height: auto;
+            overflow-y: auto;
+          }
+          .main-layout {
+            flex-direction: column;
+            overflow: visible;
+          }
+          .editor-sidebar {
+            width: 100%;
+            border-right: none;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+          }
+          .preview-area {
+            width: 100%;
+            padding: 20px 10px;
+            margin-bottom: 80px; /* Keep bottom space for sticky footer */
+          }
+          .preview-mockup.feed, .preview-mockup.video, .preview-mockup.display {
+            width: 100%;
+            max-width: 500px;
+          }
+        }
+
       `}</style>
         </div>
     );

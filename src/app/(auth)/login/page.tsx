@@ -4,6 +4,7 @@ import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import styles from "./Login.module.css";
 
 export default function LoginPage() {
@@ -11,6 +12,8 @@ export default function LoginPage() {
   const { data: session, status } = useSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [totpCode, setTotpCode] = useState("");
+  const [showMfa, setShowMfa] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -25,18 +28,29 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    const result = await signIn("credentials", {
+    const signInData: any = {
       redirect: false,
       email,
       password,
-    });
+    };
+
+    if (showMfa) {
+      signInData.totpCode = totpCode;
+    }
+
+    const result = await signIn("credentials", signInData);
 
     if (result?.error) {
-      setError("Credenciales inválidas. Por favor, inténtalo de nuevo.");
-      setLoading(false);
+      if (result.error === "MFA_REQUIRED") {
+        setShowMfa(true);
+        setLoading(false);
+      } else {
+        setError(result.error);
+        setLoading(false);
+      }
     } else {
       router.push("/");
-      router.refresh(); // Refresh to update server components with session state
+      router.refresh();
     }
   };
 
@@ -45,9 +59,17 @@ export default function LoginPage() {
       <div className={`glass-panel ${styles.card}`}>
         <div className={styles.header}>
           <div className={styles.logoContainer}>
-            <Image src="/images/logo-econos.png" alt="Econos" width={160} height={50} className={styles.logo} priority />
-            <div className={styles.divider}></div>
-            <Image src="/images/logo-smm.png" alt="SMM" width={100} height={40} className={styles.logo} priority />
+            <Image
+              src="/images/logo-econos.png"
+              alt="Econos"
+              width={160}
+              height={45}
+              priority
+              className={styles.logoEconos}
+              style={{ objectFit: 'contain' }}
+            />
+            <div className={styles.divider} />
+            <Image src="/images/logo-smm.png" alt="SMM" width={130} height={40} priority style={{ objectFit: 'contain' }} />
           </div>
           <p className={styles.subtitle}>Inicia sesión para gestionar tus campañas</p>
         </div>
@@ -55,38 +77,71 @@ export default function LoginPage() {
         <form className={styles.form} onSubmit={handleSubmit}>
           {error && <div className={styles.error}>{error}</div>}
 
-          <div className={styles.formGroup}>
-            <label htmlFor="email" className={styles.label}>Correo Electrónico</label>
-            <input
-              id="email"
-              type="email"
-              placeholder="admin@example.com"
-              className={styles.input}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={loading}
-              required
-            />
-          </div>
+          {!showMfa ? (
+            <>
+              <div className={styles.formGroup}>
+                <label htmlFor="email" className={styles.label}>Correo Electrónico</label>
+                <input
+                  id="email"
+                  type="email"
+                  placeholder="admin@example.com"
+                  className={styles.input}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={loading}
+                  required
+                />
+              </div>
 
-          <div className={styles.formGroup}>
-            <label htmlFor="password" className={styles.label}>Contraseña</label>
-            <input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              className={styles.input}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
-              required
-            />
-          </div>
+              <div className={styles.formGroup}>
+                <label htmlFor="password" className={styles.label}>Contraseña</label>
+                <input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  className={styles.input}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
+                  required
+                />
+              </div>
+            </>
+          ) : (
+            <div className={styles.formGroup}>
+              <label htmlFor="totpCode" className={styles.label}>Código de Seguridad (MFA)</label>
+              <input
+                id="totpCode"
+                type="text"
+                maxLength={6}
+                pattern="[0-9]*"
+                inputMode="numeric"
+                placeholder="000000"
+                className={styles.input}
+                value={totpCode}
+                onChange={(e) => setTotpCode(e.target.value)}
+                disabled={loading}
+                required
+                autoFocus
+              />
+              <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
+                Introduce el código de 6 dígitos generado por tu app de autenticación.
+              </p>
+            </div>
+          )}
 
           <button type="submit" className={styles.button} disabled={loading}>
-            {loading ? "Iniciando sesión..." : "Ingresar"}
+            {loading ? "Procesando..." : (showMfa ? "Verificar y Entrar" : "Ingresar")}
           </button>
         </form>
+
+        <div className={styles.extraLinks} style={{ marginTop: "1rem", textAlign: "center", fontSize: "0.85rem" }}>
+          <Link href="/forgot-password" className={styles.legalLink}>¿Olvidaste tu contraseña?</Link>
+          <div style={{ marginTop: "0.5rem" }}>
+            <span>¿No tienes cuenta? </span>
+            <Link href="/register" className={styles.legalLink} style={{ fontWeight: "600", color: "var(--accent-primary)" }}>Regístrate aquí</Link>
+          </div>
+        </div>
 
         <footer className={styles.footer}>
           <div className={styles.legalLinks}>

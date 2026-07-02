@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -19,13 +19,17 @@ model User {
   password      String?
   image         String?
   role          String    @default("VIEWER") // SUPER_ADMIN, ADMIN, EDITOR, VIEWER
+  status        String    @default("PENDING") // PENDING, APPROVED, BLOCKED
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  // Limits per platform (Phase 11)
-  maxFacebookAccounts   Int @default(1)
-  maxInstagramAccounts  Int @default(1)
-  maxYouTubeAccounts    Int @default(1)
+  // MFA (Two-Factor Authentication)
+  mfaSecret     String?
+  mfaEnabled    Boolean   @default(false)
+
+  // Relationship with Package
+  packageId     String?   
+  package       Package?  @relation(fields: [packageId], references: [id])
 
   accounts      Account[]
   sessions      Session[]
@@ -33,6 +37,18 @@ model User {
   socialAccounts  SocialAccount[]
   campaigns       Campaign[]
   passwordResetTokens PasswordResetToken[]
+}
+
+model Package {
+  id            String    @id @default(cuid())
+  name          String    @unique
+  maxFacebook   Int       @default(1)
+  maxInstagram  Int       @default(1)
+  maxYouTube    Int       @default(1)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  users         User[]
 }
 
 // NextAuth models

@@ -5,28 +5,28 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
 export async function PUT(
-  req: NextRequest, 
+  req: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   const { id } = await context.params;
   const session = await getServerSession(authOptions);
-  
+
   if (!session || session.user?.role !== "SUPER_ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
     const body = await req.json();
-    const { name, email, password, role, maxFacebookAccounts, maxInstagramAccounts, maxYouTubeAccounts } = body;
-    
+    const { name, email, password, role, status, maxFacebookAccounts, maxInstagramAccounts, maxYouTubeAccounts } = body;
+
     const existingUser = await prisma.user.findUnique({
       where: { id },
     });
-    
+
     if (!existingUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
-    
+
     if (existingUser.role === "SUPER_ADMIN" && role && role !== "SUPER_ADMIN") {
       const superAdminsCount = await prisma.user.count({ where: { role: "SUPER_ADMIN" } });
       if (superAdminsCount <= 1) {
@@ -34,33 +34,49 @@ export async function PUT(
       }
     }
 
-    const dataToUpdate: any = { name, role };
+    const dataToUpdate: any = {};
+    if (name) dataToUpdate.name = name;
+    if (role) dataToUpdate.role = role;
+    if (status) dataToUpdate.status = status;
     if (email) dataToUpdate.email = email.toLowerCase();
     if (password) dataToUpdate.password = await bcrypt.hash(password, 10);
-    
-    if (maxFacebookAccounts !== undefined) dataToUpdate.maxFacebookAccounts = maxFacebookAccounts;
-    if (maxInstagramAccounts !== undefined) dataToUpdate.maxInstagramAccounts = maxInstagramAccounts;
-    if (maxYouTubeAccounts !== undefined) dataToUpdate.maxYouTubeAccounts = maxYouTubeAccounts;
+    if (body.packageId !== undefined) dataToUpdate.packageId = body.packageId || null;
 
     const updatedUser = await prisma.user.update({
       where: { id },
       data: dataToUpdate,
-      select: { id: true, name: true, email: true, role: true }
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        status: true,
+        packageId: true,
+        package: true
+      }
     });
+
+    // If account was approved, send email
+    if (status === "APPROVED" && existingUser.status !== "APPROVED") {
+      const { sendEmail, emailTemplates } = require("@/lib/email");
+      const template = emailTemplates.registrationApproved(updatedUser.name || "Usuario", updatedUser.email);
+      await sendEmail(updatedUser.email, template.subject, template.html);
+    }
 
     return NextResponse.json(updatedUser);
   } catch (error) {
+    console.error("Update user error:", error);
     return NextResponse.json({ error: "Failed to update user" }, { status: 500 });
   }
 }
 
 export async function DELETE(
-  req: NextRequest, 
+  req: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   const { id } = await context.params;
   const session = await getServerSession(authOptions);
-  
+
   if (!session || session.user?.role !== "SUPER_ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -71,11 +87,11 @@ export async function DELETE(
 
   try {
     const existingUser = await prisma.user.findUnique({ where: { id } });
-    
+
     if (!existingUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
-    
+
     if (existingUser.role === "SUPER_ADMIN") {
       const superAdminsCount = await prisma.user.count({ where: { role: "SUPER_ADMIN" } });
       if (superAdminsCount <= 1) {

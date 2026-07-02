@@ -334,8 +334,8 @@ export async function POST(req: NextRequest) {
 
     let result;
 
-    // Detector específico: mhestate.es
-    const mhMatch = url.match(/mhestate\.es\/propiedad[?&]id=(\d+)/i);
+    // Detector específico: mhestate.es (admite propiedad.php?id=X, /es/propiedad?id=X, y urls tipo compra/inmueble-ID)
+    const mhMatch = url.match(/mhestate\.es\/.*(?:id=|\-)(\d+)/i);
     if (mhMatch) {
       result = await scrapeMHEstate(mhMatch[1], url);
     } else {
