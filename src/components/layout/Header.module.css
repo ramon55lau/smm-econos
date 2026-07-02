@@ -220,9 +220,7 @@
   animation: slideUp 0.2s ease-out;
 }
 
-.userSection:hover .userDropdown {
-  display: block;
-}
+/* Controlled by React state */
 
 .dropdownItem {
   width: 100%;

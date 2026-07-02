@@ -131,10 +131,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* ── Logo ── */}
       <div className={styles.logoContainer}>
         <div className={styles.logoCollapsed}>
-          <Image src="/images/solo smm.png" alt="Icon" width={36} height={36} className={styles.iconLogo} />
+          <Image src="/images/solo smm.png" alt="Icon" width={36} height={36} className={styles.iconLogo} unoptimized />
         </div>
         <div className={styles.logoExpanded}>
-          <Image src="/images/logo-smm.png" alt="SMM Logo" width={160} height={44} className={styles.smmLogo} priority />
+          <Image src="/images/logo-smm.png" alt="SMM Logo" width={160} height={44} className={styles.smmLogo} priority unoptimized />
         </div>
 
         {onClose && (
