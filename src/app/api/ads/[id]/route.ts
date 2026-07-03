@@ -16,7 +16,7 @@ export async function GET(
     if (!ad) {
       return NextResponse.json({ error: "Ad not found" }, { status: 404 });
     }
-    return NextResponse.json(ad);
+    return NextResponse.json(ad, { status: 200 });
   } catch (error) {
     console.error("GET /api/ads/[id] error:", error);
     return NextResponse.json({ error: "Failed to fetch ad details" }, { status: 500 });

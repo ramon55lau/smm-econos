@@ -9,7 +9,7 @@ export async function GET() {
 
   try {
     const userAds = await AdService.getUserAds(session.user.id);
-    return NextResponse.json(userAds);
+    return NextResponse.json(userAds, { status: 200 });
   } catch (error) {
     return NextResponse.json({ error: "Failed to fetch ads" }, { status: 500 });
   }
