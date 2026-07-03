@@ -88,10 +88,6 @@ export function Header({ onMenuToggle, isCollapsed }: HeaderProps) {
       </div>
 
       <div className={styles.actions}>
-        <div className={styles.versionBadge} title="Versión de la aplicación">
-          v1.2.5
-        </div>
-
         <div className={styles.userSection}>
           <button
             className={styles.profileBtn}

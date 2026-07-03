@@ -256,7 +256,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             <IconLogout />
           </button>
         </div>
-        <div className={styles.versionTag}>V3.0</div>
+        <div className={styles.versionTag}>v1.2.5</div>
       </div>
     </aside>
   );
