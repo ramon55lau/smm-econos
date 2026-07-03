@@ -16,8 +16,7 @@ export async function POST(req: NextRequest) {
         });
 
         if (!user) {
-            // For security reasons, don't reveal if user exists or not
-            return NextResponse.json({ message: "Si el correo está registrado, recibirás un enlace de recuperación." });
+            return NextResponse.json({ error: "No hay usuarios registrados con ese correo." }, { status: 404 });
         }
 
         // Generate token

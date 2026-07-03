@@ -25,10 +25,15 @@ export default function ForgotPasswordPage() {
             });
 
             const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || "Ocurrió un error");
+            }
+
             setMessage(data.message || "Se ha enviado un correo con instrucciones.");
             setLoading(false);
         } catch (err: any) {
-            setError("Ocurrió un error. Inténtalo más tarde.");
+            setError(err.message || "Ocurrió un error. Inténtalo más tarde.");
             setLoading(false);
         }
     };

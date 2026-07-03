@@ -13,6 +13,7 @@ export default function RegisterPage() {
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
+    const [userExists, setUserExists] = useState(false);
     const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -30,6 +31,11 @@ export default function RegisterPage() {
             const data = await res.json();
 
             if (!res.ok) {
+                if (data.error === "El usuario ya existe") {
+                    setUserExists(true);
+                    setLoading(false);
+                    return;
+                }
                 throw new Error(data.error || "Ocurrió un error");
             }
 
@@ -40,6 +46,42 @@ export default function RegisterPage() {
             setLoading(false);
         }
     };
+
+    if (userExists) {
+        return (
+            <div className={styles.container}>
+                <div className={`glass-panel ${styles.card}`}>
+                    <div className={styles.header}>
+                        <div className={styles.logoContainer}>
+                            <Image
+                                src="/images/logo-econos.png"
+                                alt="Econos"
+                                width={160}
+                                height={45}
+                                priority
+                                className={styles.logoEconos}
+                                style={{ objectFit: 'contain' }}
+                            />
+                            <div className={styles.divider} />
+                            <Image src="/images/logo-smm.png" alt="SMM" width={130} height={40} priority style={{ objectFit: 'contain' }} />
+                        </div>
+                        <h2 style={{ color: "var(--danger)", marginBottom: "1rem", marginTop: "1rem" }}>¡Usuario ya Registrado!</h2>
+                        <p className={styles.subtitle} style={{ marginBottom: "1.5rem" }}>
+                            El correo electrónico <strong>{email}</strong> ya se encuentra registrado en nuestra base de datos.
+                        </p>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", width: "100%" }}>
+                        <Link href="/login" className={styles.button} style={{ textAlign: "center", display: "block", textDecoration: "none" }}>
+                            Iniciar Sesión
+                        </Link>
+                        <Link href="/forgot-password" className={styles.button} style={{ textAlign: "center", display: "block", textDecoration: "none", background: "none", border: "1px solid var(--accent-primary)", color: "var(--text-primary)", boxShadow: "none" }}>
+                            Recuperar Contraseña
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     if (success) {
         return (
