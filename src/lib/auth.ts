@@ -5,12 +5,20 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
 import { checkRateLimit, recordFailedAttempt, clearAttempts, getRemainingAttempts } from "@/lib/rate-limiter";
 
+const SESSION_MAX_AGE = process.env.SESSION_MAX_AGE
+  ? parseInt(process.env.SESSION_MAX_AGE, 10)
+  : 24 * 60 * 60; // default 24 hours
+
+const SESSION_UPDATE_AGE = process.env.SESSION_UPDATE_AGE
+  ? parseInt(process.env.SESSION_UPDATE_AGE, 10)
+  : 4 * 60 * 60; // default 4 hours
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as any,
   session: {
     strategy: "jwt",
-    maxAge: 24 * 60 * 60, // 24 hours — explicit session expiration
-    updateAge: 4 * 60 * 60, // Refresh token representation every 4 hours
+    maxAge: SESSION_MAX_AGE,
+    updateAge: SESSION_UPDATE_AGE,
   },
   pages: {
     signIn: "/login",
