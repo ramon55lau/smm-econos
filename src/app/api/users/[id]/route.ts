@@ -21,6 +21,7 @@ export async function PUT(
 
     const existingUser = await prisma.user.findUnique({
       where: { id },
+      include: { package: true },
     });
 
     if (!existingUser) {
@@ -56,11 +57,37 @@ export async function PUT(
       }
     });
 
-    // If account was approved, send email
-    if (status === "APPROVED" && existingUser.status !== "APPROVED") {
+    // Send notification emails based on status/package changes
+    try {
       const { sendEmail, emailTemplates } = require("@/lib/email");
-      const template = emailTemplates.registrationApproved(updatedUser.name || "Usuario", updatedUser.email);
-      await sendEmail(updatedUser.email, template.subject, template.html);
+
+      // If account was approved (from pending or suspended)
+      if (status === "APPROVED" && existingUser.status !== "APPROVED") {
+        const template = emailTemplates.registrationApproved(updatedUser.name || "Usuario", updatedUser.email);
+        await sendEmail(updatedUser.email, template.subject, template.html);
+      }
+
+      // If account was suspended
+      if (status === "SUSPENDED" && existingUser.status !== "SUSPENDED") {
+        const template = emailTemplates.accountSuspended(updatedUser.name || "Usuario");
+        await sendEmail(updatedUser.email, template.subject, template.html);
+      }
+
+      // If package was changed
+      if (body.packageId !== undefined && body.packageId !== existingUser.packageId) {
+        const pkg = updatedUser.package;
+        if (pkg) {
+          const template = emailTemplates.packageUpdated(
+            updatedUser.name || "Usuario",
+            pkg.name,
+            { facebook: pkg.maxFacebook, instagram: pkg.maxInstagram, youtube: pkg.maxYouTube }
+          );
+          await sendEmail(updatedUser.email, template.subject, template.html);
+        }
+      }
+    } catch (emailError) {
+      console.error("Error sending notification email:", emailError);
+      // Don't fail the update if email fails
     }
 
     return NextResponse.json(updatedUser);
