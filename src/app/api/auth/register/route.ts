@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
-import { sendEmail, emailTemplates } from "@/lib/email";
+import { sendEmail, emailTemplates, ADMIN_EMAIL } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
     try {
@@ -35,6 +35,14 @@ export async function POST(req: NextRequest) {
         // Send email to user informing about the review process
         const template = emailTemplates.registrationPending(name);
         await sendEmail(email, template.subject, template.html);
+
+        // Send notification to admin about new registration
+        try {
+            const adminTemplate = emailTemplates.adminNewRegistration(name, email);
+            await sendEmail(ADMIN_EMAIL, adminTemplate.subject, adminTemplate.html);
+        } catch (adminEmailError) {
+            console.error("Error sending admin notification:", adminEmailError);
+        }
 
         return NextResponse.json(
             { message: "Usuario registrado con éxito. Tu cuenta está en revisión." },
