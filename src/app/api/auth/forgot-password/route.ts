@@ -34,7 +34,10 @@ export async function POST(req: NextRequest) {
         });
 
         // Send email
-        const resetUrl = `${process.env.NEXTAUTH_URL}/reset-password?token=${token}`;
+        const protocol = req.headers.get("x-forwarded-proto") || "https";
+        const host = req.headers.get("host");
+        const baseUrl = process.env.NEXTAUTH_URL || `${protocol}://${host}` || "https://smm.econos.io";
+        const resetUrl = `${baseUrl}/reset-password?token=${token}`;
         const template = emailTemplates.passwordReset(user.name || "Usuario", resetUrl);
         await sendEmail(user.email, template.subject, template.html);
 

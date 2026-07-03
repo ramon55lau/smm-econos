@@ -38,7 +38,17 @@ export default function ForgotPasswordPage() {
             <div className={`glass-panel ${styles.card}`}>
                 <div className={styles.header}>
                     <div className={styles.logoContainer}>
-                        <Image src="/images/logo-econos.png" alt="Econos" width={160} height={50} className={styles.logo} priority />
+                        <Image
+                            src="/images/logo-econos.png"
+                            alt="Econos"
+                            width={160}
+                            height={45}
+                            priority
+                            className={styles.logoEconos}
+                            style={{ objectFit: 'contain' }}
+                        />
+                        <div className={styles.divider} />
+                        <Image src="/images/logo-smm.png" alt="SMM" width={130} height={40} priority style={{ objectFit: 'contain' }} />
                     </div>
                     <h2 style={{ color: "var(--text-primary)", marginBottom: "0.5rem" }}>Recuperar Contraseña</h2>
                     <p className={styles.subtitle}>Ingresa tu correo para recibir un enlace de recuperación</p>

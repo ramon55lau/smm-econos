@@ -8,7 +8,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const BASE_URL = process.env.NEXTAUTH_URL || "https://smm.econos.io";
+export const BASE_URL = process.env.NEXTAUTH_URL || "https://smm.econos.io";
 const LOGO_ECONOS = `${BASE_URL}/images/logo-econos.png`;
 const LOGO_SMM = `${BASE_URL}/images/logo-smm.png`;
 
