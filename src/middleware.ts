@@ -26,6 +26,6 @@ export const config = {
          * - favicon.ico (favicon file)
          * - public files (images, etc.)
          */
-        "/((?!api/auth|api/webhooks|login|register|_next/static|_next/image|favicon.ico|privacy-policy).*)",
+        "/((?!api/auth|api/webhooks|login|register|_next/static|_next/image|favicon\\.ico|favicon\\.png|images|privacy-policy|terms|data-deletion).*)"
     ],
 };

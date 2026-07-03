@@ -194,14 +194,14 @@
 
 .iconLogo {
   object-fit: contain;
-  width: auto;
-  height: auto;
+  width: 28px;
+  height: 28px;
 }
 
 .smmLogo {
   object-fit: contain;
   width: auto;
-  height: auto;
+  height: 42px;
   transition: transform var(--transition-smooth);
 }
 
