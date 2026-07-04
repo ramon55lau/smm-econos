@@ -43,7 +43,22 @@ export async function PUT(
     if (password) dataToUpdate.password = await bcrypt.hash(password, 10);
     if (body.packageId !== undefined) dataToUpdate.packageId = body.packageId || null;
 
-    const updatedUser = await prisma.user.update({
+    // Handle membership expiry
+    const targetRole = role || existingUser.role;
+    if (["SUPER_ADMIN", "ADMIN"].includes(targetRole)) {
+      dataToUpdate.expiresAt = null; // Admins and Super Admins do not expire
+    } else if (status === "APPROVED" && existingUser.status !== "APPROVED") {
+      // If approved, set expiration to 30 days from now
+      if (!body.expiresAt) {
+        dataToUpdate.expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      }
+    }
+
+    if (body.expiresAt !== undefined) {
+      dataToUpdate.expiresAt = body.expiresAt ? new Date(body.expiresAt) : null;
+    }
+
+    const updatedUser = await (prisma.user as any).update({
       where: { id },
       data: dataToUpdate,
       select: {
@@ -52,6 +67,7 @@ export async function PUT(
         email: true,
         role: true,
         status: true,
+        expiresAt: true,
         packageId: true,
         package: true
       }
@@ -63,7 +79,11 @@ export async function PUT(
 
       // If account was approved (from pending or suspended)
       if (status === "APPROVED" && existingUser.status !== "APPROVED") {
-        const template = emailTemplates.registrationApproved(updatedUser.name || "Usuario", updatedUser.email);
+        const template = emailTemplates.registrationApproved(
+          updatedUser.name || "Usuario",
+          updatedUser.email,
+          (updatedUser as any).expiresAt
+        );
         await sendEmail(updatedUser.email, template.subject, template.html);
       }
 
@@ -75,7 +95,7 @@ export async function PUT(
 
       // If package was changed
       if (body.packageId !== undefined && body.packageId !== existingUser.packageId) {
-        const pkg = updatedUser.package;
+        const pkg = (updatedUser as any).package;
         if (pkg) {
           const template = emailTemplates.packageUpdated(
             updatedUser.name || "Usuario",

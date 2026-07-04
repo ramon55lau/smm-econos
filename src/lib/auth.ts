@@ -70,6 +70,12 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Su cuenta está pendiente de aprobación por el administrador.");
         }
 
+        // Check if user is expired (except for admins)
+        const isExempt = user.role === "SUPER_ADMIN" || user.role === "ADMIN";
+        if (!isExempt && (user as any).expiresAt && new Date((user as any).expiresAt) < new Date()) {
+          throw new Error("Su membresía ha caducado. Por favor, contacte al administrador.");
+        }
+
         // 2. MFA verification (if enabled)
         if (user.mfaEnabled && user.mfaSecret) {
           const totpCode = credentials.totpCode;
@@ -95,6 +101,7 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           role: user.role,
           status: user.status,
+          expiresAt: (user as any).expiresAt,
         };
       }
     })
@@ -104,6 +111,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.role = user.role;
         token.id = user.id;
+        token.expiresAt = (user as any).expiresAt ? new Date((user as any).expiresAt).toISOString() : null;
       }
       return token;
     },
@@ -111,6 +119,7 @@ export const authOptions: NextAuthOptions = {
       if (token && session.user) {
         session.user.role = token.role as string;
         session.user.id = token.id as string;
+        session.user.expiresAt = token.expiresAt as string | null;
       }
       return session;
     }

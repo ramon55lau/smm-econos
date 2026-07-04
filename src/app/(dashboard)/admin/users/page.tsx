@@ -21,6 +21,7 @@ type User = {
   packageId?: string;
   package?: Package;
   createdAt: string;
+  expiresAt?: string | null;
 };
 
 const ROLES = ["SUPER_ADMIN", "ADMIN", "EDITOR", "VIEWER"];
@@ -45,7 +46,8 @@ export default function UsersPage() {
     password: "",
     role: "VIEWER",
     status: "APPROVED",
-    packageId: ""
+    packageId: "",
+    expiresAt: ""
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -87,7 +89,8 @@ export default function UsersPage() {
         password: "",
         role: user.role,
         status: user.status || "APPROVED",
-        packageId: user.packageId || ""
+        packageId: user.packageId || "",
+        expiresAt: user.expiresAt ? user.expiresAt.substring(0, 10) : ""
       });
     } else {
       setFormData({
@@ -96,7 +99,8 @@ export default function UsersPage() {
         password: "",
         role: "VIEWER",
         status: "PENDING",
-        packageId: packages[0]?.id || ""
+        packageId: packages[0]?.id || "",
+        expiresAt: ""
       });
     }
     setError("");
@@ -199,6 +203,7 @@ export default function UsersPage() {
               <th className={styles.th}>Email</th>
               <th className={styles.th}>Rol</th>
               <th className={styles.th}>Estado</th>
+              <th className={styles.th}>Vencimiento</th>
               <th className={styles.th}>Paquete / Plan</th>
               <th className={styles.th}>Límites</th>
               <th className={styles.th}>Fecha Creación</th>
@@ -214,6 +219,21 @@ export default function UsersPage() {
                 <td className={styles.td}>{user.email}</td>
                 <td className={styles.td}>{getRoleBadge(user.role)}</td>
                 <td className={styles.td}>{getStatusBadge(user.status)}</td>
+                <td className={styles.td}>
+                  {["SUPER_ADMIN", "ADMIN"].includes(user.role) ? (
+                    <span style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>No expira</span>
+                  ) : user.expiresAt ? (
+                    <span style={{
+                      fontWeight: 500,
+                      color: new Date(user.expiresAt) < new Date() ? "var(--danger)" : "var(--text-secondary)"
+                    }}>
+                      {new Date(user.expiresAt).toLocaleDateString()}
+                      {new Date(user.expiresAt) < new Date() && " (Vencido)"}
+                    </span>
+                  ) : (
+                    <span style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>Sin fecha</span>
+                  )}
+                </td>
                 <td className={styles.td}>
                   <span style={{ fontWeight: 600 }}>{user.package?.name || "Sin plan"}</span>
                 </td>
@@ -337,6 +357,21 @@ export default function UsersPage() {
                   ))}
                 </select>
               </div>
+
+              {!["SUPER_ADMIN", "ADMIN"].includes(formData.role) && (
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Fecha de Vencimiento de Membresía</label>
+                  <input
+                    type="date"
+                    className={styles.input}
+                    value={formData.expiresAt}
+                    onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
+                  />
+                  <small style={{ color: "var(--text-muted)", fontSize: "0.75rem", marginTop: "-4px" }}>
+                    Si se dejas en blanco, al aprobar o guardar se calcularán 30 días automáticamente.
+                  </small>
+                </div>
+              )}
 
               <div className={styles.modalFooter}>
                 <button type="button" className={styles.cancelBtn} onClick={closeModal} disabled={saving}>

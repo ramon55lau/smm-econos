@@ -104,19 +104,45 @@ export const emailTemplates = {
   }),
 
   // ── User: Registration approved ──
-  registrationApproved: (name: string, email: string) => ({
-    subject: "✅ ¡Bienvenido! Tu cuenta en Econos SMM ha sido aprobada",
-    html: brandedEmail(`
-      <h2 style="color: #28a745; margin: 0 0 16px;">¡Buenas noticias, ${name}!</h2>
-      <p>Tu cuenta en <strong>Econos - Social Media Manager</strong> ha sido <strong style="color: #28a745;">aprobada</strong>.</p>
-      <p>Ya puedes acceder a la plataforma con tus credenciales:</p>
-      <div style="background: #f8f9fa; padding: 14px 18px; border-radius: 6px; margin: 16px 0;">
-        <p style="margin: 0;"><strong>Email:</strong> ${email}</p>
-        <p style="margin: 4px 0 0;"><strong>Estado:</strong> <span style="color: #28a745;">Activo ✓</span></p>
-      </div>
-      ${brandedButton("Iniciar Sesión", `${BASE_URL}/login`, "#28a745")}
-    `),
-  }),
+  registrationApproved: (name: string, email: string, expiresAt?: Date | string | null) => {
+    const formattedDate = expiresAt
+      ? new Date(expiresAt).toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "numeric" })
+      : "No expira (Membresía ilimitada)";
+    return {
+      subject: "✅ ¡Bienvenido! Tu cuenta en Econos SMM ha sido aprobada",
+      html: brandedEmail(`
+        <h2 style="color: #28a745; margin: 0 0 16px;">¡Buenas noticias, ${name}!</h2>
+        <p>Tu cuenta en <strong>Econos - Social Media Manager</strong> ha sido <strong style="color: #28a745;">aprobada</strong>.</p>
+        <p>Ya puedes acceder a la plataforma con tus credenciales:</p>
+        <div style="background: #f8f9fa; padding: 14px 18px; border-radius: 6px; margin: 16px 0;">
+          <p style="margin: 0;"><strong>Email:</strong> ${email}</p>
+          <p style="margin: 4px 0 0;"><strong>Estado:</strong> <span style="color: #28a745;">Activo ✓</span></p>
+          <p style="margin: 4px 0 0;"><strong>Vence el:</strong> <span style="color: #dc3545; font-weight: bold;">${formattedDate}</span></p>
+        </div>
+        ${brandedButton("Iniciar Sesión", `${BASE_URL}/login`, "#28a745")}
+      `),
+    };
+  },
+
+  // ── User: Membership expiring soon ──
+  membershipExpiringSoon: (name: string, expiresAt: Date | string) => {
+    const formattedDate = new Date(expiresAt).toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "numeric" });
+    return {
+      subject: "⚠️ Tu membresía en Econos SMM vencerá pronto",
+      html: brandedEmail(`
+        <h2 style="color: #dc3545; margin: 0 0 16px;">Renovación de Membresía Requerida</h2>
+        <p>Hola ${name},</p>
+        <p>Te recordamos que tu membresía en la plataforma <strong>Econos - Social Media Manager</strong> vencerá en los próximos 5 días.</p>
+        <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 14px 18px; border-radius: 6px; margin: 20px 0;">
+          <p style="margin: 0; font-size: 15px; color: #856404;">
+            📅 Fecha de vencimiento: <strong>${formattedDate}</strong>
+          </p>
+        </div>
+        <p>Para evitar interrupciones al publicar y programar tus campañas en redes sociales, gestiona tu plan comunicándote con administración.</p>
+        <p>Si ya has coordinado tu renovación, puedes ignorar este correo de forma segura.</p>
+      `),
+    };
+  },
 
   // ── User: Password reset ──
   passwordReset: (name: string, resetUrl: string) => ({

@@ -22,6 +22,7 @@ export async function GET() {
         package: true,
         status: true,
         createdAt: true,
+        expiresAt: true,
       },
       orderBy: { createdAt: "desc" },
     });
@@ -57,19 +58,28 @@ export async function POST(req: NextRequest) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = await prisma.user.create({
+    const targetRole = role || "VIEWER";
+    const expiresAt = body.expiresAt
+      ? new Date(body.expiresAt)
+      : (["SUPER_ADMIN", "ADMIN"].includes(targetRole)
+        ? null
+        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000));
+
+    const newUser = await (prisma.user as any).create({
       data: {
         email: email.toLowerCase(),
         name,
         password: hashedPassword,
-        role: role || "VIEWER",
+        role: targetRole,
         packageId: packageId || null,
+        expiresAt,
       },
       select: {
         id: true,
         name: true,
         email: true,
         role: true,
+        expiresAt: true,
       }
     });
 
