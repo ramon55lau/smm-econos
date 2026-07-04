@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
         targetDateEnd.setDate(targetDateEnd.getDate() + 5);
         targetDateEnd.setHours(23, 59, 59, 999);
 
-        const users = await prisma.user.findMany({
+        const users = await (prisma.user as any).findMany({
             where: {
                 expiresAt: {
                     gte: targetDateStart,
@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
         });
 
         let emailsSent = 0;
-        for (const user of users) {
+        for (const user of users as any[]) {
             try {
                 if (user.expiresAt) {
                     const template = emailTemplates.membershipExpiringSoon(user.name || "Usuario", user.expiresAt);
