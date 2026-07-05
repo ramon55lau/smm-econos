@@ -42,8 +42,24 @@ export default function ScreenLinkInput({ onScraped, onManual }: Props) {
       <div className="content">
         <div className="header">
           <div className="logo-group">
-            <span className="econos-text">ECONOS</span>
-            <span className="smm-text">SMM</span>
+            <Image
+              src="/images/logo-econos.png"
+              alt="Econos"
+              width={160}
+              height={50}
+              style={{ objectFit: 'contain', width: 'auto', height: '40px' }}
+              priority
+              unoptimized
+            />
+            <Image
+              src="/images/logo-smm.png"
+              alt="Social Media Manager"
+              width={120}
+              height={33}
+              style={{ objectFit: 'contain', width: 'auto', height: '24px', marginTop: '0.5rem' }}
+              priority
+              unoptimized
+            />
           </div>
         </div>
 
