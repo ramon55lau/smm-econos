@@ -43,6 +43,12 @@ export async function PUT(
     if (password) dataToUpdate.password = await bcrypt.hash(password, 10);
     if (body.packageId !== undefined) dataToUpdate.packageId = body.packageId || null;
 
+    if (body.disableMfa === true) {
+      dataToUpdate.mfaEnabled = false;
+      dataToUpdate.mfaSecret = null;
+      dataToUpdate.mfaBackupCodes = null;
+    }
+
     // Handle membership expiry
     const targetRole = role || existingUser.role;
     if (["SUPER_ADMIN", "ADMIN"].includes(targetRole)) {

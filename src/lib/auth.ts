@@ -84,11 +84,43 @@ export const authOptions: NextAuthOptions = {
             throw new Error("MFA_REQUIRED");
           }
 
-          const { verify } = await import("otplib");
-          const isValid = await verify({ token: totpCode, secret: user.mfaSecret });
+          const trimmedCode = totpCode.trim().toLowerCase();
 
-          if (!isValid) {
-            throw new Error("Código MFA inválido. Verifique su aplicación de autenticación.");
+          // Check if it's a backup code (8-character alphanumeric)
+          if (trimmedCode.length === 8 && /^[a-z0-9]+$/.test(trimmedCode)) {
+            let backupCodesList: string[] = [];
+
+            if ((user as any).mfaBackupCodes) {
+              try {
+                backupCodesList = JSON.parse((user as any).mfaBackupCodes);
+              } catch {
+                backupCodesList = [];
+              }
+            }
+
+            if (backupCodesList.includes(trimmedCode)) {
+              // Valid backup code! Disable 2FA for the user so they can access their account and reset it.
+              await (prisma.user as any).update({
+                where: { id: user.id },
+                data: {
+                  mfaEnabled: false,
+                  mfaSecret: null,
+                  mfaBackupCodes: null
+                }
+              });
+
+              // bypass standard TOTP verification and continue login
+            } else {
+              throw new Error("Código de recuperación inválido o ya utilizado.");
+            }
+          } else {
+            // Standard 6-digit TOTP verification
+            const { verify } = await import("otplib");
+            const isValid = await verify({ token: trimmedCode, secret: user.mfaSecret });
+
+            if (!isValid) {
+              throw new Error("Código MFA inválido. Verifique su aplicación de autenticación.");
+            }
           }
         }
 

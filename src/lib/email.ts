@@ -276,4 +276,20 @@ export const emailTemplates = {
       ${brandedButton("Ir al Panel de Usuarios", `${BASE_URL}/admin/users`, "#b08d6d")}
     `),
   }),
+  // ── User: 2FA Reset Recovery Link ──
+  mfaRecovery: (name: string, recoveryUrl: string) => ({
+    subject: "🔐 Restablecer Autenticación en Dos Pasos (2FA) - Econos SMM",
+    html: brandedEmail(`
+      <h2 style="color: #1a1a2e; margin: 0 0 16px;">Restablecer tu 2FA</h2>
+      <p>Hola ${name},</p>
+      <p>Hemos recibido una solicitud para desactivar la <strong>Autenticación en Dos Pasos (2FA)</strong> de tu cuenta en <strong>Econos SMM</strong> debido a la pérdida de tu dispositivo.</p>
+      <p>Haz clic en el botón a continuación para proceder con la desactivación segura de tu 2FA:</p>
+      ${brandedButton("Desactivar 2FA de mi cuenta", recoveryUrl, "#dc3545")}
+      <div style="background: #fdf0f0; border-left: 4px solid #dc3545; padding: 14px 18px; border-radius: 6px; margin: 20px 0;">
+        <p style="margin: 0; font-size: 13px; color: #721c24;">
+          ⚠️ Este enlace expirará en <strong>15 minutos</strong>. Si tú no solicitaste este cambio, te recomendamos cambiar tu contraseña inmediatamente ya que alguien podría tener acceso a tus credenciales.
+        </p>
+      </div>
+    `),
+  }),
 };

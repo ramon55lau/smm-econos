@@ -42,13 +42,25 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Código incorrecto. Verifique su app de autenticación e intente de nuevo." }, { status: 400 });
         }
 
-        // Activate MFA
-        await prisma.user.update({
-            where: { id: session.user.id },
-            data: { mfaEnabled: true }
+        // Generate 10 backup codes (alphanumeric, 8 chars)
+        const generatedBackupCodes = Array.from({ length: 10 }, () => {
+            const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+            return Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
         });
 
-        return NextResponse.json({ message: "MFA activado exitosamente." });
+        // Activate MFA & save JSON string of backup codes
+        await (prisma.user as any).update({
+            where: { id: session.user.id },
+            data: {
+                mfaEnabled: true,
+                mfaBackupCodes: JSON.stringify(generatedBackupCodes)
+            }
+        });
+
+        return NextResponse.json({
+            message: "MFA activado exitosamente.",
+            backupCodes: generatedBackupCodes
+        });
     } catch (error: any) {
         console.error("MFA verify error:", error);
         return NextResponse.json({ error: "Error verificando código MFA" }, { status: 500 });

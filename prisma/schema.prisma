@@ -27,6 +27,7 @@ model User {
   // MFA (Two-Factor Authentication)
   mfaSecret     String?
   mfaEnabled    Boolean   @default(false)
+  mfaBackupCodes String?
 
   // Relationship with Package
   packageId     String?   

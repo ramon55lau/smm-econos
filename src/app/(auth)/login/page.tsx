@@ -1,22 +1,39 @@
 "use client";
 
 import { signIn, useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import styles from "./Login.module.css";
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session, status } = useSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [totpCode, setTotpCode] = useState("");
   const [showMfa, setShowMfa] = useState(false);
+  const [isBackupCode, setIsBackupCode] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mfaMsg, setMfaMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [sendingEmail, setSendingEmail] = useState(false);
+
+  useEffect(() => {
+    const disableMfa = searchParams.get("disableMfa");
+    const msg = searchParams.get("msg");
+    if (disableMfa === "success") {
+      setMfaMsg({ text: "Tu Autenticación 2FA ha sido desactivada con éxito. Ya puedes iniciar sesión.", type: "success" });
+    } else if (disableMfa === "error") {
+      const errorText = msg === "invalid_or_expired"
+        ? "El enlace de desactivación de 2FA ha expirado o ya fue utilizado."
+        : "Hubo un error al procesar la solicitud de desactivación de 2FA.";
+      setMfaMsg({ text: errorText, type: "error" });
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -55,6 +72,36 @@ export default function LoginPage() {
     }
   };
 
+  const handleSendRecoveryEmail = async () => {
+    if (!email) {
+      setError("Por favor, introduce tu correo electrónico primero.");
+      return;
+    }
+
+    setSendingEmail(true);
+    setError("");
+    setMfaMsg(null);
+
+    try {
+      const res = await fetch("/api/auth/mfa/recovery", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "No se pudo enviar el correo de recuperación.");
+      } else {
+        setMfaMsg({ text: "Te hemos enviado un correo electrónico con instrucciones para desactivar tu 2FA.", type: "success" });
+      }
+    } catch {
+      setError("Error de red. Intenta nuevamente.");
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   return (
     <div className={styles.container}>
       <div className={`glass-panel ${styles.card}`}>
@@ -86,6 +133,20 @@ export default function LoginPage() {
         </div>
 
         <form className={styles.form} onSubmit={handleSubmit}>
+          {mfaMsg && (
+            <div style={{
+              padding: "0.75rem 1rem",
+              borderRadius: "0.5rem",
+              fontSize: "0.85rem",
+              fontWeight: 500,
+              background: mfaMsg.type === "success" ? "rgba(34, 197, 94, 0.1)" : "rgba(239, 68, 68, 0.1)",
+              border: `1px solid ${mfaMsg.type === "success" ? "rgba(34, 197, 94, 0.2)" : "rgba(239, 68, 68, 0.2)"}`,
+              color: mfaMsg.type === "success" ? "#16a34a" : "#dc2626",
+              marginBottom: "1rem",
+            }}>
+              {mfaMsg.text}
+            </div>
+          )}
           {error && <div className={styles.error}>{error}</div>}
 
           {!showMfa ? (
@@ -159,24 +220,71 @@ export default function LoginPage() {
             </>
           ) : (
             <div className={styles.formGroup}>
-              <label htmlFor="totpCode" className={styles.label}>Código de Seguridad (MFA)</label>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                <label htmlFor="totpCode" className={styles.label} style={{ margin: 0 }}>
+                  {isBackupCode ? "Código de Recuperación" : "Código de Seguridad (MFA)"}
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsBackupCode(!isBackupCode);
+                    setTotpCode("");
+                    setError("");
+                  }}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "var(--accent-primary)",
+                    fontSize: "0.78rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    padding: 0,
+                    textDecoration: "underline",
+                  }}
+                >
+                  {isBackupCode ? "Usar App" : "Usar Código de Respaldo"}
+                </button>
+              </div>
               <input
                 id="totpCode"
                 type="text"
-                maxLength={6}
-                pattern="[0-9]*"
-                inputMode="numeric"
-                placeholder="000000"
+                maxLength={isBackupCode ? 8 : 6}
+                placeholder={isBackupCode ? "abcdef12" : "000000"}
                 className={styles.input}
                 value={totpCode}
-                onChange={(e) => setTotpCode(e.target.value)}
+                onChange={(e) => setTotpCode(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ""))}
                 disabled={loading}
                 required
                 autoFocus
+                style={{ textAlign: "center", letterSpacing: "0.15em", fontSize: "1.1rem" }}
               />
-              <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
-                Introduce el código de 6 dígitos generado por tu app de autenticación.
+              <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.35rem", lineHeight: 1.4 }}>
+                {isBackupCode
+                  ? "Introduce uno de tus códigos de recuperación de 8 caracteres alfanuméricos."
+                  : "Introduce el código de 6 dígitos generado por tu app de autenticación."}
               </p>
+
+              {/* Botón de pérdida de dispositivo */}
+              <div style={{ marginTop: "1rem", textAlign: "right" }}>
+                <button
+                  type="button"
+                  onClick={handleSendRecoveryEmail}
+                  disabled={sendingEmail}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "var(--text-muted)",
+                    fontSize: "0.76rem",
+                    cursor: sendingEmail ? "not-allowed" : "pointer",
+                    padding: 0,
+                    textDecoration: "underline",
+                  }}
+                  onMouseEnter={e => !sendingEmail && (e.currentTarget.style.color = "var(--accent-primary)")}
+                  onMouseLeave={e => !sendingEmail && (e.currentTarget.style.color = "var(--text-muted)")}
+                >
+                  {sendingEmail ? "Enviando..." : "📧 ¿Perdiste tu teléfono? Desactivar 2FA por Correo"}
+                </button>
+              </div>
             </div>
           )}
 
@@ -203,5 +311,24 @@ export default function LoginPage() {
         </footer>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        background: 'var(--bg-primary, #fbf7f0)',
+        color: 'var(--text-muted)'
+      }}>
+        Cargando formulario...
+      </div>
+    }>
+      <LoginPageContent />
+    </Suspense>
   );
 }

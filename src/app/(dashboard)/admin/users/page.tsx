@@ -22,6 +22,7 @@ type User = {
   package?: Package;
   createdAt: string;
   expiresAt?: string | null;
+  mfaEnabled?: boolean;
 };
 
 const ROLES = ["SUPER_ADMIN", "ADMIN", "EDITOR", "VIEWER"];
@@ -164,6 +165,35 @@ export default function UsersPage() {
     }
   };
 
+  const handleDisableMfa = async (user: User) => {
+    if (!confirm(`¿Estás seguro de que deseas desactivar el 2FA para el usuario ${user.name}? This will clear their 2FA settings.`)) return;
+
+    try {
+      const res = await fetch(`/api/users/${user.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          status: user.status,
+          packageId: user.packageId,
+          disableMfa: true,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "No se pudo desactivar el 2FA");
+      } else {
+        alert("Autenticación 2FA desactivada con éxito.");
+        await fetchUsers();
+      }
+    } catch (e) {
+      alert("Error desactivando el 2FA.");
+    }
+  };
+
   // Renewal modal states
   const [isRenewModalOpen, setIsRenewModalOpen] = useState(false);
   const [renewModalUser, setRenewModalUser] = useState<User | null>(null);
@@ -263,6 +293,7 @@ export default function UsersPage() {
               <th className={styles.th}>Vencimiento</th>
               <th className={styles.th}>Paquete / Plan</th>
               <th className={styles.th}>Límites</th>
+              <th className={styles.th}>2FA</th>
               <th className={styles.th}>Fecha Creación</th>
               {isAdmin && <th className={styles.th}>Acciones</th>}
             </tr>
@@ -299,6 +330,19 @@ export default function UsersPage() {
                     {user.package ? `${user.package.maxFacebook} FB / ${user.package.maxInstagram} IG / ${user.package.maxYouTube} YT` : "---"}
                   </div>
                 </td>
+                <td className={styles.td}>
+                  <span style={{
+                    fontWeight: 600,
+                    fontSize: "0.82rem",
+                    padding: "0.2rem 0.5rem",
+                    borderRadius: "6px",
+                    background: user.mfaEnabled ? "rgba(34, 197, 94, 0.1)" : "rgba(107, 114, 128, 0.1)",
+                    color: user.mfaEnabled ? "#16a34a" : "#4b5563",
+                    border: `1px solid ${user.mfaEnabled ? "rgba(34, 197, 94, 0.15)" : "rgba(107, 114, 128, 0.15)"}`
+                  }}>
+                    {user.mfaEnabled ? "🔐 Sí" : "🔓 No"}
+                  </span>
+                </td>
                 <td className={styles.td}>{new Date(user.createdAt).toLocaleDateString()}</td>
                 {isAdmin && (
                   <td className={styles.td}>
@@ -306,6 +350,16 @@ export default function UsersPage() {
                       <button className={styles.iconBtn} onClick={() => openModal(user)} title="Editar">
                         ✏️
                       </button>
+                      {user.mfaEnabled && (
+                        <button
+                          className={styles.iconBtn}
+                          onClick={() => handleDisableMfa(user)}
+                          title="Desactivar 2FA manualmente"
+                          style={{ color: "#dc2626" }}
+                        >
+                          🔑
+                        </button>
+                      )}
                       {!['SUPER_ADMIN', 'ADMIN'].includes(user.role) && (
                         <button
                           className={styles.iconBtn}

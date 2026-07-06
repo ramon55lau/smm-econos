@@ -23,6 +23,7 @@ export async function GET() {
         status: true,
         createdAt: true,
         expiresAt: true,
+        mfaEnabled: true,
       },
       orderBy: { createdAt: "desc" },
     });

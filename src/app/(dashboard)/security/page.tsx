@@ -14,6 +14,7 @@ export default function SecurityPage() {
     const [code, setCode] = useState("");
     const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
     const [showDisableConfirm, setShowDisableConfirm] = useState(false);
+    const [backupCodes, setBackupCodes] = useState<string[] | null>(null);
 
     useEffect(() => {
         fetchMfaStatus();
@@ -34,6 +35,7 @@ export default function SecurityPage() {
         setMessage(null);
         setCode("");
         setQrCode(null);
+        setBackupCodes(null);
 
         const res = await fetch("/api/auth/mfa/setup", { method: "POST" });
         const data = await res.json();
@@ -76,6 +78,9 @@ export default function SecurityPage() {
         setQrCode(null);
         setSecret(null);
         setCode("");
+        if (data.backupCodes) {
+            setBackupCodes(data.backupCodes);
+        }
         await updateSession();
         setMessage({ text: "¡2FA activado exitosamente! Tu cuenta ahora está protegida.", type: "success" });
     };
@@ -98,6 +103,24 @@ export default function SecurityPage() {
         setStatus("idle");
         await updateSession();
         setMessage({ text: "2FA desactivado. Puedes volver a activarlo cuando quieras.", type: "success" });
+    };
+
+    const handleDownloadBackupCodes = () => {
+        if (!backupCodes) return;
+        const fileContent = `CÓDIGOS DE RESPALDO (BACKUP CODES) - ECONOS SMM\n` +
+            `=============================================\n\n` +
+            `Guarde estos códigos en un lugar seguro. Solo son de UN SOLO USO.\n` +
+            `Si pierde el acceso a su aplicación de autenticación, use uno de estos códigos para iniciar sesión.\n\n` +
+            backupCodes.map((c, i) => `Código ${i + 1}: ${c}`).join("\n") +
+            `\n\nFecha de generación: ${new Date().toLocaleString()}\n`;
+
+        const blob = new Blob([fileContent], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `smm-econos-2fa-backup-codes.txt`;
+        link.click();
+        URL.revokeObjectURL(url);
     };
 
     const isLoading = status === "loading" || status === "generating";
@@ -422,6 +445,70 @@ export default function SecurityPage() {
                                 Tu cuenta está protegida con Autenticación en Dos Pasos. Cada vez que inicies sesión,
                                 deberás ingresar el código de tu aplicación de autenticación.
                             </p>
+
+                            {backupCodes && (
+                                <div style={{
+                                    border: "1px solid rgba(176, 141, 109, 0.25)",
+                                    borderRadius: "1rem",
+                                    padding: "1.5rem",
+                                    background: "rgba(176, 141, 109, 0.03)",
+                                    marginBottom: "1.75rem",
+                                    animation: "fadeIn 0.3s ease",
+                                }}>
+                                    <div style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: "0.95rem", marginBottom: "0.25rem" }}>
+                                        ⚠️ Tus Códigos de Respaldo
+                                    </div>
+                                    <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", lineHeight: 1.5, marginBottom: "1rem" }}>
+                                        Guarda estos 10 códigos. Te permitirán entrar si pierdes tu dispositivo.
+                                        Solo pueden usarse <strong>una vez</strong> cada uno.
+                                        <strong>Esta es la única vez que los verás.</strong>
+                                    </p>
+
+                                    <div style={{
+                                        display: "grid",
+                                        gridTemplateColumns: "repeat(2, 1fr)",
+                                        gap: "0.5rem",
+                                        marginBottom: "1.25rem"
+                                    }}>
+                                        {backupCodes.map((code, idx) => (
+                                            <div key={idx} style={{
+                                                background: "var(--bg-primary, #fff)",
+                                                border: "1px solid rgba(74, 63, 53, 0.08)",
+                                                padding: "0.5rem",
+                                                borderRadius: "0.5rem",
+                                                fontFamily: "monospace",
+                                                fontSize: "0.88rem",
+                                                textAlign: "center",
+                                                color: "var(--text-primary)",
+                                                letterSpacing: "0.05em",
+                                                fontWeight: 600
+                                            }}>
+                                                {code}
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <button
+                                        onClick={handleDownloadBackupCodes}
+                                        style={{
+                                            width: "100%",
+                                            padding: "0.75rem",
+                                            borderRadius: "0.75rem",
+                                            border: "none",
+                                            background: "rgba(176, 141, 109, 0.15)",
+                                            color: "var(--text-primary)",
+                                            fontSize: "0.85rem",
+                                            fontWeight: 700,
+                                            cursor: "pointer",
+                                            transition: "background 0.2s ease"
+                                        }}
+                                        onMouseEnter={e => e.currentTarget.style.background = "rgba(176, 141, 109, 0.25)"}
+                                        onMouseLeave={e => e.currentTarget.style.background = "rgba(176, 141, 109, 0.15)"}
+                                    >
+                                        ⬇️ Descargar Códigos (.txt)
+                                    </button>
+                                </div>
+                            )}
 
                             <div style={{
                                 background: "rgba(34, 197, 94, 0.06)",
