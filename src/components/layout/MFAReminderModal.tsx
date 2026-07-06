@@ -2,42 +2,46 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function MFAReminderModal() {
-    const { data: session, status } = useSession();
+    const { status } = useSession();
     const router = useRouter();
     const [visible, setVisible] = useState(false);
+    const checkedRef = useRef(false); // prevent double-check on StrictMode double-invoke
 
     useEffect(() => {
         if (status !== "authenticated") return;
+        if (checkedRef.current) return;
+        checkedRef.current = true;
 
-        // Don't show again if dismissed this session
-        const dismissed = sessionStorage.getItem("mfa_reminder_dismissed");
-        if (dismissed) return;
+        let cancelled = false;
 
-        // Re-check real MFA status from DB (not just the JWT token)
-        // This ensures the modal doesn't appear after the user just activated MFA
-        const checkMfaStatus = async () => {
+        const checkAndShow = async () => {
             try {
                 const res = await fetch("/api/auth/mfa/status");
                 const data = await res.json();
-                if (!data.mfaEnabled) {
-                    const timer = setTimeout(() => setVisible(true), 1200);
-                    return () => clearTimeout(timer);
+                if (!cancelled && !data.mfaEnabled) {
+                    // Small delay so it doesn't flash on page load
+                    setTimeout(() => {
+                        if (!cancelled) setVisible(true);
+                    }, 1200);
                 }
             } catch {
-                // If API fails, fall back to session token value
-                if (!session?.user?.mfaEnabled) {
-                    const timer = setTimeout(() => setVisible(true), 1200);
-                    return () => clearTimeout(timer);
+                // API failure: show the modal as a safe fallback
+                if (!cancelled) {
+                    setTimeout(() => {
+                        if (!cancelled) setVisible(true);
+                    }, 1200);
                 }
             }
         };
 
-        checkMfaStatus();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        checkAndShow();
+
+        return () => { cancelled = true; };
     }, [status]);
+
 
     const handleLater = () => {
         sessionStorage.setItem("mfa_reminder_dismissed", "true");
