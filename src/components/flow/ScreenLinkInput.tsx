@@ -47,6 +47,7 @@ export default function ScreenLinkInput({ onScraped, onManual }: Props) {
               alt="Econos"
               width={140}
               height={32}
+              className="logo-econos"
               style={{ objectFit: 'contain', width: 'auto', height: '32px' }}
               priority
               unoptimized
@@ -134,24 +135,35 @@ export default function ScreenLinkInput({ onScraped, onManual }: Props) {
           align-items: center;
           justify-content: center;
           gap: 1.5rem;
-          background: #0d0d0f; /* Dark premium background from Landing page layout */
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          padding: 0.75rem 2rem;
+          background: rgba(255, 255, 255, 0.6); /* Soft light translucent white */
+          backdrop-filter: blur(12px);
+          border: 1px solid rgba(74, 63, 53, 0.08); /* Dark brown border at low opacity */
+          padding: 0.6rem 1.75rem;
           border-radius: 9999px; /* Rounded pill style */
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+          box-shadow: 0 4px 20px rgba(74, 63, 53, 0.04), 0 2px 6px rgba(74, 63, 53, 0.02);
           transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s ease, box-shadow 0.3s ease;
         }
 
         .logo-capsule:hover {
           transform: translateY(-2px);
-          border-color: rgba(176, 141, 109, 0.45); /* Elegant gold highlight */
-          box-shadow: 0 8px 30px rgba(176, 141, 109, 0.15), 0 4px 12px rgba(0, 0, 0, 0.08);
+          border-color: rgba(74, 63, 53, 0.15);
+          box-shadow: 0 8px 30px rgba(74, 63, 53, 0.08), 0 4px 12px rgba(74, 63, 53, 0.03);
+        }
+
+        .logo-econos {
+          filter: brightness(0.4) sepia(1) hue-rotate(-20deg) saturate(1.5);
+          transition: filter 0.3s ease;
+        }
+
+        .logo-econos:hover {
+          filter: brightness(0.35) sepia(1) hue-rotate(-20deg) saturate(1.8);
         }
 
         .logo-divider {
           width: 1px;
           height: 20px;
-          background: rgba(255, 255, 255, 0.18);
+          background: #4a3f35;
+          opacity: 0.25;
         }
 
         .hero h1 {
