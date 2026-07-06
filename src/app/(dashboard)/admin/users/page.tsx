@@ -164,9 +164,14 @@ export default function UsersPage() {
     }
   };
 
-  const handleRenewMembership = async (user: User) => {
-    // If the membership is not expired yet (expiresAt is in the future), start from that date.
-    // Otherwise, start from today.
+  // Renewal modal states
+  const [isRenewModalOpen, setIsRenewModalOpen] = useState(false);
+  const [renewModalUser, setRenewModalUser] = useState<User | null>(null);
+  const [renewCalculatedExpiry, setRenewCalculatedExpiry] = useState("");
+  const [renewDateMsg, setRenewDateMsg] = useState("");
+  const [renewing, setRenewing] = useState(false);
+
+  const handleRenewMembership = (user: User) => {
     const currentExpiry = user.expiresAt ? new Date(user.expiresAt) : null;
     const baseDate = currentExpiry && currentExpiry > new Date() ? currentExpiry : new Date();
 
@@ -175,22 +180,30 @@ export default function UsersPage() {
     const expiresAt = newExpiry.toISOString().substring(0, 10);
 
     const dateMsg = currentExpiry && currentExpiry > new Date()
-      ? `sumando 30 días a su vigencia actual (${currentExpiry.toLocaleDateString()})`
-      : "por 30 días a partir de hoy";
+      ? `Agrega 30 días continuos al vencimiento actual (${currentExpiry.toLocaleDateString('es-ES')})`
+      : "Inicia hoy y extiende la vigencia por 30 días continuos";
 
-    if (!confirm(`¿Renovar membresía de ${user.name || user.email} ${dateMsg}?\nNueva fecha de vencimiento: ${new Date(expiresAt).toLocaleDateString()}`)) return;
+    setRenewModalUser(user);
+    setRenewCalculatedExpiry(expiresAt);
+    setRenewDateMsg(dateMsg);
+    setIsRenewModalOpen(true);
+  };
+
+  const confirmRenewMembership = async () => {
+    if (!renewModalUser) return;
+    setRenewing(true);
 
     try {
-      const res = await fetch(`/api/users/${user.id}`, {
+      const res = await fetch(`/api/users/${renewModalUser.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          status: user.status,
-          packageId: user.packageId,
-          expiresAt,
+          name: renewModalUser.name,
+          email: renewModalUser.email,
+          role: renewModalUser.role,
+          status: renewModalUser.status,
+          packageId: renewModalUser.packageId,
+          expiresAt: renewCalculatedExpiry,
         })
       });
       if (!res.ok) {
@@ -198,9 +211,13 @@ export default function UsersPage() {
         alert(data.error || "No se pudo renovar la membresía");
       } else {
         await fetchUsers();
+        setIsRenewModalOpen(false);
+        setRenewModalUser(null);
       }
     } catch (e) {
       alert("Error renovando membresía");
+    } finally {
+      setRenewing(false);
     }
   };
 
@@ -433,6 +450,198 @@ export default function UsersPage() {
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* Elegante Modal de Renovación de Suscripción */}
+      {isRenewModalOpen && renewModalUser && (
+        <div className={styles.modalOverlay} style={{ backdropFilter: "blur(6px)", zIndex: 10000 }}>
+          <div className={styles.modalContent} style={{
+            maxWidth: "460px",
+            borderRadius: "1.5rem",
+            border: "1px solid rgba(176, 141, 109, 0.2)",
+            boxShadow: "0 20px 50px rgba(13, 13, 15, 0.15)",
+            padding: "2rem",
+            background: "var(--bg-secondary, #fffdf9)",
+            animation: "modalFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
+          }}>
+            {/* Header con Logos de Marca */}
+            <div style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              borderBottom: "1px solid rgba(176, 141, 109, 0.12)",
+              paddingBottom: "1.25rem",
+              marginBottom: "1.5rem"
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <img src="/images/logo-econos.png" alt="Econos" style={{ height: "20px", width: "auto", objectFit: "contain" }} />
+                <span style={{ height: "14px", width: "1px", background: "rgba(74, 63, 53, 0.2)" }}></span>
+                <img src="/images/logo-smm.png" alt="SMM" style={{ height: "26px", width: "auto", objectFit: "contain" }} />
+              </div>
+              <button
+                onClick={() => { setIsRenewModalOpen(false); setRenewModalUser(null); }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  fontSize: "1.25rem",
+                  cursor: "pointer",
+                  color: "var(--text-muted)",
+                  padding: "0"
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Icono de Renovación */}
+            <div style={{
+              width: "56px",
+              height: "56px",
+              borderRadius: "50%",
+              background: "linear-gradient(135deg, rgba(176, 141, 109, 0.15), rgba(176, 141, 109, 0.05))",
+              border: "1px solid rgba(176, 141, 109, 0.2)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 1rem",
+            }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#b08d6d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+              </svg>
+            </div>
+
+            <h3 style={{
+              fontSize: "1.2rem",
+              fontWeight: 700,
+              color: "var(--text-primary, #4a3f35)",
+              textAlign: "center",
+              marginBottom: "0.25rem"
+            }}>
+              Renovar Membresía
+            </h3>
+            <p style={{
+              fontSize: "0.85rem",
+              color: "var(--text-muted)",
+              textAlign: "center",
+              marginBottom: "1.5rem"
+            }}>
+              Extiende el acceso de cliente de forma manual
+            </p>
+
+            {/* Datos del Usuario */}
+            <div style={{
+              background: "rgba(176, 141, 109, 0.06)",
+              borderRadius: "1rem",
+              padding: "1.25rem",
+              marginBottom: "1.5rem",
+              border: "1px solid rgba(176, 141, 109, 0.08)"
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+                <span style={{ fontSize: "0.82rem", color: "var(--text-muted)" }}>Cliente:</span>
+                <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-primary)" }}>
+                  {renewModalUser.name || "Usuario"}
+                </span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+                <span style={{ fontSize: "0.82rem", color: "var(--text-muted)" }}>Email:</span>
+                <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>{renewModalUser.email}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.75rem" }}>
+                <span style={{ fontSize: "0.82rem", color: "var(--text-muted)" }}>Plan Actual:</span>
+                <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--accent-primary, #b08d6d)" }}>
+                  {packages.find(p => p.id === renewModalUser.packageId)?.name || 'Plan Básico'}
+                </span>
+              </div>
+
+              <div style={{ height: "1px", background: "rgba(176, 141, 109, 0.12)", margin: "0.75rem 0" }}></div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.02em" }}>Vencimiento Actual</span>
+                  <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-secondary)" }}>
+                    {renewModalUser.expiresAt ? new Date(renewModalUser.expiresAt).toLocaleDateString('es-ES') : "Expirada / Sin fecha"}
+                  </span>
+                </div>
+                <div style={{ fontSize: "1.25rem", color: "var(--text-muted)" }}>➡️</div>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+                  <span style={{ fontSize: "0.78rem", color: "var(--accent-primary, #b08d6d)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.02em" }}>Nuevo Vencimiento</span>
+                  <span style={{ fontSize: "1rem", fontWeight: 800, color: "var(--accent-primary, #b08d6d)" }}>
+                    {new Date(renewCalculatedExpiry).toLocaleDateString('es-ES')}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <p style={{
+              fontSize: "0.8rem",
+              color: "var(--text-muted)",
+              lineHeight: 1.5,
+              marginBottom: "1.75rem",
+              textAlign: "center"
+            }}>
+              💡 <em>{renewDateMsg}.</em> Se enviará de inmediato un correo electrónico al cliente con la confirmación de la fecha de caducidad y límites detallados de su paquete.
+            </p>
+
+            {/* Acciones */}
+            <div style={{ display: "flex", gap: "0.75rem" }}>
+              <button
+                type="button"
+                onClick={() => { setIsRenewModalOpen(false); setRenewModalUser(null); }}
+                disabled={renewing}
+                style={{
+                  flex: 1,
+                  padding: "0.8rem 1rem",
+                  borderRadius: "0.75rem",
+                  border: "1px solid rgba(74, 63, 53, 0.15)",
+                  background: "transparent",
+                  color: "var(--text-secondary)",
+                  fontSize: "0.88rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "background 0.2s"
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(74, 63, 53, 0.05)"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmRenewMembership}
+                disabled={renewing}
+                style={{
+                  flex: 1,
+                  padding: "0.8rem 1rem",
+                  borderRadius: "0.75rem",
+                  border: "none",
+                  background: "linear-gradient(135deg, #c4a882, #b08d6d)",
+                  color: "#fff",
+                  fontSize: "0.88rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  boxShadow: "0 4px 12px rgba(176, 141, 109, 0.25)",
+                  transition: "transform 0.2s, box-shadow 0.2s"
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                  e.currentTarget.style.boxShadow = "0 6px 16px rgba(176, 141, 109, 0.35)";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(176, 141, 109, 0.25)";
+                }}
+              >
+                {renewing ? "Procesando..." : "Confirmar Renovación"}
+              </button>
+            </div>
+          </div>
+          <style>{`
+            @keyframes modalFadeIn {
+              from { opacity: 0; transform: scale(0.95); }
+              to { opacity: 1; transform: scale(1); }
+            }
+          `}</style>
         </div>
       )}
     </div>
