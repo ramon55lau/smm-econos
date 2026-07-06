@@ -2,6 +2,7 @@
 
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
+import MFAReminderModal from "@/components/layout/MFAReminderModal";
 import { useState } from "react";
 import styles from "./DashboardLayout.module.css";
 
@@ -22,21 +23,24 @@ export default function DashboardLayoutClient({
           aria-hidden="true"
         />
       )}
-      
-      <Sidebar 
-        isOpen={sidebarOpen} 
-        onClose={() => setSidebarOpen(false)} 
+
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
-      
+
       <div className={`${styles.mainContent} main-content`}>
-        <Header 
-          onMenuToggle={() => setSidebarOpen((p) => !p)} 
+        <Header
+          onMenuToggle={() => setSidebarOpen((p) => !p)}
           isCollapsed={true}
         />
         <main className={styles.pageContainer}>
           {children}
         </main>
       </div>
+
+      {/* MFA reminder – shown once per session if 2FA not enabled */}
+      <MFAReminderModal />
     </div>
   );
 }

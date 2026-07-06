@@ -7,6 +7,7 @@ declare module "next-auth" {
       id: string;
       role: string;
       expiresAt?: string | null;
+      mfaEnabled?: boolean;
     } & DefaultSession["user"];
   }
 
@@ -14,6 +15,7 @@ declare module "next-auth" {
     id: string;
     role: string;
     expiresAt?: Date | string | null;
+    mfaEnabled?: boolean;
   }
 }
 
@@ -22,5 +24,6 @@ declare module "next-auth/jwt" {
     id: string;
     role: string;
     expiresAt?: string | null;
+    mfaEnabled?: boolean;
   }
 }

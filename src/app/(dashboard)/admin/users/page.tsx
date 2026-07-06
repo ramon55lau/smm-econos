@@ -164,6 +164,37 @@ export default function UsersPage() {
     }
   };
 
+  const handleRenewMembership = async (user: User) => {
+    const newExpiry = new Date();
+    newExpiry.setDate(newExpiry.getDate() + 30);
+    const expiresAt = newExpiry.toISOString().substring(0, 10);
+
+    if (!confirm(`¿Renovar membresía de ${user.name || user.email} por 30 días más?\nNueva fecha de vencimiento: ${new Date(expiresAt).toLocaleDateString()}`)) return;
+
+    try {
+      const res = await fetch(`/api/users/${user.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          status: user.status,
+          packageId: user.packageId,
+          expiresAt,
+        })
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "No se pudo renovar la membresía");
+      } else {
+        await fetchUsers();
+      }
+    } catch (e) {
+      alert("Error renovando membresía");
+    }
+  };
+
   const getRoleBadge = (role: string) => {
     switch (role) {
       case "SUPER_ADMIN": return <span className={`${styles.badge} ${styles.badgeSuperAdmin}`}>Super Admin</span>;
@@ -249,6 +280,16 @@ export default function UsersPage() {
                       <button className={styles.iconBtn} onClick={() => openModal(user)} title="Editar">
                         ✏️
                       </button>
+                      {!['SUPER_ADMIN', 'ADMIN'].includes(user.role) && (
+                        <button
+                          className={styles.iconBtn}
+                          onClick={() => handleRenewMembership(user)}
+                          title="Renovar membresía 30 días"
+                          style={{ color: 'var(--accent-primary)' }}
+                        >
+                          🔄
+                        </button>
+                      )}
                       <button
                         className={`${styles.iconBtn} ${styles.iconBtnDelete}`}
                         onClick={() => handleDelete(user.id)}

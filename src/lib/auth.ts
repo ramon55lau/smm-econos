@@ -102,6 +102,7 @@ export const authOptions: NextAuthOptions = {
           role: user.role,
           status: user.status,
           expiresAt: (user as any).expiresAt,
+          mfaEnabled: user.mfaEnabled ?? false,
         };
       }
     })
@@ -112,6 +113,7 @@ export const authOptions: NextAuthOptions = {
         token.role = user.role;
         token.id = user.id;
         token.expiresAt = (user as any).expiresAt ? new Date((user as any).expiresAt).toISOString() : null;
+        token.mfaEnabled = (user as any).mfaEnabled ?? false;
       }
       return token;
     },
@@ -120,6 +122,7 @@ export const authOptions: NextAuthOptions = {
         session.user.role = token.role as string;
         session.user.id = token.id as string;
         session.user.expiresAt = token.expiresAt as string | null;
+        session.user.mfaEnabled = token.mfaEnabled as boolean ?? false;
       }
       return session;
     }
