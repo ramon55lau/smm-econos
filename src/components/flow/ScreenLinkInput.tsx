@@ -48,7 +48,12 @@ export default function ScreenLinkInput({ onScraped, onManual }: Props) {
               width={140}
               height={32}
               className="logo-econos"
-              style={{ objectFit: 'contain', width: 'auto', height: '32px' }}
+              style={{
+                objectFit: 'contain',
+                width: 'auto',
+                height: '32px',
+                filter: 'brightness(0.4) sepia(1) hue-rotate(-20deg) saturate(1.5)'
+              }}
               priority
               unoptimized
             />
