@@ -67,6 +67,13 @@ const IconSocial = () => (
   </svg>
 );
 
+const IconSecurity = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    <path d="m9 12 2 2 4-4" />
+  </svg>
+);
+
 const IconLogout = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -88,6 +95,7 @@ const navItems = [
   },
   { name: "Reportes", href: "/ads", icon: <IconAds /> },
   { name: "Cuentas Sociales", href: "/settings/accounts", icon: <IconSocial /> },
+  { name: "Seguridad", href: "/security", icon: <IconSecurity /> },
 ];
 
 const IconPackage = () => (
