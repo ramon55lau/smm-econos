@@ -12,17 +12,32 @@ export default function MFAReminderModal() {
     useEffect(() => {
         if (status !== "authenticated") return;
 
-        // Only show if MFA is not enabled
-        if (session?.user?.mfaEnabled) return;
-
         // Don't show again if dismissed this session
         const dismissed = sessionStorage.getItem("mfa_reminder_dismissed");
         if (dismissed) return;
 
-        // Small delay so it doesn't flash immediately on page load
-        const timer = setTimeout(() => setVisible(true), 1200);
-        return () => clearTimeout(timer);
-    }, [status, session]);
+        // Re-check real MFA status from DB (not just the JWT token)
+        // This ensures the modal doesn't appear after the user just activated MFA
+        const checkMfaStatus = async () => {
+            try {
+                const res = await fetch("/api/auth/mfa/status");
+                const data = await res.json();
+                if (!data.mfaEnabled) {
+                    const timer = setTimeout(() => setVisible(true), 1200);
+                    return () => clearTimeout(timer);
+                }
+            } catch {
+                // If API fails, fall back to session token value
+                if (!session?.user?.mfaEnabled) {
+                    const timer = setTimeout(() => setVisible(true), 1200);
+                    return () => clearTimeout(timer);
+                }
+            }
+        };
+
+        checkMfaStatus();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [status]);
 
     const handleLater = () => {
         sessionStorage.setItem("mfa_reminder_dismissed", "true");
@@ -32,7 +47,7 @@ export default function MFAReminderModal() {
     const handleActivate = () => {
         sessionStorage.setItem("mfa_reminder_dismissed", "true");
         setVisible(false);
-        router.push("/dashboard/security");
+        router.push("/security");
     };
 
     if (!visible) return null;
@@ -169,7 +184,7 @@ export default function MFAReminderModal() {
                 </div>
 
                 <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "1rem" }}>
-                    Puedes activarla en cualquier momento desde <strong>Configuración → Seguridad</strong>
+                    Puedes activarla en cualquier momento desde <strong>Seguridad</strong> en el menú lateral
                 </p>
             </div>
 
