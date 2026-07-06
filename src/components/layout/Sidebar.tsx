@@ -134,7 +134,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <Image src="/images/solo smm.png" alt="Icon" width={36} height={36} className={styles.iconLogo} unoptimized />
         </div>
         <div className={styles.logoExpanded}>
-          <Image src="/images/logo-smm.png" alt="SMM Logo" width={208} height={57} className={styles.smmLogo} priority unoptimized />
+          <Image src="/images/logo-smm.png" alt="SMM Logo" width={270} height={74} className={styles.smmLogo} priority unoptimized />
         </div>
 
         {onClose && (
