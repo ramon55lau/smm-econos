@@ -41,22 +41,23 @@ export default function ScreenLinkInput({ onScraped, onManual }: Props) {
     <div className="link-input-screen">
       <div className="content">
         <div className="header">
-          <div className="logo-group">
+          <div className="logo-capsule">
             <Image
               src="/images/logo-econos.png"
               alt="Econos"
-              width={160}
-              height={50}
-              style={{ objectFit: 'contain', width: 'auto', height: '40px' }}
+              width={140}
+              height={32}
+              style={{ objectFit: 'contain', width: 'auto', height: '32px' }}
               priority
               unoptimized
             />
+            <div className="logo-divider" />
             <Image
               src="/images/logo-smm.png"
               alt="Social Media Manager"
-              width={120}
-              height={33}
-              style={{ objectFit: 'contain', width: 'auto', height: '24px', marginTop: '0.5rem' }}
+              width={140}
+              height={32}
+              style={{ objectFit: 'contain', width: 'auto', height: '32px' }}
               priority
               unoptimized
             />
@@ -127,24 +128,30 @@ export default function ScreenLinkInput({ onScraped, onManual }: Props) {
           margin-bottom: 3rem;
         }
 
-        .logo-group {
-          display: flex;
-          flex-direction: column;
+        .logo-capsule {
+          display: inline-flex;
+          flex-direction: row;
           align-items: center;
+          justify-content: center;
+          gap: 1.5rem;
+          background: #0d0d0f; /* Dark premium background from Landing page layout */
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          padding: 0.75rem 2rem;
+          border-radius: 9999px; /* Rounded pill style */
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s ease, box-shadow 0.3s ease;
         }
 
-        .econos-text {
-          font-weight: 800;
-          letter-spacing: 4px;
-          font-size: 1.5rem;
-          color: #4a3f35;
+        .logo-capsule:hover {
+          transform: translateY(-2px);
+          border-color: rgba(176, 141, 109, 0.45); /* Elegant gold highlight */
+          box-shadow: 0 8px 30px rgba(176, 141, 109, 0.15), 0 4px 12px rgba(0, 0, 0, 0.08);
         }
 
-        .smm-text {
-          font-size: 0.9rem;
-          opacity: 0.6;
-          margin-top: -4px;
-          letter-spacing: 2px;
+        .logo-divider {
+          width: 1px;
+          height: 20px;
+          background: rgba(255, 255, 255, 0.18);
         }
 
         .hero h1 {
