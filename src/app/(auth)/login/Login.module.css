@@ -52,8 +52,21 @@
   margin-bottom: 2rem;
   flex-wrap: nowrap;
   max-width: 100%;
-  overflow: hidden;
-  /* prevent logos from spilling outside the card */
+}
+
+.logoWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.econosWrapper {
+  width: 125px;
+}
+
+.smmWrapper {
+  width: 110px;
 }
 
 .divider {
@@ -70,17 +83,13 @@
     gap: 0.75rem;
   }
 
-  /* Force both logo images to stay within bounds */
-  .logoContainer img {
-    max-height: 22px !important;
-    width: auto !important;
-    height: auto !important;
+  .econosWrapper {
+    width: 95px;
   }
-}
 
-/* Fix for light Econos logo on light background */
-.logoEconos {
-  filter: brightness(0.4) sepia(1) hue-rotate(-20deg) saturate(1.5);
+  .smmWrapper {
+    width: 85px;
+  }
 }
 
 .subtitle {

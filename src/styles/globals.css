@@ -358,3 +358,9 @@ button:focus-visible {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Ensure the Econos logo consistently renders with the brand golden/sepia color across all environments and themes */
+img[src*="logo-econos.png"],
+img[src$="logo-econos.png"] {
+  filter: brightness(0.4) sepia(1) hue-rotate(-20deg) saturate(1.5) !important;
+}
