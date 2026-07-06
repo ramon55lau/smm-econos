@@ -208,6 +208,48 @@ export const emailTemplates = {
     `),
   }),
 
+  // ── User: Membership renewed ──
+  membershipRenewed: (name: string, expiresAt: Date | string | null, packageName: string, limits?: { facebook: number; instagram: number; youtube: number }) => {
+    const formattedDate = expiresAt
+      ? new Date(expiresAt).toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "numeric" })
+      : "No expira (Membresía ilimitada)";
+    return {
+      subject: "🔄 Membresía Renovada con Éxito - Econos SMM",
+      html: brandedEmail(`
+        <h2 style="color: #b08d6d; margin: 0 0 16px;">¡Tu membresía ha sido renovada!</h2>
+        <p>Hola ${name},</p>
+        <p>Nos complace informarte que tu membresía en <strong>Econos - Social Media Manager</strong> ha sido renovada con éxito por el equipo de administración.</p>
+        <div style="background: #fef9f3; border-left: 4px solid #b08d6d; padding: 16px 20px; border-radius: 8px; margin: 20px 0;">
+          <p style="margin: 0; font-size: 15px; color: #4a3f35;">
+            📅 Nueva fecha de vencimiento: <strong style="color: #b08d6d;">${formattedDate}</strong>
+          </p>
+          <p style="margin: 4px 0 0; font-size: 14px; color: #7a6f65;">
+            Plan activo: <strong>${packageName}</strong>
+          </p>
+        </div>
+        ${limits ? `
+        <h3 style="color: #4a3f35; margin-top: 20px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;">Límites de tu Plan</h3>
+        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin: 12px 0; border: 1px solid #e8e4df; border-radius: 8px; overflow: hidden;">
+          <tr style="background: #fdfcfb;">
+            <td style="padding: 10px 14px; border-bottom: 1px solid #e8e4df; font-size: 14px; color: #4a3f35;">👥 <strong>Meta (Facebook)</strong></td>
+            <td style="padding: 10px 14px; border-bottom: 1px solid #e8e4df; font-size: 14px; text-align: right; color: #b08d6d; font-weight: 700;">Hasta ${limits.facebook} cuenta${limits.facebook === 1 ? '' : 's'}</td>
+          </tr>
+          <tr style="background: #ffffff;">
+            <td style="padding: 10px 14px; border-bottom: 1px solid #e8e4df; font-size: 14px; color: #4a3f35;">📸 <strong>Instagram</strong></td>
+            <td style="padding: 10px 14px; border-bottom: 1px solid #e8e4df; font-size: 14px; text-align: right; color: #b08d6d; font-weight: 700;">Hasta ${limits.instagram} cuenta${limits.instagram === 1 ? '' : 's'}</td>
+          </tr>
+          <tr style="background: #fdfcfb;">
+            <td style="padding: 10px 14px; font-size: 14px; color: #4a3f35;">🎥 <strong>YouTube / Google Ads</strong></td>
+            <td style="padding: 10px 14px; font-size: 14px; text-align: right; color: #b08d6d; font-weight: 700;">Hasta ${limits.youtube} cuenta${limits.youtube === 1 ? '' : 's'}</td>
+          </tr>
+        </table>
+        ` : ''}
+        <p style="margin-top: 20px;">Ya puedes seguir programando y gestionando tus campañas en redes sociales con total normalidad desde tu panel.</p>
+        ${brandedButton("Acceder al Dashboard", `${BASE_URL}/login`, "#b08d6d")}
+      `),
+    };
+  },
+
   // ── Admin: New registration notification ──
   adminNewRegistration: (userName: string, userEmail: string) => ({
     subject: "🆕 Nuevo registro en Econos SMM - Pendiente de aprobación",

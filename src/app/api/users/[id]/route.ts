@@ -78,11 +78,37 @@ export async function PUT(
       const { sendEmail, emailTemplates } = require("@/lib/email");
 
       // If account was approved (from pending or suspended)
+      // If account was approved (from pending or suspended)
       if (status === "APPROVED" && existingUser.status !== "APPROVED") {
         const template = emailTemplates.registrationApproved(
           updatedUser.name || "Usuario",
           updatedUser.email,
           (updatedUser as any).expiresAt
+        );
+        await sendEmail(updatedUser.email, template.subject, template.html);
+      }
+
+      // If membership was renewed/extended (and not part of a fresh registration approval notification)
+      const isExpiresAtUpdated = body.expiresAt !== undefined && body.expiresAt !== null;
+      const wasAlreadyApproved = existingUser.status === "APPROVED";
+      const isDateChanged = !existingUser.expiresAt ||
+        (body.expiresAt && new Date(body.expiresAt).getTime() !== new Date(existingUser.expiresAt).getTime());
+
+      if (isExpiresAtUpdated && wasAlreadyApproved && isDateChanged) {
+        // Retrieve package to show plan details in email
+        const activePkg = (updatedUser as any).package || await prisma.package.findUnique({
+          where: { id: updatedUser.packageId || "" }
+        }).catch(() => null);
+
+        const template = emailTemplates.membershipRenewed(
+          updatedUser.name || "Usuario",
+          (updatedUser as any).expiresAt,
+          activePkg?.name || "Plan Personalizado",
+          activePkg ? {
+            facebook: activePkg.maxFacebook,
+            instagram: activePkg.maxInstagram,
+            youtube: activePkg.maxYouTube
+          } : undefined
         );
         await sendEmail(updatedUser.email, template.subject, template.html);
       }
@@ -93,8 +119,8 @@ export async function PUT(
         await sendEmail(updatedUser.email, template.subject, template.html);
       }
 
-      // If package was changed
-      if (body.packageId !== undefined && body.packageId !== existingUser.packageId) {
+      // If package was changed (prevent duplicate email if it just happened along with renewal, but usually separate)
+      if (body.packageId !== undefined && body.packageId !== existingUser.packageId && !isExpiresAtUpdated) {
         const pkg = (updatedUser as any).package;
         if (pkg) {
           const template = emailTemplates.packageUpdated(
