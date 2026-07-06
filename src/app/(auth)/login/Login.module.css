@@ -52,6 +52,8 @@
   margin-bottom: 2rem;
   flex-wrap: nowrap;
   max-width: 100%;
+  overflow: hidden;
+  /* prevent logos from spilling outside the card */
 }
 
 .divider {
@@ -62,9 +64,17 @@
   flex-shrink: 0;
 }
 
-@media (max-width: 400px) {
+/* Responsive: shrink logos proportionally on narrow screens */
+@media (max-width: 420px) {
   .logoContainer {
     gap: 0.75rem;
+  }
+
+  /* Force both logo images to stay within bounds */
+  .logoContainer img {
+    max-height: 22px !important;
+    width: auto !important;
+    height: auto !important;
   }
 }
 
