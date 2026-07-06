@@ -165,11 +165,20 @@ export default function UsersPage() {
   };
 
   const handleRenewMembership = async (user: User) => {
-    const newExpiry = new Date();
+    // If the membership is not expired yet (expiresAt is in the future), start from that date.
+    // Otherwise, start from today.
+    const currentExpiry = user.expiresAt ? new Date(user.expiresAt) : null;
+    const baseDate = currentExpiry && currentExpiry > new Date() ? currentExpiry : new Date();
+
+    const newExpiry = new Date(baseDate);
     newExpiry.setDate(newExpiry.getDate() + 30);
     const expiresAt = newExpiry.toISOString().substring(0, 10);
 
-    if (!confirm(`¿Renovar membresía de ${user.name || user.email} por 30 días más?\nNueva fecha de vencimiento: ${new Date(expiresAt).toLocaleDateString()}`)) return;
+    const dateMsg = currentExpiry && currentExpiry > new Date()
+      ? `sumando 30 días a su vigencia actual (${currentExpiry.toLocaleDateString()})`
+      : "por 30 días a partir de hoy";
+
+    if (!confirm(`¿Renovar membresía de ${user.name || user.email} ${dateMsg}?\nNueva fecha de vencimiento: ${new Date(expiresAt).toLocaleDateString()}`)) return;
 
     try {
       const res = await fetch(`/api/users/${user.id}`, {
