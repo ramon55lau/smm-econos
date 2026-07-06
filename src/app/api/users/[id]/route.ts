@@ -47,15 +47,30 @@ export async function PUT(
     const targetRole = role || existingUser.role;
     if (["SUPER_ADMIN", "ADMIN"].includes(targetRole)) {
       dataToUpdate.expiresAt = null; // Admins and Super Admins do not expire
-    } else if (status === "APPROVED" && existingUser.status !== "APPROVED") {
-      // If approved, set expiration to 30 days from now
-      if (!body.expiresAt) {
-        dataToUpdate.expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-      }
-    }
+    } else {
+      // Calculate 30 days from now (activation date)
+      const thirtyDaysFromNow = new Date();
+      thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
 
-    if (body.expiresAt !== undefined) {
-      dataToUpdate.expiresAt = body.expiresAt ? new Date(body.expiresAt) : null;
+      // Check if activating now
+      const isActivating = status === "APPROVED" && existingUser.status !== "APPROVED";
+
+      if (isActivating) {
+        // If activating, and no specific valid date is provided by the admin, force 30 days from today
+        if (body.expiresAt) {
+          dataToUpdate.expiresAt = new Date(body.expiresAt);
+        } else {
+          dataToUpdate.expiresAt = thirtyDaysFromNow;
+        }
+      } else if (body.expiresAt !== undefined) {
+        // If not activating but admin edits the date
+        if (body.expiresAt === "" || body.expiresAt === null) {
+          // If cleared, default to 30 days from now if it was empty, or respect null
+          dataToUpdate.expiresAt = existingUser.expiresAt ? existingUser.expiresAt : thirtyDaysFromNow;
+        } else {
+          dataToUpdate.expiresAt = new Date(body.expiresAt);
+        }
+      }
     }
 
     const updatedUser = await (prisma.user as any).update({
