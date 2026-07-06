@@ -54,19 +54,37 @@
   gap: 2rem;
   margin-bottom: 4rem;
   animation: fadeIn 0.8s ease-out;
+  flex-wrap: nowrap;
 }
 
 .logo {
   object-fit: contain;
-  max-height: 48px;
+  height: auto;
   width: auto !important;
+  max-height: 56px;
+  /* SMM can go up to 56px; Econos naturally shorter due to aspect ratio */
 }
 
 .divider {
   width: 1px;
-  height: 60px;
+  height: 48px;
   background: linear-gradient(180deg, var(--accent-primary), var(--accent-warm), transparent);
   opacity: 0.5;
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .logoContainer {
+    gap: 1rem;
+  }
+
+  .logo {
+    max-height: 40px;
+  }
+
+  .divider {
+    height: 32px;
+  }
 }
 
 .title {

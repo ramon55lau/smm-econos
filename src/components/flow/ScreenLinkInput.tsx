@@ -42,31 +42,41 @@ export default function ScreenLinkInput({ onScraped, onManual }: Props) {
       <div className="content">
         <div className="header">
           <div className="logo-capsule">
-            <Image
-              src="/images/logo-econos.png"
-              alt="Econos"
-              width={140}
-              height={32}
-              className="logo-econos"
-              style={{
-                objectFit: 'contain',
-                width: 'auto',
-                height: '32px',
-                filter: 'brightness(0.4) sepia(1) hue-rotate(-20deg) saturate(1.5)'
-              }}
-              priority
-              unoptimized
-            />
+            <div className="logo-wrapper econos-wrapper">
+              <Image
+                src="/images/logo-econos.png"
+                alt="Econos"
+                width={120}
+                height={26}
+                className="logo-econos"
+                style={{
+                  objectFit: 'contain',
+                  width: '100%',
+                  height: 'auto',
+                  maxHeight: '26px',
+                  filter: 'brightness(0.4) sepia(1) hue-rotate(-20deg) saturate(1.5)'
+                }}
+                priority
+                unoptimized
+              />
+            </div>
             <div className="logo-divider" />
-            <Image
-              src="/images/logo-smm.png"
-              alt="Social Media Manager"
-              width={140}
-              height={32}
-              style={{ objectFit: 'contain', width: 'auto', height: '32px' }}
-              priority
-              unoptimized
-            />
+            <div className="logo-wrapper smm-wrapper">
+              <Image
+                src="/images/logo-smm.png"
+                alt="Social Media Manager"
+                width={110}
+                height={38}
+                style={{
+                  objectFit: 'contain',
+                  width: '100%',
+                  height: 'auto',
+                  maxHeight: '38px'
+                }}
+                priority
+                unoptimized
+              />
+            </div>
           </div>
         </div>
 
@@ -166,9 +176,43 @@ export default function ScreenLinkInput({ onScraped, onManual }: Props) {
 
         .logo-divider {
           width: 1px;
-          height: 20px;
+          height: 24px;
           background: #4a3f35;
-          opacity: 0.25;
+          opacity: 0.2;
+          flex-shrink: 0;
+        }
+
+        .logo-wrapper {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .econos-wrapper {
+          width: 120px;
+          flex-shrink: 1;
+        }
+
+        .smm-wrapper {
+          width: 110px;
+          flex-shrink: 1;
+        }
+
+        @media (max-width: 480px) {
+          .logo-capsule {
+            gap: 0.75rem;
+            padding: 0.4rem 1rem;
+            max-width: 90%;
+          }
+          .econos-wrapper {
+            width: 100px;
+          }
+          .smm-wrapper {
+            width: 90px;
+          }
+          .logo-divider {
+            height: 16px;
+          }
         }
 
         .hero h1 {

@@ -48,15 +48,24 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 1.5rem;
+  gap: 1.25rem;
   margin-bottom: 2rem;
+  flex-wrap: nowrap;
+  max-width: 100%;
 }
 
 .divider {
   width: 1px;
-  height: 30px;
+  height: 28px;
   background: var(--accent-primary);
   opacity: 0.3;
+  flex-shrink: 0;
+}
+
+@media (max-width: 400px) {
+  .logoContainer {
+    gap: 0.75rem;
+  }
 }
 
 /* Fix for light Econos logo on light background */

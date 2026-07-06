@@ -62,14 +62,21 @@ export default function LoginPage() {
             <Image
               src="/images/logo-econos.png"
               alt="Econos"
-              width={160}
-              height={45}
+              width={130}
+              height={30}
               priority
               className={styles.logoEconos}
-              style={{ objectFit: 'contain' }}
+              style={{ objectFit: 'contain', width: 'auto', height: '30px' }}
             />
             <div className={styles.divider} />
-            <Image src="/images/logo-smm.png" alt="SMM" width={130} height={40} priority style={{ objectFit: 'contain' }} />
+            <Image
+              src="/images/logo-smm.png"
+              alt="SMM"
+              width={140}
+              height={42}
+              priority
+              style={{ objectFit: 'contain', width: 'auto', height: '42px' }}
+            />
           </div>
           <p className={styles.subtitle}>Inicia sesión para gestionar tus campañas</p>
         </div>
