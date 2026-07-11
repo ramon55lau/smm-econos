@@ -22,6 +22,10 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
     const [hashtags, setHashtags] = useState(data.hashtags?.join(' ') || "");
     const [isAds, setIsAds] = useState(platform === 'google-ads');
 
+    // Filter out invalid/empty images and videos to prevent empty/broken selection cards
+    const sanitizedImages = (data.images || []).filter(img => typeof img === 'string' && img.trim().length > 0 && img.startsWith('http'));
+    const sanitizedVideos = (data.videos || []).filter(v => v && typeof v.url === 'string' && v.url.trim().length > 0 && v.url.startsWith('http'));
+
     useEffect(() => {
         if (platform === 'youtube' || platform === 'instagram' || platform === 'facebook') {
             setIsAds(false);
@@ -30,9 +34,9 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
 
     // Multi-media selection
     const [selectedMedia, setSelectedMedia] = useState<{ url: string, type: 'image' | 'video' }[]>(
-        (data.videos && data.videos.length > 0)
-            ? [{ url: data.videos[0].url, type: 'video' }]
-            : (data.images && data.images.length > 0) ? [{ url: data.images[0], type: 'image' }] : []
+        (sanitizedVideos.length > 0)
+            ? [{ url: sanitizedVideos[0].url, type: 'video' }]
+            : (sanitizedImages.length > 0) ? [{ url: sanitizedImages[0], type: 'image' }] : []
     );
 
     const [cta, setCta] = useState("Más información");
@@ -193,14 +197,14 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
                                             <span className="upload-label">Subir</span>
                                         </div>
 
-                                        {data.videos && data.videos.length > 0 && (
+                                        {sanitizedVideos.length > 0 && (
                                             <div
-                                                className={`gallery-item ${selectedMedia.some(m => m.url === data.videos[0].url) ? 'active' : ''}`}
-                                                onClick={() => toggleMedia(data.videos[0].url, 'video')}
+                                                className={`gallery-item ${selectedMedia.some(m => m.url === sanitizedVideos[0].url) ? 'active' : ''}`}
+                                                onClick={() => toggleMedia(sanitizedVideos[0].url, 'video')}
                                             >
-                                                <video src={data.videos[0].url} muted />
+                                                <video src={sanitizedVideos[0].url} muted />
                                                 <span className="play-badge">▶</span>
-                                                {selectedMedia.some(m => m.url === data.videos[0].url) && <span className="check-box">✓</span>}
+                                                {selectedMedia.some(m => m.url === sanitizedVideos[0].url) && <span className="check-box">✓</span>}
                                             </div>
                                         )}
                                         {extraMedia.map((m, i) => (
@@ -215,7 +219,7 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
                                             </div>
                                         ))}
 
-                                        {data.images.slice(0, 12).map((img, i) => (
+                                        {sanitizedImages.slice(0, 12).map((img, i) => (
                                             <div
                                                 key={i}
                                                 className={`gallery-item ${selectedMedia.some(m => m.url === img) ? 'active' : ''}`}
