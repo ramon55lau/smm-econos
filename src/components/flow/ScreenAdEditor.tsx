@@ -484,89 +484,134 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
                                     <div className="media-container fb-mosaic-grid">
                                         {selectedMedia.length === 0 ? (
                                             <div className="media-placeholder">Sin multimedia</div>
-                                        ) : selectedMedia.length === 1 ? (
-                                            /* Single image — full width */
-                                            <div className="mosaic-single">
-                                                {selectedMedia[0]?.type === 'video' ? (
-                                                    selectedMedia[0].url.includes('youtube.com') || selectedMedia[0].url.includes('youtu.be') ? (
-                                                        <iframe
-                                                            src={`https://www.youtube.com/embed/${selectedMedia[0].url.includes('v=') ? selectedMedia[0].url.split('v=')[1].split('&')[0] : selectedMedia[0].url.split('/').pop()?.split('?')[0]}`}
-                                                            style={{ width: '100%', height: '100%', border: 'none' }}
-                                                            allowFullScreen
-                                                        />
-                                                    ) : (
-                                                        <video src={selectedMedia[0].url} autoPlay muted loop />
-                                                    )
-                                                ) : (
-                                                    <img src={selectedMedia[0]?.url} alt="" />
-                                                )}
-                                            </div>
-                                        ) : selectedMedia.length === 2 ? (
-                                            /* 2 images — side by side */
-                                            <div className="mosaic-row-2">
-                                                {selectedMedia.slice(0, 2).map((m, i) => (
-                                                    <div key={i} className="mosaic-cell">
-                                                        {m.type === 'video' ? <video src={m.url} muted /> : <img src={m.url} alt="" />}
+                                        ) : (() => {
+                                            // Helper to render a single media item
+                                            const renderItem = (m: { url: string, type: string }, key: string | number, style?: React.CSSProperties) => {
+                                                if (m.type === 'video') {
+                                                    if (m.url.includes('youtube.com') || m.url.includes('youtu.be')) {
+                                                        const videoId = m.url.includes('v=')
+                                                            ? m.url.split('v=')[1].split('&')[0]
+                                                            : m.url.split('/').pop()?.split('?')[0];
+                                                        return (
+                                                            <iframe
+                                                                key={key}
+                                                                src={`https://www.youtube.com/embed/${videoId}`}
+                                                                style={{ width: '100%', height: '100%', border: 'none', ...(style || {}) }}
+                                                                allowFullScreen
+                                                            />
+                                                        );
+                                                    }
+                                                    return <video key={key} src={m.url} autoPlay muted loop style={style} />;
+                                                }
+                                                return <img key={key} src={m.url} alt="" style={style} />;
+                                            };
+
+                                            // ─── If there's a video, always put it full-width first ───
+                                            const videoItem = selectedMedia.find(m => m.type === 'video');
+                                            const imageItems = selectedMedia.filter(m => m.type !== 'video');
+
+                                            if (videoItem) {
+                                                return (
+                                                    <>
+                                                        {/* Video — full width */}
+                                                        <div className="mosaic-single" style={{ borderRadius: imageItems.length > 0 ? '8px 8px 0 0' : '8px', overflow: 'hidden' }}>
+                                                            {renderItem(videoItem, 'video-primary')}
+                                                            <span style={{
+                                                                position: 'absolute', bottom: 8, left: 8,
+                                                                background: 'rgba(0,0,0,0.6)', color: '#fff',
+                                                                fontSize: '0.65rem', padding: '2px 6px', borderRadius: 4,
+                                                                display: 'flex', alignItems: 'center', gap: 4
+                                                            }}>▶ Video</span>
+                                                        </div>
+
+                                                        {/* Additional images strip below video */}
+                                                        {imageItems.length > 0 && (
+                                                            <div style={{
+                                                                display: 'grid',
+                                                                gridTemplateColumns: `repeat(${Math.min(imageItems.length, 4)}, 1fr)`,
+                                                                gap: '2px',
+                                                                marginTop: '2px',
+                                                                maxHeight: '80px',
+                                                                borderRadius: '0 0 8px 8px',
+                                                                overflow: 'hidden'
+                                                            }}>
+                                                                {imageItems.slice(0, 4).map((m, i) => (
+                                                                    <div key={i} style={{ position: 'relative', overflow: 'hidden', height: '80px' }}>
+                                                                        <img src={m.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                                        {i === 3 && imageItems.length > 4 && (
+                                                                            <div className="mosaic-overlay">+{imageItems.length - 4}</div>
+                                                                        )}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </>
+                                                );
+                                            }
+
+                                            // ─── Pure image mosaic (no video) ───
+                                            if (selectedMedia.length === 1) {
+                                                return <div className="mosaic-single">{renderItem(selectedMedia[0], 0)}</div>;
+                                            } else if (selectedMedia.length === 2) {
+                                                return (
+                                                    <div className="mosaic-row-2">
+                                                        {selectedMedia.slice(0, 2).map((m, i) => (
+                                                            <div key={i} className="mosaic-cell">{renderItem(m, i)}</div>
+                                                        ))}
                                                     </div>
-                                                ))}
-                                            </div>
-                                        ) : selectedMedia.length === 3 ? (
-                                            /* 3 images — 2 top, 1 bottom full */
-                                            <>
-                                                <div className="mosaic-row-2">
-                                                    {selectedMedia.slice(0, 2).map((m, i) => (
-                                                        <div key={i} className="mosaic-cell">
-                                                            {m.type === 'video' ? <video src={m.url} muted /> : <img src={m.url} alt="" />}
+                                                );
+                                            } else if (selectedMedia.length === 3) {
+                                                return (
+                                                    <>
+                                                        <div className="mosaic-row-2">
+                                                            {selectedMedia.slice(0, 2).map((m, i) => (
+                                                                <div key={i} className="mosaic-cell">{renderItem(m, i)}</div>
+                                                            ))}
                                                         </div>
-                                                    ))}
-                                                </div>
-                                                <div className="mosaic-row-3">
-                                                    <div className="mosaic-cell">
-                                                        {selectedMedia[2].type === 'video' ? <video src={selectedMedia[2].url} muted /> : <img src={selectedMedia[2].url} alt="" />}
-                                                    </div>
-                                                </div>
-                                            </>
-                                        ) : selectedMedia.length === 4 ? (
-                                            /* 4 images — 2 top, 2 bottom */
-                                            <>
-                                                <div className="mosaic-row-2">
-                                                    {selectedMedia.slice(0, 2).map((m, i) => (
-                                                        <div key={i} className="mosaic-cell">
-                                                            {m.type === 'video' ? <video src={m.url} muted /> : <img src={m.url} alt="" />}
+                                                        <div className="mosaic-row-3">
+                                                            <div className="mosaic-cell">{renderItem(selectedMedia[2], 2)}</div>
                                                         </div>
-                                                    ))}
-                                                </div>
-                                                <div className="mosaic-row-2">
-                                                    {selectedMedia.slice(2, 4).map((m, i) => (
-                                                        <div key={i} className="mosaic-cell">
-                                                            {m.type === 'video' ? <video src={m.url} muted /> : <img src={m.url} alt="" />}
+                                                    </>
+                                                );
+                                            } else if (selectedMedia.length === 4) {
+                                                return (
+                                                    <>
+                                                        <div className="mosaic-row-2">
+                                                            {selectedMedia.slice(0, 2).map((m, i) => (
+                                                                <div key={i} className="mosaic-cell">{renderItem(m, i)}</div>
+                                                            ))}
                                                         </div>
-                                                    ))}
-                                                </div>
-                                            </>
-                                        ) : (
-                                            /* 5+ images — 2 top, 3 bottom with +N overlay on last */
-                                            <>
-                                                <div className="mosaic-row-2">
-                                                    {selectedMedia.slice(0, 2).map((m, i) => (
-                                                        <div key={i} className="mosaic-cell">
-                                                            {m.type === 'video' ? <video src={m.url} muted /> : <img src={m.url} alt="" />}
+                                                        <div className="mosaic-row-2">
+                                                            {selectedMedia.slice(2, 4).map((m, i) => (
+                                                                <div key={i} className="mosaic-cell">{renderItem(m, i + 2)}</div>
+                                                            ))}
                                                         </div>
-                                                    ))}
-                                                </div>
-                                                <div className="mosaic-row-3">
-                                                    {selectedMedia.slice(2, 5).map((m, i) => (
-                                                        <div key={i} className="mosaic-cell" style={{ position: 'relative' }}>
-                                                            {m.type === 'video' ? <video src={m.url} muted /> : <img src={m.url} alt="" />}
-                                                            {i === 2 && selectedMedia.length > 5 && (
-                                                                <div className="mosaic-overlay">+{selectedMedia.length - 5}</div>
-                                                            )}
+                                                    </>
+                                                );
+                                            } else {
+                                                return (
+                                                    <>
+                                                        <div className="mosaic-row-2">
+                                                            {selectedMedia.slice(0, 2).map((m, i) => (
+                                                                <div key={i} className="mosaic-cell">{renderItem(m, i)}</div>
+                                                            ))}
                                                         </div>
-                                                    ))}
-                                                </div>
-                                            </>
-                                        )}
+                                                        <div className="mosaic-row-3">
+                                                            {selectedMedia.slice(2, 5).map((m, i) => (
+                                                                <div key={i} className="mosaic-cell" style={{ position: 'relative' }}>
+                                                                    {renderItem(m, i + 2)}
+                                                                    {i === 2 && selectedMedia.length > 5 && (
+                                                                        <div className="mosaic-overlay">+{selectedMedia.length - 5}</div>
+                                                                    )}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </>
+                                                );
+                                            }
+                                        })()}
                                     </div>
+
                                     <footer>
                                         <div className="footer-meta">
                                             <b>{destinationUrl ? destinationUrl.replace('https://', '').split('/')[0] : 'enlace'}</b>
@@ -606,12 +651,12 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
                         <p>Hemos optimizado el diseño para {variant}. Puedes editar textos y elementos para que se adapten a tu marca.</p>
                     </div>
                 </aside>
-            </div>
+            </div >
 
             {/* Mobile/Tablet Fallback Publish Button */}
-            <div className="mobile-publish-footer">
+            < div className="mobile-publish-footer" >
                 <button className="publish-now-btn" style={{ minWidth: '220px' }} onClick={handlePublishLocal}>🚀 Publicar ahora</button>
-            </div>
+            </div >
 
 
 
@@ -1287,6 +1332,6 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
         }
 
       `}</style>
-        </div>
+        </div >
     );
 }

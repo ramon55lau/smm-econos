@@ -13,10 +13,12 @@ export async function GET(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const provider = req.nextUrl.searchParams.get("provider");
-  
+
   // Use NEXTAUTH_URL as priority for stable redirects in production
   const baseUrl = process.env.NEXTAUTH_URL || req.nextUrl.origin;
   const redirectUri = `${baseUrl}/api/social/callback/${provider}`;
+
+  const isPopup = req.nextUrl.searchParams.get("popup") === "true";
 
   try {
     let oauthUrl: string;
@@ -27,7 +29,7 @@ export async function GET(req: NextRequest) {
         oauthUrl = getFacebookOAuthUrl(redirectUri, provider);
         break;
       case "youtube":
-        oauthUrl = getYouTubeOAuthUrl(redirectUri);
+        oauthUrl = getYouTubeOAuthUrl(redirectUri, isPopup ? "popup" : undefined);
         break;
       default:
         return NextResponse.json({ error: "Invalid provider" }, { status: 400 });

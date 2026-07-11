@@ -114,9 +114,28 @@ async function scrapeMHEstate(propertyId: string, originalUrl: string) {
   }
 
   const videos: { url: string; thumbnail?: string; type?: string }[] = [];
-  const videoUrl = getXmlTag(block, "video") || getXmlTag(block, "url_video") || getXmlTag(block, "embed");
-  if (videoUrl && videoUrl.startsWith("http")) {
-    videos.push({ url: videoUrl, thumbnail: images[0], type: "unknown" });
+
+  // Check common video tag names (including the <videos><video1> structure used by MHEstate XML)
+  const videoTagNames = ["video", "url_video", "embed", "video1", "video2", "video3"];
+  for (const tagName of videoTagNames) {
+    const vUrl = getXmlTag(block, tagName);
+    if (vUrl && vUrl.startsWith("http") && !videos.some(v => v.url === vUrl)) {
+      // Generate YouTube thumbnail if applicable
+      let thumb: string | undefined = images[0];
+      const lowerVUrl = vUrl.toLowerCase();
+      if (lowerVUrl.includes("youtube.com") || lowerVUrl.includes("youtu.be")) {
+        let videoId = "";
+        if (vUrl.includes("v=")) {
+          videoId = vUrl.split("v=")[1].split("&")[0];
+        } else if (vUrl.includes("youtu.be/")) {
+          videoId = vUrl.split("youtu.be/")[1].split("?")[0];
+        } else if (vUrl.includes("embed/")) {
+          videoId = vUrl.split("embed/")[1].split("?")[0];
+        }
+        if (videoId) thumb = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+      }
+      videos.push({ url: vUrl, thumbnail: thumb, type: "unknown" });
+    }
   }
 
   // Build hashtags from tipo_ofer + zona + ciudad
@@ -168,6 +187,78 @@ function inferFromUrl(url: string): { title: string; city?: string; ref?: string
   }
 }
 
+// ─── Recursive helper to locate media inside arbitrary structures ──────────
+function findMediaRecursively(obj: any, urlContext: string, extractedImages: string[], extractedVideos: any[]) {
+  if (!obj) return;
+  if (typeof obj === 'string') {
+    const isUrl = obj.startsWith('http://') || obj.startsWith('https://');
+    if (isUrl) {
+      const lower = obj.toLowerCase();
+      // Check for video links
+      if (
+        lower.includes("youtube.com") ||
+        lower.includes("youtu.be") ||
+        lower.includes("vimeo.com") ||
+        lower.endsWith(".mp4") ||
+        lower.endsWith(".webm") ||
+        lower.endsWith(".mov") ||
+        lower.endsWith(".ogg") ||
+        lower.endsWith(".m4v") ||
+        lower.includes("/video/")
+      ) {
+        if (!extractedVideos.some(v => v.url === obj)) {
+          let thumb = undefined;
+          if (lower.includes("youtube.com") || lower.includes("youtu.be")) {
+            let videoId = "";
+            if (obj.includes("v=")) {
+              videoId = obj.split("v=")[1].split("&")[0];
+            } else if (obj.includes("youtu.be/")) {
+              videoId = obj.split("youtu.be/")[1].split("?")[0];
+            }
+            if (videoId) thumb = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+          }
+          extractedVideos.push({ url: obj, type: "unknown", thumbnail: thumb });
+        }
+      }
+      // Check for image links
+      else if (
+        lower.endsWith(".jpg") ||
+        lower.endsWith(".jpeg") ||
+        lower.endsWith(".png") ||
+        lower.endsWith(".webp") ||
+        lower.endsWith(".avif") ||
+        lower.includes(".jpg?") ||
+        lower.includes(".jpeg?") ||
+        lower.includes(".png?") ||
+        lower.includes(".webp?") ||
+        lower.includes(".avif?") ||
+        lower.includes("/images/") ||
+        lower.includes("/img/") ||
+        lower.includes("/photo/") ||
+        lower.includes("/photos/") ||
+        lower.includes("/picture/") ||
+        lower.includes("/pictures/") ||
+        lower.includes("/uploads/") ||
+        obj.includes("api.maklarringen.se/images/")
+      ) {
+        if (!isJunk(obj) && !extractedImages.includes(obj)) {
+          extractedImages.push(obj);
+        }
+      }
+    }
+  } else if (Array.isArray(obj)) {
+    for (const item of obj) {
+      findMediaRecursively(item, urlContext, extractedImages, extractedVideos);
+    }
+  } else if (typeof obj === 'object') {
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        findMediaRecursively(obj[key], urlContext, extractedImages, extractedVideos);
+      }
+    }
+  }
+}
+
 // ─── Generic scraper ─────────────────────────────────────────────────────────
 async function scrapeGeneric(url: string) {
   let html = "";
@@ -190,7 +281,7 @@ async function scrapeGeneric(url: string) {
     console.warn(`Scrape generic warning for ${url}:`, err);
   }
 
-  // Detect and extract video
+  // Detect and extract video directly from URL context
   const videoData = await extractVideoFromUrl(url);
 
   // If no html or catastrophically failed, return base hybridized object
@@ -254,12 +345,40 @@ async function scrapeGeneric(url: string) {
     .replace(/&#x27;/g, "'").replace(/&quot;/g, '"');
 
   const images: string[] = [];
+  const videos: { url: string; type?: string; thumbnail?: string }[] = [];
+
+  // Add the primary URL inferred video (e.g. youtube/vimeo link) first so it gets prioritized
+  if (videoData) {
+    if (!videos.some(v => v.url === videoData.url)) {
+      videos.push(videoData);
+    }
+  }
+
+  // Extract from Next.js hydration stores if present (__NEXT_DATA__)
+  const nextDataMatch = html.match(/<script[^>]+id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/i);
+  if (nextDataMatch) {
+    try {
+      const nextDataObj = JSON.parse(nextDataMatch[1].trim());
+      findMediaRecursively(nextDataObj, url, images, videos);
+    } catch (e) {
+      console.warn("Failed to parse __NEXT_DATA__ state:", e);
+    }
+  }
+
+  // Also apply it to parsed JSON-LD
+  if (jsonLdData && Object.keys(jsonLdData).length > 0) {
+    findMediaRecursively(jsonLdData, url, images, videos);
+  }
 
   const ogImg = getMeta(["og:image", "og:image:secure_url", "twitter:image", "image"]) || (jsonLdData.image ? (typeof jsonLdData.image === 'string' ? jsonLdData.image : (jsonLdData.image.url || jsonLdData.image[0])) : null);
-  if (ogImg && typeof ogImg === 'string' && ogImg.startsWith("http") && !isJunk(ogImg)) images.push(ogImg);
+  if (ogImg && typeof ogImg === 'string' && ogImg.startsWith("http") && !isJunk(ogImg)) {
+    if (!images.includes(ogImg)) {
+      images.push(ogImg);
+    }
+  }
 
-  // Only grab absolute .jpg / .jpeg / .png URLs
-  const directRegex = /https?:\/\/[^\s"'<>\\]+\.(?:jpg|jpeg|png)(?:\?[^\s"'<>\\]*)?/gi;
+  // Only grab absolute .jpg / .jpeg / .png / .webp / .avif URLs
+  const directRegex = /https?:\/\/[^\s"'<>\\]+\.(?:jpg|jpeg|png|webp|avif)(?:\?[^\s"'<>\\]*)?/gi;
   let m: RegExpExecArray | null;
   while ((m = directRegex.exec(html)) !== null && images.length < 50) {
     const src = m[0];
@@ -271,27 +390,57 @@ async function scrapeGeneric(url: string) {
   let sm: RegExpExecArray | null;
   while ((sm = scriptRegex.exec(html)) !== null && images.length < 60) {
     const scriptContent = sm[1];
+
+    // Scan direct regex
     let match;
     while ((match = directRegex.exec(scriptContent)) !== null && images.length < 60) {
       const src = match[0];
       if (!isJunk(src) && !images.includes(src)) images.push(src);
     }
+
+    // Try to parse JSON variables inside script
+    const jsonMatches = scriptContent.match(/({[\s\S]*?}|\[[\s\S]*?\])/g);
+    if (jsonMatches) {
+      for (const jsonStr of jsonMatches) {
+        if (jsonStr.length > 50 && (jsonStr.includes("http") || jsonStr.includes("/images/"))) {
+          try {
+            const parsedObj = JSON.parse(jsonStr);
+            findMediaRecursively(parsedObj, url, images, videos);
+          } catch (_) { }
+        }
+      }
+    }
   }
 
   // Generic videos from OG tags
-  const videos = videoData ? [videoData] : [];
   const ogVid = getMeta(["og:video", "og:video:url", "og:video:secure_url"]);
   if (ogVid && ogVid.startsWith("http") && !videos.some(v => v.url === ogVid)) {
     videos.push({ url: ogVid, type: "unknown", thumbnail: ogImg || undefined });
   }
 
-  // Relative <img src> with .jpg/.png only
-  const imgTagRegex = /<img[^>]+(?:src|data-src|data-original)=["']([^"']+\.(?:jpg|jpeg|png)(?:\?[^"']*)?)["'][^>]*>/gi;
+  // Relative <img src>
+  const imgTagRegex = /<img[^>]+(?:src|data-src|data-original)=["']([^"']+\.(?:jpg|jpeg|png|webp|avif)(?:\?[^"']*)?)["'][^>]*>/gi;
   while ((m = imgTagRegex.exec(html)) !== null && images.length < 60) {
     let src = m[1];
     if (src.startsWith("//")) src = "https:" + src;
     else if (src.startsWith("/")) { try { src = new URL(src, url).href; } catch (_) { } }
     if (src.startsWith("http") && !isJunk(src) && !images.includes(src)) images.push(src);
+  }
+
+  // Custom regexes for common CDN media patterns that might not end with extensions (like api.maklarringen.se/images/)
+  const cdnPatterns = [
+    /https?:\/\/[^\s"'<>\\]+?\/images\/[^\s"'<>\\]+/gi,
+    /https?:\/\/[^\s"'<>\\]+?\/photos\/[^\s"'<>\\]+/gi,
+    /https?:\/\/[^\s"'<>\\]+?\/uploads\/[^\s"'<>\\]+/gi
+  ];
+  for (const regex of cdnPatterns) {
+    let match;
+    while ((match = regex.exec(html)) !== null && images.length < 70) {
+      const src = match[0].split(/[\\"']/)[0]; // strip quotes if any
+      if (src.startsWith("http") && !isJunk(src) && !images.includes(src)) {
+        images.push(src);
+      }
+    }
   }
 
   const hashtags = generateHashtags([title]);
@@ -308,18 +457,30 @@ async function scrapeGeneric(url: string) {
     if (inferred.ref) inferredDesc = `Referencia del inmueble: ${inferred.ref}. `;
   }
 
+  // If there are videos, let's make sure the thumbnail of the video is first in images or video is clearly marked
+  // We prioritize video: if a video exists, ensure its structure is clear in the response payload
+  if (videos.length > 0) {
+    // If the video has a thumbnail, put it at the beginning of images (or make sure we have a good picture)
+    for (const v of videos) {
+      if (v.thumbnail && !images.includes(v.thumbnail)) {
+        images.unshift(v.thumbnail);
+      }
+    }
+  }
+
   return {
     title: title.substring(0, 100),
     description: (inferredDesc + description).substring(0, 500),
     price: priceTag,
     city: cityTag,
-    images,
-    videos,
+    images: images.slice(0, 50),
+    videos: videos,
     hashtags,
     suggestedComment: "📍 Consulta detalles y agenda tu visita. ¡Te asesoramos sin compromiso!",
     linkUrl: url,
   };
 }
+
 
 // ─── Main Route ───────────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {

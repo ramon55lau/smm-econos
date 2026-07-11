@@ -20,6 +20,8 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
     const [selectedProfile, setSelectedProfile] = useState("");
     const [publishType, setPublishType] = useState<"organic" | "paid">("organic");
     const [organicDestination, setOrganicDestination] = useState("");
+    const [selectedChannels, setSelectedChannels] = useState<string[]>([]);
+    const [youtubeFormat, setYoutubeFormat] = useState<"video" | "shorts">("video");
 
     // Paid config
     const [budget, setBudget] = useState("10");
@@ -136,36 +138,48 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
 
     if (!mounted) return null;
 
-    const handleSyncPopup = (e: React.MouseEvent) => {
-        e.preventDefault();
-        const popup = window.open('/settings/accounts', 'SMMAccountSync', 'width=1000,height=800,scrollbars=yes');
+    const openSyncPopup = (url: string) => {
+        const popup = window.open(url, 'SMMAccountSync', 'width=1000,height=800,scrollbars=yes');
         syncPopupRef.current = popup;
 
-        // Start polling to detect new accounts
         const initialCount = accounts.length;
         if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
         pollIntervalRef.current = setInterval(async () => {
-            // Check if popup was closed
             if (syncPopupRef.current && syncPopupRef.current.closed) {
-                // Popup closed, do a final refresh
                 const fresh = await fetchAccounts();
                 setAccounts(fresh);
                 if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
                 pollIntervalRef.current = null;
                 return;
             }
-            // Poll for new accounts
             const fresh = await fetchAccounts();
             if (fresh.length > initialCount) {
                 setAccounts(fresh);
-                // Auto-close popup and stop polling
-                if (syncPopupRef.current && !syncPopupRef.current.closed) {
-                    syncPopupRef.current.close();
-                }
+                if (syncPopupRef.current && !syncPopupRef.current.closed) syncPopupRef.current.close();
                 if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
                 pollIntervalRef.current = null;
             }
         }, 2000);
+    };
+
+    const handleSyncPopup = (e: React.MouseEvent) => {
+        e.preventDefault();
+        openSyncPopup('/settings/accounts');
+    };
+
+    const handleYoutubeSyncPopup = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        try {
+            // Get the real YouTube OAuth URL with the correct scopes
+            const res = await fetch("/api/social/connect?provider=youtube&popup=true");
+            if (!res.ok) throw new Error("No se pudo obtener la URL de YouTube");
+            const { url } = await res.json();
+            if (!url) throw new Error("URL de OAuth no disponible");
+            // Open the real Google/YouTube OAuth in popup with polling
+            openSyncPopup(url);
+        } catch (err: any) {
+            alert(`Error al conectar YouTube: ${err.message}`);
+        }
     };
 
     const refreshAccounts = async () => {
@@ -274,31 +288,99 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
 
                     {step === 3 && (
                         <div className="step-content">
-                            {publishType === 'organic' || platform === 'youtube' ? (
+                            {platform === 'youtube' ? (
+                                (() => {
+                                    const ytAccounts = accounts.filter(a => a.provider === 'youtube');
+                                    const toggleChannel = (id: string) => {
+                                        setSelectedChannels(prev =>
+                                            prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
+                                        );
+                                    };
+
+                                    if (ytAccounts.length === 0) {
+                                        // No channels synced — show CTA to connect
+                                        return (
+                                            <div className="organic-flow">
+                                                <h2 className="step-title">Canal de YouTube</h2>
+                                                <div className="yt-no-channels">
+                                                    <span className="yt-no-icon">📡</span>
+                                                    <p>No tienes ningún canal de YouTube conectado.</p>
+                                                    <button className="yt-connect-btn" onClick={handleYoutubeSyncPopup}>
+                                                        <span>▶️</span> Conectar canal de YouTube
+                                                    </button>
+                                                    <button onClick={refreshAccounts} className="refresh-mini-btn" title="Ya conecté, actualizar">🔄 Actualizar</button>
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+
+                                    return (
+                                        <div className="organic-flow">
+                                            <h2 className="step-title">Canal de YouTube</h2>
+                                            <p className="step-sub">Selecciona el canal donde publicar. Puedes elegir varios.</p>
+
+                                            {/* Format selector */}
+                                            <div className="yt-format-row">
+                                                <button
+                                                    className={`yt-fmt-btn ${youtubeFormat === 'video' ? 'active' : ''}`}
+                                                    onClick={() => setYoutubeFormat('video')}
+                                                >
+                                                    📺 Video estándar
+                                                </button>
+                                                <button
+                                                    className={`yt-fmt-btn ${youtubeFormat === 'shorts' ? 'active' : ''}`}
+                                                    onClick={() => setYoutubeFormat('shorts')}
+                                                >
+                                                    📱 Shorts
+                                                </button>
+                                            </div>
+
+                                            {/* Channel list */}
+                                            <div className="yt-channel-list">
+                                                {ytAccounts.map(acc => (
+                                                    <div
+                                                        key={acc.id}
+                                                        className={`yt-channel-card ${selectedChannels.includes(acc.id) ? 'selected' : ''}`}
+                                                        onClick={() => toggleChannel(acc.id)}
+                                                    >
+                                                        <div className="yt-ch-avatar">▶️</div>
+                                                        <div className="yt-ch-info">
+                                                            <b>{acc.accountName || acc.pageName || 'Mi canal'}</b>
+                                                            <span>{acc.providerAccountId}</span>
+                                                        </div>
+                                                        {selectedChannels.includes(acc.id) && (
+                                                            <div className="selected-check">✓</div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                                <button onClick={handleYoutubeSyncPopup} className="account-item add-more-item" style={{ marginTop: 4 }}>
+                                                    <div className="acc-avatar">+</div>
+                                                    <div className="acc-info">
+                                                        <b className="acc-name">Conectar otro canal</b>
+                                                        <span className="acc-provider">Abrir sincronizador YouTube</span>
+                                                    </div>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })()
+                            ) : publishType === 'organic' ? (
                                 <div className="organic-flow">
-                                    <h2 className="step-title">Destino en YouTube</h2>
-                                    <p className="step-sub">¿Dónde quieres publicar este video?</p>
+                                    <h2 className="step-title">Destino de publicación</h2>
+                                    <p className="step-sub">¿Dónde quieres publicar?</p>
                                     <div className="destination-grid">
-                                        <button
-                                            className={`dest-card ${organicDestination === 'shorts' ? 'active' : ''}`}
-                                            onClick={() => setOrganicDestination('shorts')}
-                                        >
-                                            <span className="dest-icon">📱</span>
-                                            <div className="dest-info">
-                                                <b>YouTube Shorts</b>
-                                                <span>Video vertical corto</span>
-                                            </div>
-                                        </button>
-                                        <button
-                                            className={`dest-card ${organicDestination === 'canal' ? 'active' : ''}`}
-                                            onClick={() => setOrganicDestination('canal')}
-                                        >
-                                            <span className="dest-icon">📺</span>
-                                            <div className="dest-info">
-                                                <b>Canal Principal</b>
-                                                <span>Video estándar</span>
-                                            </div>
-                                        </button>
+                                        {['feed', 'story', 'reels'].map(d => (
+                                            <button
+                                                key={d}
+                                                className={`dest-card ${organicDestination === d ? 'active' : ''}`}
+                                                onClick={() => setOrganicDestination(d)}
+                                            >
+                                                <span className="dest-icon">{d === 'feed' ? '🖼️' : d === 'story' ? '📱' : '🎬'}</span>
+                                                <div className="dest-info">
+                                                    <b>{d.charAt(0).toUpperCase() + d.slice(1)}</b>
+                                                </div>
+                                            </button>
+                                        ))}
                                     </div>
                                 </div>
                             ) : (
@@ -368,7 +450,7 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
                         <button
                             className="publish-btn"
                             onClick={handleFinalPublish}
-                            disabled={loading || !selectedProfile}
+                            disabled={loading || !selectedProfile || (platform === 'youtube' && selectedChannels.length === 0)}
                         >
                             {loading ? "Procesando..." : "🚀 Publicar ahora"}
                         </button>
@@ -682,6 +764,75 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
             box-shadow: var(--shadow-glow-gold);
             background: var(--accent-hover);
         }
+
+        /* ── YouTube channel picker ── */
+        .yt-format-row {
+            display: flex; gap: 8px; margin-bottom: 14px;
+        }
+        .yt-fmt-btn {
+            flex: 1; padding: 10px 14px; border-radius: 20px;
+            border: 1.5px solid var(--border-color);
+            background: #fff; font-size: 0.85rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s; color: var(--text-primary);
+        }
+        .yt-fmt-btn.active {
+            background: var(--accent-primary); color: #fff;
+            border-color: var(--accent-primary);
+            box-shadow: 0 4px 14px rgba(176,141,109,0.25);
+        }
+        .yt-channel-list {
+            display: flex; flex-direction: column; gap: 8px;
+            max-height: 260px; overflow-y: auto;
+        }
+        .yt-channel-card {
+            display: flex; align-items: center; gap: 14px;
+            padding: 14px 16px; border-radius: 16px;
+            border: 1.5px solid var(--border-color);
+            background: #fff; cursor: pointer;
+            transition: all 0.2s; position: relative;
+        }
+        .yt-channel-card:hover { background: var(--bg-primary); border-color: var(--border-hover); }
+        .yt-channel-card.selected {
+            border-color: #ff0000; background: #fff5f5;
+            box-shadow: 0 4px 16px rgba(255,0,0,0.08);
+        }
+        .yt-ch-avatar {
+            width: 44px; height: 44px; background: #fff0f0;
+            border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; font-size: 20px; flex-shrink: 0;
+        }
+        .yt-ch-info b { display: block; font-size: 0.95rem; color: var(--text-primary); }
+        .yt-ch-info span { font-size: 0.72rem; color: var(--text-muted); }
+
+        /* No channels CTA */
+        .yt-no-channels {
+            display: flex; flex-direction: column; align-items: center;
+            gap: 14px; padding: 32px 20px; margin-top: 12px;
+            background: var(--bg-primary); border: 1px dashed var(--border-color);
+            border-radius: 20px; text-align: center;
+        }
+        .yt-no-icon { font-size: 36px; opacity: 0.35; }
+        .yt-no-channels p { font-weight: 600; color: var(--text-primary); margin: 0; }
+        .yt-connect-btn {
+            display: flex; align-items: center; gap: 8px;
+            padding: 12px 24px; border-radius: 30px;
+            background: #ff0000; color: #fff;
+            border: none; font-weight: 700; font-size: 0.95rem;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .yt-connect-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,0,0,0.3); }
+
+        /* Dest-card (for non-YT organic) */
+        .destination-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+        .dest-card {
+            display: flex; align-items: center; gap: 14px;
+            padding: 16px; border-radius: 16px; border: 1.5px solid var(--border-color);
+            background: #fff; cursor: pointer; transition: all 0.2s; text-align: left;
+        }
+        .dest-card.active { border-color: var(--accent-primary); background: var(--bg-primary); }
+        .dest-icon { font-size: 24px; }
+        .dest-info b { display: block; font-size: 0.95rem; font-weight: 700; }
+        .dest-info span { font-size: 0.75rem; color: var(--text-muted); }
       `}</style>
             </div>
         </div>,

@@ -26,13 +26,13 @@ export function Header({ onMenuToggle, isCollapsed }: HeaderProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const getBreadcrumbs = () => {
-    const parts = pathname.split("/").filter(p => p);
-    if (parts.length === 0) return [{ label: "Dashboard", href: "/dashboard" }];
+    const parts = pathname.split("/").filter(p => p && p !== "dashboard");
 
-    const crumbs = parts.map((part, index) => {
-      const href = "/" + parts.slice(0, index + 1).join("/");
+    return parts.map((part, index) => {
+      // Rebuild path correctly
+      const prefix = pathname.startsWith("/dashboard/") ? "/dashboard" : "";
+      const href = prefix + "/" + parts.slice(0, index + 1).join("/");
       const labels: Record<string, string> = {
-        dashboard: "Dashboard",
         campaigns: "Campañas",
         ads: "Reportes",
         settings: "Configuración",
@@ -43,18 +43,12 @@ export function Header({ onMenuToggle, isCollapsed }: HeaderProps) {
         new: "Nuevo",
         publish: "Publicar",
         "real-estate": "Propiedades",
+        security: "Seguridad",
       };
 
-      // If the part is a UUID or MongoID (approximate check), call it "Detalle"
       const label = labels[part] || (part.length > 20 ? "Detalle" : part.charAt(0).toUpperCase() + part.slice(1));
       return { label, href };
     });
-
-    // Ensure it starts with Dashboard if not already
-    if (parts[0] !== "dashboard") {
-      return [{ label: "Dashboard", href: "/dashboard" }, ...crumbs];
-    }
-    return crumbs;
   };
 
   const breadcrumbs = getBreadcrumbs();
@@ -87,6 +81,46 @@ export function Header({ onMenuToggle, isCollapsed }: HeaderProps) {
         </nav>
       </div>
 
+      <div className={styles.centerLogoContainer}>
+        <Link href="/dashboard" className={styles.logoCapsule}>
+          <div className={styles.logoWrapperEconos}>
+            <Image
+              src="/images/logo-econos.png"
+              alt="Econos"
+              width={120}
+              height={26}
+              className={styles.logoEconos}
+              style={{
+                objectFit: 'contain',
+                width: '100%',
+                height: 'auto',
+                maxHeight: '26px',
+                filter: 'brightness(0.4) sepia(1) hue-rotate(-20deg) saturate(1.5)'
+              }}
+              priority
+              unoptimized
+            />
+          </div>
+          <div className={styles.logoDivider} />
+          <div className={styles.logoWrapperSmm}>
+            <Image
+              src="/images/logo-smm.png"
+              alt="Social Media Manager"
+              width={110}
+              height={38}
+              style={{
+                objectFit: 'contain',
+                width: '100%',
+                height: 'auto',
+                maxHeight: '38px'
+              }}
+              priority
+              unoptimized
+            />
+          </div>
+        </Link>
+      </div>
+
       <div className={styles.actions}>
         <div className={styles.userSection}>
           <button
@@ -101,9 +135,11 @@ export function Header({ onMenuToggle, isCollapsed }: HeaderProps) {
             <div className={styles.avatar}>
               {session?.user?.name ? session.user.name.charAt(0).toUpperCase() : "U"}
             </div>
-            <div className={styles.userInfoHideMobile}>
-              <span className={styles.userName}>{session?.user?.name || "Usuario"}</span>
-              <IconChevronDown />
+            <div className={styles.userInfoHideMobile} style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "2px" }}>
+              <span className={styles.userName} style={{ lineHeight: "1.1", fontWeight: "600" }}>{session?.user?.name || "Usuario"}</span>
+              <span style={{ fontSize: "0.72rem", color: "var(--accent-primary)", fontWeight: "600", lineHeight: "1" }}>
+                {(session?.user as any)?.packageName || "Sin Plan"}
+              </span>
             </div>
           </button>
 

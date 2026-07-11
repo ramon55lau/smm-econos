@@ -292,9 +292,7 @@ export default function UsersPage() {
               <th className={styles.th}>Estado</th>
               <th className={styles.th}>Vencimiento</th>
               <th className={styles.th}>Paquete / Plan</th>
-              <th className={styles.th}>Límites</th>
               <th className={styles.th}>2FA</th>
-              <th className={styles.th}>Fecha Creación</th>
               {isAdmin && <th className={styles.th}>Acciones</th>}
             </tr>
           </thead>
@@ -326,11 +324,6 @@ export default function UsersPage() {
                   <span style={{ fontWeight: 600 }}>{user.package?.name || "Sin plan"}</span>
                 </td>
                 <td className={styles.td}>
-                  <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-                    {user.package ? `${user.package.maxFacebook} FB / ${user.package.maxInstagram} IG / ${user.package.maxYouTube} YT` : "---"}
-                  </div>
-                </td>
-                <td className={styles.td}>
                   <span style={{
                     fontWeight: 600,
                     fontSize: "0.82rem",
@@ -343,7 +336,6 @@ export default function UsersPage() {
                     {user.mfaEnabled ? "🔐 Sí" : "🔓 No"}
                   </span>
                 </td>
-                <td className={styles.td}>{new Date(user.createdAt).toLocaleDateString()}</td>
                 {isAdmin && (
                   <td className={styles.td}>
                     <div className={styles.actions}>

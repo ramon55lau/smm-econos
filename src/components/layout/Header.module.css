@@ -288,3 +288,60 @@
     transform: translateY(0);
   }
 }
+
+.centerLogoContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.logoCapsule {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(74, 63, 53, 0.08);
+  padding: 0.3rem 1.2rem;
+  border-radius: 9999px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  transition: all var(--transition-smooth);
+  text-decoration: none;
+}
+
+.logoCapsule:hover {
+  transform: translateY(-1px);
+  border-color: rgba(74, 63, 53, 0.15);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.logoWrapperEconos,
+.logoWrapperSmm {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+}
+
+.logoEconos {
+  height: 20px !important;
+  width: auto !important;
+}
+
+.logoDivider {
+  width: 1px;
+  height: 18px;
+  background: rgba(74, 63, 53, 0.2);
+  user-select: none;
+}
+
+/* Hide center logo container on mobile view to avoid overlay issues */
+@media (max-width: 768px) {
+  .centerLogoContainer {
+    display: none;
+  }
+}

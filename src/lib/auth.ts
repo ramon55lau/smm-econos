@@ -45,8 +45,9 @@ export const authOptions: NextAuthOptions = {
           throw new Error(`Cuenta bloqueada temporalmente. Intente de nuevo en ${minutes} minutos.`);
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email }
+        const user = await (prisma.user as any).findUnique({
+          where: { email },
+          include: { package: true }
         });
 
         if (!user || !user.password) {
@@ -134,7 +135,9 @@ export const authOptions: NextAuthOptions = {
           role: user.role,
           status: user.status,
           expiresAt: (user as any).expiresAt,
+          createdAt: (user as any).createdAt,
           mfaEnabled: user.mfaEnabled ?? false,
+          packageName: (user as any).package?.name || "Sin Plan",
         };
       }
     })
@@ -145,7 +148,9 @@ export const authOptions: NextAuthOptions = {
         token.role = user.role;
         token.id = user.id;
         token.expiresAt = (user as any).expiresAt ? new Date((user as any).expiresAt).toISOString() : null;
+        token.createdAt = (user as any).createdAt ? new Date((user as any).createdAt).toISOString() : null;
         token.mfaEnabled = (user as any).mfaEnabled ?? false;
+        token.packageName = (user as any).packageName || "Sin Plan";
       }
       return token;
     },
@@ -154,7 +159,9 @@ export const authOptions: NextAuthOptions = {
         session.user.role = token.role as string;
         session.user.id = token.id as string;
         session.user.expiresAt = token.expiresAt as string | null;
+        session.user.createdAt = token.createdAt as string | null;
         session.user.mfaEnabled = token.mfaEnabled as boolean ?? false;
+        session.user.packageName = token.packageName as string ?? "Sin Plan";
       }
       return session;
     }

@@ -40,47 +40,7 @@ export default function ScreenLinkInput({ onScraped, onManual }: Props) {
   return (
     <div className="link-input-screen">
       <div className="content">
-        <div className="header">
-          <div className="logo-capsule">
-            <div className="logo-wrapper econos-wrapper">
-              <Image
-                src="/images/logo-econos.png"
-                alt="Econos"
-                width={120}
-                height={26}
-                className="logo-econos"
-                style={{
-                  objectFit: 'contain',
-                  width: '100%',
-                  height: 'auto',
-                  maxHeight: '26px',
-                  filter: 'brightness(0.4) sepia(1) hue-rotate(-20deg) saturate(1.5)'
-                }}
-                priority
-                unoptimized
-              />
-            </div>
-            <div className="logo-divider" />
-            <div className="logo-wrapper smm-wrapper">
-              <Image
-                src="/images/logo-smm.png"
-                alt="Social Media Manager"
-                width={110}
-                height={38}
-                style={{
-                  objectFit: 'contain',
-                  width: '100%',
-                  height: 'auto',
-                  maxHeight: '38px'
-                }}
-                priority
-                unoptimized
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="hero">
+        <div className="hero" style={{ marginTop: "1rem" }}>
           <h1>Publica tu propiedad <br /> <span>en todos los canales</span></h1>
         </div>
 

@@ -26,10 +26,14 @@ export async function GET(
   }
 
   const code = req.nextUrl.searchParams.get("code");
-  const state = req.nextUrl.searchParams.get("state"); // Is it "facebook" or "instagram"?
+  const state = req.nextUrl.searchParams.get("state"); // Is it "facebook", "instagram" or "popup"?
+  const isPopup = state === "popup";
   const intendedProvider = state === "instagram" ? "instagram" : "facebook";
 
   if (!code) {
+    if (isPopup) {
+      return getPopupErrorHtml("No se pudo obtener el código de autorización.");
+    }
     return NextResponse.redirect(new URL("/settings/accounts?error=missing_code", baseUrl));
   }
 
@@ -178,6 +182,7 @@ export async function GET(
       }
 
     } else {
+      if (isPopup) return getPopupErrorHtml("Proveedor de OAuth inválido.");
       return NextResponse.redirect(new URL("/settings/accounts?error=invalid_provider", baseUrl));
     }
 
@@ -191,6 +196,7 @@ export async function GET(
     });
 
     if (!user) {
+      if (isPopup) return getPopupErrorHtml("Usuario no encontrado.");
       return NextResponse.redirect(new URL("/settings/accounts?error=user_not_found", baseUrl));
     }
 
@@ -205,19 +211,25 @@ export async function GET(
         const fbCount = (user.socialAccounts || []).filter((a: any) => a.provider === "facebook").length;
         const fbLimit = pkg.maxFacebook;
         if (fbCount >= fbLimit) {
-          return NextResponse.redirect(new URL(`/settings/accounts?error=Has alcanzado el límite de ${fbLimit} cuentas de Facebook.`, baseUrl));
+          const errMsg = `Has alcanzado el límite de ${fbLimit} cuentas de Facebook.`;
+          if (isPopup) return getPopupErrorHtml(errMsg);
+          return NextResponse.redirect(new URL(`/settings/accounts?error=${encodeURIComponent(errMsg)}`, baseUrl));
         }
       } else if (provider === "youtube") {
         const ytCount = (user.socialAccounts || []).filter((a: any) => a.provider === "youtube").length;
         const ytLimit = pkg.maxYouTube;
         if (ytCount >= ytLimit) {
-          return NextResponse.redirect(new URL(`/settings/accounts?error=Has alcanzado el límite de ${ytLimit} cuentas de YouTube.`, baseUrl));
+          const errMsg = `Has alcanzado el límite de ${ytLimit} cuentas de YouTube.`;
+          if (isPopup) return getPopupErrorHtml(errMsg);
+          return NextResponse.redirect(new URL(`/settings/accounts?error=${encodeURIComponent(errMsg)}`, baseUrl));
         }
       } else if (provider === "instagram") {
         const igCount = (user.socialAccounts || []).filter((a: any) => a.provider === "instagram").length;
         const igLimit = pkg.maxInstagram;
         if (igCount >= igLimit) {
-          return NextResponse.redirect(new URL(`/settings/accounts?error=Has alcanzado el límite de ${igLimit} cuentas de Instagram.`, baseUrl));
+          const errMsg = `Has alcanzado el límite de ${igLimit} cuentas de Instagram.`;
+          if (isPopup) return getPopupErrorHtml(errMsg);
+          return NextResponse.redirect(new URL(`/settings/accounts?error=${encodeURIComponent(errMsg)}`, baseUrl));
         }
       }
     }
@@ -256,14 +268,134 @@ export async function GET(
       },
     });
 
-    return NextResponse.json({ success: true }); // We usually redirect, but let's stick to the flow
+    if (isPopup) {
+      return getPopupSuccessHtml();
+    }
+    return NextResponse.redirect(new URL("/settings/accounts?success=true", baseUrl));
   } catch (error: any) {
     console.error(`OAuth callback error (${provider}):`, error.message);
+    if (isPopup) {
+      return getPopupErrorHtml(error.message);
+    }
     return NextResponse.redirect(
       new URL(`/settings/accounts?error=${encodeURIComponent(error.message)}`, baseUrl)
     );
-  } finally {
-    // Standard finally if needed, usually we redirect in try/catch
-    return NextResponse.redirect(new URL("/settings/accounts?success=true", baseUrl));
   }
+}
+
+// ── Helpers to render self-closing success/error HTML views in Popups ──
+
+function getPopupSuccessHtml() {
+  return new NextResponse(`
+    <!DOCTYPE html>
+    <html lang="es">
+      <head>
+        <meta charset="utf-8">
+        <title>Conexión exitosa</title>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background: #fdfcfa;
+            color: #4a3f35;
+            text-align: center;
+          }
+          .card {
+            padding: 40px;
+            border-radius: 24px;
+            background: white;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
+            border: 1px solid #eae6e1;
+            max-width: 320px;
+          }
+          h2 { margin: 0 0 8px 0; color: #b08d6d; font-size: 1.5rem; }
+          p { color: #8a7a6e; font-size: 0.95rem; line-height: 1.4; margin: 0 0 20px 0; }
+          .spinner {
+            width: 24px; height: 24px;
+            border: 3px solid #eae6e1;
+            border-top: 3px solid #b08d6d;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto;
+          }
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <h2>🎉 ¡Conexión exitosa!</h2>
+          <p>Tu canal de YouTube ha sido conectado correctamente.</p>
+          <div class="spinner"></div>
+        </div>
+        <script>
+          try {
+            if (window.opener) {
+              window.opener.postMessage("social-account-synced", "*");
+            }
+          } catch(e) {}
+          setTimeout(() => {
+            window.close();
+          }, 1000);
+        </script>
+      </body>
+    </html>
+  `, {
+    headers: { "Content-Type": "text/html; charset=utf-8" }
+  });
+}
+
+function getPopupErrorHtml(errorMsg: string) {
+  return new NextResponse(`
+    <!DOCTYPE html>
+    <html lang="es">
+      <head>
+        <meta charset="utf-8">
+        <title>Error de conexión</title>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background: #fffafa;
+            color: #4a3f35;
+            text-align: center;
+          }
+          .card {
+            padding: 40px;
+            border-radius: 24px;
+            background: white;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
+            border: 1px solid #fee2e2;
+            max-width: 320px;
+          }
+          h2 { margin: 0 0 8px 0; color: #dc2626; font-size: 1.5rem; }
+          p { color: #8a7a6e; font-size: 0.95rem; line-height: 1.4; margin: 0 0 16px 0; }
+          button {
+            background: #dc2626; color: white; border: none;
+            padding: 10px 20px; border-radius: 20px;
+            font-weight: 600; cursor: pointer; font-size: 0.9rem;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <h2>❌ Error al conectar</h2>
+          <p>${errorMsg || "Ocurrió un error inesperado al sincronizar."}</p>
+          <button onclick="window.close()">Cerrar ventana</button>
+        </div>
+      </body>
+    </html>
+  `, {
+    headers: { "Content-Type": "text/html; charset=utf-8" }
+  });
 }

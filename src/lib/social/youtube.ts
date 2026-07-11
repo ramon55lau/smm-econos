@@ -18,7 +18,7 @@ interface YouTubePublishResult {
 /**
  * Get the OAuth URL to connect a YouTube/Google account
  */
-export function getYouTubeOAuthUrl(redirectUri: string): string {
+export function getYouTubeOAuthUrl(redirectUri: string, state?: string): string {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   if (!clientId) throw new Error("GOOGLE_CLIENT_ID not configured");
 
@@ -37,6 +37,10 @@ export function getYouTubeOAuthUrl(redirectUri: string): string {
     access_type: "offline",
     prompt: "consent",
   });
+
+  if (state) {
+    params.append("state", state);
+  }
 
   return `${GOOGLE_AUTH_URL}?${params.toString()}`;
 }

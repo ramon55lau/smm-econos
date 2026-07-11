@@ -5,7 +5,8 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 import styles from "./Sidebar.module.css";
 import { useSession, signOut } from "next-auth/react";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import ProfileModal from "./ProfileModal";
 
 /* ── SVG Icon Components (Lucide-style, consistent stroke) ── */
 const IconDashboard = () => (
@@ -31,7 +32,6 @@ const IconAds = () => (
   </svg>
 );
 
-
 const IconUsers = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
@@ -44,13 +44,6 @@ const IconUsers = () => (
 const IconPermissions = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4" />
-  </svg>
-);
-
-const IconPlus = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 5v14" />
-    <path d="M5 12h14" />
   </svg>
 );
 
@@ -75,10 +68,17 @@ const IconSecurity = () => (
 );
 
 const IconLogout = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
     <polyline points="16 17 21 12 16 7" />
     <line x1="21" y1="12" x2="9" y2="12" />
+  </svg>
+);
+
+const IconEdit = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+    <path d="m15 5 4 4" />
   </svg>
 );
 
@@ -120,8 +120,11 @@ type SidebarProps = {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const { data: session, update: updateSession } = useSession();
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showUserPopup, setShowUserPopup] = useState(false);
+  const popupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const isAdmin = session?.user?.role === "SUPER_ADMIN" || session?.user?.role === "ADMIN";
 
@@ -134,138 +137,192 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     setOpenMenus(prev => ({ ...prev, [name]: !prev[name] }));
   };
 
+  const handlePopupEnter = () => {
+    if (popupTimeoutRef.current) clearTimeout(popupTimeoutRef.current);
+    setShowUserPopup(true);
+  };
+
+  const handlePopupLeave = () => {
+    popupTimeoutRef.current = setTimeout(() => setShowUserPopup(false), 200);
+  };
+
   return (
-    <aside className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : ""}`}>
-      {/* ── Logo ── */}
-      <div className={styles.logoContainer}>
-        <div className={styles.logoCollapsed}>
-          <Image src="/images/solo smm.png" alt="Icon" width={36} height={36} className={styles.iconLogo} unoptimized />
-        </div>
-        <div className={styles.logoExpanded}>
-          <Image src="/images/logo-smm.png" alt="SMM Logo" width={270} height={74} className={styles.smmLogo} priority unoptimized />
-        </div>
+    <>
+      <aside className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : ""}`}>
+        {/* ── Logo ── */}
+        <Link href="/dashboard" className={styles.logoContainer} style={{ cursor: "pointer", textDecoration: "none" }}>
+          <div className={styles.logoCollapsed}>
+            <Image src="/images/solo smm.png" alt="Icon" width={36} height={36} className={styles.iconLogo} unoptimized />
+          </div>
+          <div className={styles.logoExpanded}>
+            <Image src="/images/logo-smm.png" alt="SMM Logo" width={270} height={74} className={styles.smmLogo} priority unoptimized />
+          </div>
+        </Link>
 
         {onClose && (
-          <button className={styles.closeBtn} onClick={onClose} aria-label="Close menu">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 6 6 18" /><path d="m6 6 12 12" />
-            </svg>
-          </button>
+          <div className={styles.closeBtnWrapper} style={{ display: "flex", justifyContent: "flex-end", padding: "1rem" }}>
+            <button className={styles.closeBtn} onClick={onClose} aria-label="Close menu">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+              </svg>
+            </button>
+          </div>
         )}
-      </div>
 
+        {/* ── Navigation ── */}
+        <nav className={styles.nav}>
+          <div className={styles.navSection}>Menú</div>
+          {navItems.map((item) => {
+            if ('children' in item && item.children) {
+              const isParentActive = item.children.some(child => pathname === child.href || pathname.startsWith(`${child.href}/`)) || pathname === item.href;
+              const isMenuOpen = openMenus[item.name] !== undefined ? openMenus[item.name] : isParentActive;
 
-      {/* ── Navigation ── */}
-      <nav className={styles.nav}>
-        <div className={styles.navSection}>Menú</div>
-        {navItems.map((item) => {
-          if ('children' in item && item.children) {
-            const isParentActive = item.children.some(child => pathname === child.href || pathname.startsWith(`${child.href}/`)) || pathname === item.href;
-            const isMenuOpen = openMenus[item.name] !== undefined ? openMenus[item.name] : isParentActive;
-
-            return (
-              <div key={item.name} className={styles.navGroup}>
-                <div
-                  className={`${styles.navItem} ${isParentActive && !isMenuOpen ? styles.active : ""} ${styles.navParent}`}
-                  onClick={(e) => toggleMenu(item.name, e)}
-                  style={{ cursor: "pointer" }}
-                >
-                  <span className={styles.navIcon}>{item.icon}</span>
-                  <span className={styles.navLabel} style={{ flex: 1 }}>{item.name}</span>
-                  <span className={`${styles.chevron} ${isMenuOpen ? styles.chevronOpen : ""}`}>
-                    <IconChevron />
-                  </span>
-                </div>
-                {isMenuOpen && (
-                  <div className={styles.navChildren}>
-                    {item.children.map(child => {
-                      const isActive = child.href === "/campaigns"
-                        ? pathname === "/campaigns" || pathname.startsWith("/campaigns/")
-                        : pathname === child.href || pathname.startsWith(`${child.href}/`);
-                      return (
-                        <Link
-                          key={child.href}
-                          href={child.href}
-                          className={`${styles.navChildItem} ${isActive ? styles.activeChild : ""}`}
-                          onClick={handleNavClick}
-                        >
-                          <span className={styles.navChildDot}></span>
-                          <span className={styles.navChildLabel}>{child.name}</span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          }
-
-          const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(`${item.href}/`));
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`${styles.navItem} ${isActive ? styles.active : ""}`}
-              onClick={handleNavClick}
-              title={item.name}
-            >
-              <span className={styles.navIcon}>{item.icon}</span>
-              <span className={styles.navLabel}>{item.name}</span>
-            </Link>
-          );
-        })}
-
-        {isAdmin && (
-          <>
-            <div className={styles.navSection} style={{ marginTop: "1.5rem" }}>
-              Admin
-            </div>
-            {adminItems.map((item) => {
-              const isActive = pathname.startsWith(item.href);
               return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`${styles.navItem} ${isActive ? styles.active : ""}`}
-                  onClick={handleNavClick}
-                  title={item.name}
-                >
-                  <span className={styles.navIcon}>{item.icon}</span>
-                  <span className={styles.navLabel}>{item.name}</span>
-                </Link>
+                <div key={item.name} className={styles.navGroup}>
+                  <div
+                    className={`${styles.navItem} ${isParentActive && !isMenuOpen ? styles.active : ""} ${styles.navParent}`}
+                    onClick={(e) => toggleMenu(item.name, e)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <span className={styles.navIcon}>{item.icon}</span>
+                    <span className={styles.navLabel} style={{ flex: 1 }}>{item.name}</span>
+                    <span className={`${styles.chevron} ${isMenuOpen ? styles.chevronOpen : ""}`}>
+                      <IconChevron />
+                    </span>
+                  </div>
+                  {isMenuOpen && (
+                    <div className={styles.navChildren}>
+                      {item.children.map(child => {
+                        const isActive = child.href === "/campaigns"
+                          ? pathname === "/campaigns" || pathname.startsWith("/campaigns/")
+                          : pathname === child.href || pathname.startsWith(`${child.href}/`);
+                        return (
+                          <Link
+                            key={child.href}
+                            href={child.href}
+                            className={`${styles.navChildItem} ${isActive ? styles.activeChild : ""}`}
+                            onClick={handleNavClick}
+                          >
+                            <span className={styles.navChildDot}></span>
+                            <span className={styles.navChildLabel}>{child.name}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               );
-            })}
-          </>
-        )}
-      </nav>
+            }
 
-      {/* ── Footer ── */}
-      <div className={styles.footer}>
-        <div className={styles.legalLinks}>
-          <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className={styles.legalLink}>
-            Privacidad
-          </a>
-          <span className={styles.legalDivider}>·</span>
-          <a href="/terms" target="_blank" rel="noopener noreferrer" className={styles.legalLink}>
-            Condiciones
-          </a>
-        </div>
-        <div className={styles.userInfo}>
-          <div className={styles.footerAvatar}>
-            {session?.user?.name ? session.user.name.charAt(0).toUpperCase() : "U"}
+            const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(`${item.href}/`));
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`${styles.navItem} ${isActive ? styles.active : ""}`}
+                onClick={handleNavClick}
+                title={item.name}
+              >
+                <span className={styles.navIcon}>{item.icon}</span>
+                <span className={styles.navLabel}>{item.name}</span>
+              </Link>
+            );
+          })}
+
+          {isAdmin && (
+            <>
+              <div className={styles.navSection} style={{ marginTop: "1.5rem" }}>
+                Admin
+              </div>
+              {adminItems.map((item) => {
+                const isActive = pathname.startsWith(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`${styles.navItem} ${isActive ? styles.active : ""}`}
+                    onClick={handleNavClick}
+                    title={item.name}
+                  >
+                    <span className={styles.navIcon}>{item.icon}</span>
+                    <span className={styles.navLabel}>{item.name}</span>
+                  </Link>
+                );
+              })}
+            </>
+          )}
+        </nav>
+
+        {/* ── Footer ── */}
+        <div className={styles.footer}>
+          <div className={styles.legalLinks}>
+            <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className={styles.legalLink}>
+              Privacidad
+            </a>
+            <span className={styles.legalDivider}>·</span>
+            <a href="/terms" target="_blank" rel="noopener noreferrer" className={styles.legalLink}>
+              Condiciones
+            </a>
           </div>
-          <div className={styles.userDetails}>
-            <div className={styles.footerName}>
-              {session?.user?.name || "Usuario"}
+          <div
+            className={styles.userInfoWrapper}
+            onMouseEnter={handlePopupEnter}
+            onMouseLeave={handlePopupLeave}
+          >
+            {/* Popup menu */}
+            {showUserPopup && (
+              <div className={styles.userPopup}>
+                <button
+                  className={styles.popupItem}
+                  onClick={() => { setShowUserPopup(false); setShowProfileModal(true); }}
+                >
+                  <IconEdit />
+                  <span>Editar perfil</span>
+                </button>
+                <div className={styles.popupDivider} />
+                <button
+                  className={`${styles.popupItem} ${styles.popupItemDanger}`}
+                  onClick={() => signOut()}
+                >
+                  <IconLogout />
+                  <span>Cerrar sesión</span>
+                </button>
+              </div>
+            )}
+            <div className={styles.userInfo}>
+              <div className={styles.footerAvatar}>
+                {session?.user?.name ? session.user.name.charAt(0).toUpperCase() : "U"}
+              </div>
+              <div className={styles.userDetails}>
+                <div className={styles.footerName}>
+                  {session?.user?.name || "Usuario"}
+                </div>
+                <div className={styles.footerEmail} style={{ opacity: 0.8, color: "var(--accent-primary)" }}>
+                  {session?.user?.packageName || "Sin Plan"}
+                </div>
+              </div>
             </div>
-            <div className={styles.footerEmail}>{session?.user?.email}</div>
           </div>
-          <button className={styles.logoutBtn} onClick={() => signOut()} title="Cerrar sesión">
-            <IconLogout />
-          </button>
+          <div className={styles.versionTag}>v1.2.5</div>
         </div>
-        <div className={styles.versionTag}>v1.2.5</div>
-      </div>
-    </aside>
+      </aside>
+
+      {/* Profile Modal */}
+      {showProfileModal && session?.user && (
+        <ProfileModal
+          user={{
+            name: session.user.name,
+            email: session.user.email,
+            createdAt: session.user.createdAt,
+            expiresAt: session.user.expiresAt,
+            packageName: session.user.packageName,
+            mfaEnabled: session.user.mfaEnabled,
+            role: session.user.role,
+          }}
+          onClose={() => setShowProfileModal(false)}
+          onMfaDisabled={() => updateSession()}
+        />
+      )}
+    </>
   );
 }

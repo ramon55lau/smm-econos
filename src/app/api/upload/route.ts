@@ -6,11 +6,25 @@ import path from "path";
 import os from "os";
 import { randomUUID } from "crypto";
 
+import { checkAndRecordUpload } from "@/lib/upload-limiter";
+import { detectFileTypeFromBuffer } from "@/lib/magic-bytes";
+
 const UPLOAD_DIR = path.join(os.tmpdir(), "smm-uploads");
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  // 1. Rate limiting check
+  const rateLimitKey = session.user?.email || "anonymous";
+  const rateLimitCheck = checkAndRecordUpload(rateLimitKey);
+  if (!rateLimitCheck.allowed) {
+    const waitSeconds = Math.ceil(((rateLimitCheck.resetTimeMs || Date.now()) - Date.now()) / 1000);
+    return NextResponse.json(
+      { error: `Límite de subidas excedido. Por favor, espera ${waitSeconds} segundos.` },
+      { status: 429 }
+    );
+  }
 
   try {
     const formData = await req.formData();
@@ -26,29 +40,37 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "El archivo supera el límite de 50MB" }, { status: 400 });
     }
 
-    // Validate file type
+    // Convert file to buffer to perform binary validation
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+
+    // 2. Validate Magic Bytes (real file header content)
+    const detected = detectFileTypeFromBuffer(buffer);
+    if (!detected) {
+      return NextResponse.json({ error: "El archivo cargado posee un formato binario inválido o alterado." }, { status: 400 });
+    }
+
+    // 3. Confirm target type is in the whitelist
     const allowedTypes = [
       "image/jpeg", "image/png", "image/gif", "image/webp",
       "video/mp4", "video/webm", "video/quicktime",
     ];
-    if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ error: "File type not allowed" }, { status: 400 });
+    if (!allowedTypes.includes(detected.mime)) {
+      return NextResponse.json({ error: "Tipo de archivo no permitido." }, { status: 400 });
     }
 
     // Create upload directory if it doesn't exist
     await mkdir(UPLOAD_DIR, { recursive: true });
 
-    // Generate unique filename
-    const ext = file.name.split(".").pop() || "bin";
-    const filename = `${randomUUID()}.${ext}`;
+    // 4. Force extension normalization based on detected file signature (ignores client extension)
+    const filename = `${randomUUID()}.${detected.ext}`;
     const filepath = path.join(UPLOAD_DIR, filename);
 
-    // Write file to disk
-    const bytes = await file.arrayBuffer();
-    await writeFile(filepath, Buffer.from(bytes));
+    // Write file to disk securely
+    await writeFile(filepath, buffer);
 
     // Determine media type
-    const mediaType = file.type.startsWith("video/") ? "video" : "image";
+    const mediaType = detected.mime.startsWith("video/") ? "video" : "image";
 
     // Generate absolute URL for Meta API compatibility
     const baseUrl = process.env.NEXTAUTH_URL || `https://${req.headers.get("host")}`;
