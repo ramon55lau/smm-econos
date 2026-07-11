@@ -162,9 +162,13 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
         }, 2000);
     };
 
-    const handleSyncPopup = (e: React.MouseEvent) => {
+    const handleConnectClick = (e: React.MouseEvent) => {
         e.preventDefault();
-        openSyncPopup('/settings/accounts');
+        if (platform === 'youtube' || platform === 'google-ads') {
+            handleYoutubeSyncPopup(e);
+        } else {
+            openSyncPopup('/settings/accounts');
+        }
     };
 
     const handleYoutubeSyncPopup = async (e: React.MouseEvent) => {
@@ -209,7 +213,7 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
                                     <h2 className="step-title">Selecciona tu perfil</h2>
                                     <p className="step-sub">Elige la cuenta desde la que deseas publicar.</p>
                                 </div>
-                                <button onClick={handleSyncPopup} className="add-profile-btn" title="Conectar nueva cuenta">
+                                <button onClick={handleConnectClick} className="add-profile-btn" title="Conectar nueva cuenta">
                                     <span className="plus">+</span>
                                 </button>
                             </div>
@@ -218,9 +222,9 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
                                 {filteredAccounts.length === 0 ? (
                                     <div className="empty-state">
                                         <div className="empty-icon">🔌</div>
-                                        <p>No hay cuentas de {platform} conectadas.</p>
+                                        <p>No hay cuentas de {platform === 'google-ads' ? 'YouTube/Google Ads' : platform} conectadas.</p>
                                         <div className="empty-actions">
-                                            <button onClick={handleSyncPopup} className="sync-now-link">Sincronizar ahora</button>
+                                            <button onClick={handleConnectClick} className="sync-now-link">Sincronizar ahora</button>
                                             <button onClick={refreshAccounts} className="refresh-mini-btn" title="Actualizar lista">🔄</button>
                                         </div>
                                     </div>
@@ -241,7 +245,7 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
                                             </div>
                                         ))}
                                         {/* Quick add option inside the list too */}
-                                        <button onClick={handleSyncPopup} className="account-item add-more-item">
+                                        <button onClick={handleConnectClick} className="account-item add-more-item">
                                             <div className="acc-avatar">+</div>
                                             <div className="acc-info">
                                                 <b className="acc-name">Conectar otra cuenta</b>

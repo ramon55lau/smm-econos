@@ -41,8 +41,18 @@ function LoginPageContent() {
     }
   }, [status, router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Auto-submit 2FA when length is complete
+  useEffect(() => {
+    if (showMfa && totpCode) {
+      const requiredLength = isBackupCode ? 8 : 6;
+      if (totpCode.length === requiredLength) {
+        handleSubmit();
+      }
+    }
+  }, [totpCode, showMfa, isBackupCode]);
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setLoading(true);
     setError("");
 

@@ -150,7 +150,15 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     <>
       <aside className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : ""}`}>
         {/* ── Logo ── */}
-        <Link href="/dashboard" className={styles.logoContainer} style={{ cursor: "pointer", textDecoration: "none" }}>
+        <Link
+          href="/dashboard"
+          className={styles.logoContainer}
+          style={{ cursor: "pointer", textDecoration: "none" }}
+          onClick={(e) => {
+            e.preventDefault();
+            window.location.href = "/dashboard";
+          }}
+        >
           <div className={styles.logoCollapsed}>
             <Image src="/images/solo smm.png" alt="Icon" width={36} height={36} className={styles.iconLogo} unoptimized />
           </div>

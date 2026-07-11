@@ -16,6 +16,30 @@ function cleanTitle(title: string): string {
   return t;
 }
 
+function cleanHtmlEntities(text: string): string {
+  return text
+    .replace(/&#x27;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, "&")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&aring;/g, "å")
+    .replace(/&Aring;/g, "Å")
+    .replace(/&auml;/g, "ä")
+    .replace(/&Auml;/g, "Ä")
+    .replace(/&ouml;/g, "ö")
+    .replace(/&Ouml;/g, "Ö")
+    .replace(/&eacute;/g, "é")
+    .replace(/&Eacute;/g, "É")
+    .replace(/&#228;/g, "ä")
+    .replace(/&#229;/g, "å")
+    .replace(/&#246;/g, "ö")
+    .replace(/&#196;/g, "Ä")
+    .replace(/&#197;/g, "Å")
+    .replace(/&#214;/g, "Ö");
+}
+
 function generateHashtags(parts: string[]): string[] {
   const words: string[] = [];
   for (const part of parts) {
@@ -341,8 +365,35 @@ async function scrapeGeneric(url: string) {
   }
   title = cleanTitle(title);
 
-  const description = (getMeta(["og:description", "twitter:description", "description"]) || getJsonLdField(["description"]) || "")
-    .replace(/&#x27;/g, "'").replace(/&quot;/g, '"');
+  let description = cleanHtmlEntities(getMeta(["og:description", "twitter:description", "description"]) || getJsonLdField(["description"]) || "");
+
+  // Fallback heuristic: Try parsing paragraphs from body text if description is missing or too short
+  if (!description || description.trim().length < 25) {
+    const pMatches = html.match(/<p[^>]*>([\s\S]*?)<\/p>/gi);
+    if (pMatches) {
+      const candidates = pMatches
+        .map(p => p.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim())
+        .filter(text => {
+          if (text.length < 45) return false;
+          const lower = text.toLowerCase();
+          if (
+            lower.includes("javascript") ||
+            lower.includes("cookie") ||
+            lower.includes("privacy") ||
+            lower.includes("integritetspolicy") ||
+            lower.includes("användarvillkor") ||
+            lower.includes("copyright") ||
+            lower.includes("derechos reservados") ||
+            lower.includes("lorem ipsum")
+          ) return false;
+          return true;
+        });
+
+      if (candidates.length > 0) {
+        description = cleanHtmlEntities(candidates.slice(0, 3).join("\n\n"));
+      }
+    }
+  }
 
   const images: string[] = [];
   const videos: { url: string; type?: string; thumbnail?: string }[] = [];

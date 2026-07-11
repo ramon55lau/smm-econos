@@ -14,12 +14,30 @@ type SocialAccount = {
 };
 
 type UserLimits = {
-  maxFacebookAccounts: number;
-  maxInstagramAccounts: number;
-  maxYouTubeAccounts: number;
+  id: string;
+  name: string | null;
+  email: string;
+  role: string;
+  package: {
+    id: string;
+    name: string;
+    maxFacebook: number;
+    maxInstagram: number;
+    maxYouTube: number;
+  } | null;
 };
 
-const providers = [
+type Provider = {
+  key: string;
+  name: string;
+  desc: string;
+  iconSrc: string;
+  iconClass: string;
+  btnClass: string;
+  iconSvg?: React.ReactNode;
+};
+
+const providers: Provider[] = [
   {
     key: "facebook",
     name: "Facebook",
@@ -43,6 +61,23 @@ const providers = [
     iconSrc: "/images/youtube.png",
     iconClass: styles.providerYt,
     btnClass: styles.connectBtnYt,
+  },
+  {
+    key: "google-ads",
+    name: "Google Ads",
+    desc: "Administra anuncios de búsqueda y display en Google",
+    iconSrc: "",
+    iconClass: styles.providerGads,
+    btnClass: styles.connectBtnGads,
+    iconSvg: (
+      <svg viewBox="0 0 256 256" width="32" height="32" xmlns="http://www.w3.org/2000/svg" style={{ objectFit: 'contain' }}>
+        <path d="M57.2 178.3L104.5 96.6L151.8 178.3Z" fill="#FBBC04" />
+        <path d="M198.8 178.3L104.5 178.3L151.6 96.6Z" fill="#4285F4" />
+        <ellipse cx="104.5" cy="178.3" rx="47.3" ry="47.3" fill="#34A853" />
+        <path d="M151.6 96.6L198.8 178.3L104.5 178.3Z" fill="#4285F4" />
+        <path d="M151.6 96.6L198.8 14.9L246.1 96.6Z" fill="#EA4335" />
+      </svg>
+    )
   },
 ];
 
@@ -83,6 +118,13 @@ export default function AccountsPage() {
   };
 
   useEffect(() => { fetchAccounts(); }, []);
+
+  // Auto-verify MFA when 6 digits are typed
+  useEffect(() => {
+    if (verificationCode && verificationCode.length === 6) {
+      handleVerifyMfa();
+    }
+  }, [verificationCode]);
 
   const handleSetupMfa = async () => {
     setMfaLoading(true);
@@ -199,10 +241,10 @@ export default function AccountsPage() {
     const uniqueTitulars = Array.from(titularsMap.values());
 
     let limit = 1;
-    if (limits) {
-      if (provider === "facebook") limit = limits.maxFacebookAccounts;
-      else if (provider === "instagram") limit = limits.maxInstagramAccounts;
-      else if (provider === "youtube") limit = limits.maxYouTubeAccounts;
+    if (limits && limits.package) {
+      if (provider === "facebook") limit = limits.package.maxFacebook;
+      else if (provider === "instagram") limit = limits.package.maxInstagram;
+      else if (provider === "youtube") limit = limits.package.maxYouTube;
     }
     return {
       accounts: uniqueTitulars,
@@ -240,7 +282,9 @@ export default function AccountsPage() {
             <div key={p.key} className={`glass-panel ${styles.providerCard}`}>
               <div className={styles.providerHeader}>
                 <div className={`${styles.providerIcon} ${p.iconClass}`}>
-                  <img src={p.iconSrc} alt={p.name} style={{ width: 32, height: 32, objectFit: "contain" }} />
+                  {p.iconSvg ? p.iconSvg : (
+                    <img src={p.iconSrc} alt={p.name} style={{ width: 32, height: 32, objectFit: "contain" }} />
+                  )}
                 </div>
                 <div>
                   <div className={styles.providerName}>{p.name}</div>
