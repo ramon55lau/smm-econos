@@ -40,6 +40,16 @@ function cleanHtmlEntities(text: string): string {
     .replace(/&#214;/g, "Ö");
 }
 
+function getMetadataValue(html: string, names: string[]): string | null {
+  for (const name of names) {
+    const r1 = html.match(new RegExp(`<meta[^>]+(?:name|property|itemprop)=["']${name}["'][^>]*content=["']([^"']+)["']`, "i"));
+    if (r1) return r1[1];
+    const r2 = html.match(new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]*(?:name|property|itemprop)=["']${name}["']`, "i"));
+    if (r2) return r2[1];
+  }
+  return null;
+}
+
 function generateHashtags(parts: string[]): string[] {
   const words: string[] = [];
   for (const part of parts) {
@@ -323,15 +333,7 @@ async function scrapeGeneric(url: string) {
     };
   }
 
-  const getMeta = (names: string[]) => {
-    for (const name of names) {
-      const r1 = html.match(new RegExp(`<meta[^>]+(?:name|property|itemprop)=["']${name}["'][^>]*content=["']([^"']+)["']`, "i"));
-      if (r1) return r1[1];
-      const r2 = html.match(new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]*(?:name|property|itemprop)=["']${name}["']`, "i"));
-      if (r2) return r2[1];
-    }
-    return null;
-  };
+  const getMeta = (names: string[]) => getMetadataValue(html, names);
 
   // --- Deep Extraction: JSON-LD ---
   let jsonLdData: any = {};
@@ -568,7 +570,10 @@ async function scrapeGeneric(url: string) {
 
   // 1. Try parsing ytInitialPlayerResponse
   if (html) {
-    const match = html.match(/ytInitialPlayerResponse\s*=\s*({[\s\S]*?});/);
+    let match = html.match(/ytInitialPlayerResponse\s*=\s*({[\s\S]*?});/);
+    if (!match) {
+      match = html.match(/ytInitialPlayerResponse\s*=\s*({[\s\S]+?})(?:;|<\/script>|var\s+\w+=)/);
+    }
     if (match) {
       try {
         const playerResponse = JSON.parse(match[1]);
@@ -589,8 +594,7 @@ async function scrapeGeneric(url: string) {
     title = tm ? tm[1].replace(" - YouTube", "") : "";
   }
   if (!description && html) {
-    const dm = html.match(/<meta\s+name="description"\s+content="([^"]+)"/i) || html.match(/property="og:description"\s+content="([^"]+)"/i);
-    description = dm ? dm[1] : "";
+    description = getMetadataValue(html, ["description", "og:description"]) || "";
   }
 
   // 3. oEmbed backup for title if still missing
