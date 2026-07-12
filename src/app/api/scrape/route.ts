@@ -530,8 +530,116 @@ async function scrapeGeneric(url: string) {
     suggestedComment: "📍 Consulta detalles y agenda tu visita. ¡Te asesoramos sin compromiso!",
     linkUrl: url,
   };
-}
+} async function scrapeYouTube(url: string) {
+  let videoId = "";
+  if (url.includes("v=")) {
+    videoId = url.split("v=")[1].split("&")[0];
+  } else if (url.includes("youtu.be/")) {
+    videoId = url.split("youtu.be/")[1].split("?")[0];
+  } else if (url.includes("/embed/")) {
+    videoId = url.split("/embed/")[1].split("?")[0];
+  } else if (url.includes("/shorts/")) {
+    videoId = url.split("/shorts/")[1].split("?")[0];
+  }
 
+  if (!videoId) return await scrapeGeneric(url);
+
+  const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+
+  let html = "";
+  try {
+    const res = await fetch(watchUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept-Language": "es-ES,es;q=0.9,en;q=0.8"
+      }
+    });
+    if (res.ok) {
+      html = await res.text();
+    }
+  } catch (err) {
+    console.error("Fetcher error for YouTube:", err);
+  }
+
+  let title = "";
+  let description = "";
+  let keywords: string[] = [];
+  let duration = 0;
+
+  // 1. Try parsing ytInitialPlayerResponse
+  if (html) {
+    const match = html.match(/ytInitialPlayerResponse\s*=\s*({[\s\S]*?});/);
+    if (match) {
+      try {
+        const playerResponse = JSON.parse(match[1]);
+        const details = playerResponse.videoDetails || {};
+        title = details.title || "";
+        description = details.shortDescription || "";
+        keywords = details.keywords || [];
+        duration = parseInt(details.lengthSeconds || "0", 10);
+      } catch (e) {
+        console.warn("Failed to parse ytInitialPlayerResponse", e);
+      }
+    }
+  }
+
+  // 2. Fallbacks using meta tags in html
+  if (!title && html) {
+    const tm = html.match(/<meta\s+name="title"\s+content="([^"]+)"/i) || html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    title = tm ? tm[1].replace(" - YouTube", "") : "";
+  }
+  if (!description && html) {
+    const dm = html.match(/<meta\s+name="description"\s+content="([^"]+)"/i) || html.match(/property="og:description"\s+content="([^"]+)"/i);
+    description = dm ? dm[1] : "";
+  }
+
+  // 3. oEmbed backup for title if still missing
+  if (!title) {
+    try {
+      const oembedRes = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(watchUrl)}&format=json`);
+      if (oembedRes.ok) {
+        const oembed = await oembedRes.json();
+        title = oembed.title || "";
+      }
+    } catch (e) {
+      console.warn("YouTube oEmbed failed:", e);
+    }
+  }
+
+  // Formatting and cleanup
+  title = cleanTitle(title || "Video de YouTube");
+  description = cleanHtmlEntities(description || "Descripción del video de YouTube");
+
+  // Attempt to extract hashtags from the scraped description
+  let hashtags: string[] = [];
+  if (description) {
+    const descHashtags = description.match(/#\w+/g);
+    if (descHashtags) {
+      hashtags = [...new Set(descHashtags)];
+    }
+  }
+
+  if (hashtags.length === 0 && keywords.length > 0) {
+    hashtags = keywords.map(kw => `#${kw.replace(/\s+/g, '')}`).slice(0, 10);
+  }
+  if (hashtags.length === 0) {
+    hashtags = generateHashtags([title]);
+  }
+
+  const thumb = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+
+  return {
+    title: title.substring(0, 100),
+    description: description.substring(0, 500),
+    price: "",
+    city: "",
+    images: [thumb],
+    videos: [{ url: watchUrl, thumbnail: thumb, type: "unknown", duration }],
+    hashtags,
+    suggestedComment: "🎬 ¡Mira este increíble video de YouTube! Déjanos un comentario si te ha gustado.",
+    linkUrl: watchUrl
+  };
+}
 
 // ─── Main Route ───────────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
@@ -546,9 +654,12 @@ export async function POST(req: NextRequest) {
 
     let result;
 
-    // Detector específico: mhestate.es (admite propiedad.php?id=X, /es/propiedad?id=X, y urls tipo compra/inmueble-ID)
+    const isYouTube = url.includes("youtube.com") || url.includes("youtu.be");
     const mhMatch = url.match(/mhestate\.es\/.*(?:id=|\-)(\d+)/i);
-    if (mhMatch) {
+
+    if (isYouTube) {
+      result = await scrapeYouTube(url);
+    } else if (mhMatch) {
       result = await scrapeMHEstate(mhMatch[1], url);
     } else {
       result = await scrapeGeneric(url);

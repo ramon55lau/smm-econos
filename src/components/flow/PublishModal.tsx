@@ -93,7 +93,7 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
                     destinations: [
                         {
                             platform: platform === "google-ads" ? "youtube" : platform.split("-")[0],
-                            destination: publishType === "organic" ? organicDestination : "ads",
+                            destination: platform === "youtube" ? youtubeFormat : (publishType === "organic" ? organicDestination : "ads"),
                             adsConfig: publishType === "paid" ? {
                                 budgetAmount: parseFloat(budget),
                                 durationDays: parseInt(duration),
@@ -294,77 +294,73 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
                         <div className="step-content">
                             {platform === 'youtube' ? (
                                 (() => {
-                                    const ytAccounts = accounts.filter(a => a.provider === 'youtube');
-                                    const toggleChannel = (id: string) => {
-                                        setSelectedChannels(prev =>
-                                            prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
-                                        );
-                                    };
+                                    const firstVideo = data.videos?.[0];
+                                    const videoDuration = firstVideo?.duration; // duration in seconds
+                                    const hasVideo = !!firstVideo;
 
-                                    if (ytAccounts.length === 0) {
-                                        // No channels synced — show CTA to connect
-                                        return (
-                                            <div className="organic-flow">
-                                                <h2 className="step-title">Canal de YouTube</h2>
-                                                <div className="yt-no-channels">
-                                                    <span className="yt-no-icon">📡</span>
-                                                    <p>No tienes ningún canal de YouTube conectado.</p>
-                                                    <button className="yt-connect-btn" onClick={handleYoutubeSyncPopup}>
-                                                        <span>▶️</span> Conectar canal de YouTube
-                                                    </button>
-                                                    <button onClick={refreshAccounts} className="refresh-mini-btn" title="Ya conecté, actualizar">🔄 Actualizar</button>
-                                                </div>
-                                            </div>
-                                        );
+                                    // Shorts are only allowed for videos of 15 seconds to 3 minutes (180 seconds)
+                                    const isShortsAllowed = hasVideo && typeof videoDuration === 'number' && videoDuration >= 15 && videoDuration <= 180;
+
+                                    // If YouTube format is shorts and duration not allowed, fallback to video standard
+                                    if (youtubeFormat === 'shorts' && !isShortsAllowed) {
+                                        setYoutubeFormat('video');
                                     }
+
+                                    const formatTime = (secs: number) => {
+                                        const mins = Math.floor(secs / 60);
+                                        const remainingSecs = secs % 60;
+                                        return mins > 0 ? `${mins}m ${remainingSecs}s` : `${remainingSecs}s`;
+                                    };
 
                                     return (
                                         <div className="organic-flow">
-                                            <h2 className="step-title">Canal de YouTube</h2>
-                                            <p className="step-sub">Selecciona el canal donde publicar. Puedes elegir varios.</p>
+                                            <h2 className="step-title">Formato de publicación</h2>
+                                            <p className="step-sub">Selecciona cómo deseas publicar tu video en YouTube.</p>
 
-                                            {/* Format selector */}
                                             <div className="yt-format-row">
                                                 <button
+                                                    type="button"
                                                     className={`yt-fmt-btn ${youtubeFormat === 'video' ? 'active' : ''}`}
                                                     onClick={() => setYoutubeFormat('video')}
                                                 >
                                                     📺 Video estándar
                                                 </button>
                                                 <button
-                                                    className={`yt-fmt-btn ${youtubeFormat === 'shorts' ? 'active' : ''}`}
-                                                    onClick={() => setYoutubeFormat('shorts')}
+                                                    type="button"
+                                                    className={`yt-fmt-btn ${youtubeFormat === 'shorts' ? 'active' : ''} ${!isShortsAllowed ? 'disabled' : ''}`}
+                                                    onClick={() => {
+                                                        if (isShortsAllowed) setYoutubeFormat('shorts');
+                                                    }}
+                                                    title={!isShortsAllowed ? "Los Shorts requieren un video de entre 15 segundos y 3 minutos." : ""}
                                                 >
                                                     📱 Shorts
                                                 </button>
                                             </div>
 
-                                            {/* Channel list */}
-                                            <div className="yt-channel-list">
-                                                {ytAccounts.map(acc => (
-                                                    <div
-                                                        key={acc.id}
-                                                        className={`yt-channel-card ${selectedChannels.includes(acc.id) ? 'selected' : ''}`}
-                                                        onClick={() => toggleChannel(acc.id)}
-                                                    >
-                                                        <div className="yt-ch-avatar">▶️</div>
-                                                        <div className="yt-ch-info">
-                                                            <b>{acc.accountName || acc.pageName || 'Mi canal'}</b>
-                                                            <span>{acc.providerAccountId}</span>
-                                                        </div>
-                                                        {selectedChannels.includes(acc.id) && (
-                                                            <div className="selected-check">✓</div>
+                                            {hasVideo && typeof videoDuration === 'number' && (
+                                                <div className={`duration-notice ${isShortsAllowed ? 'valid' : 'invalid'}`}>
+                                                    <span className="notice-icon">⏱️</span>
+                                                    <div className="notice-body">
+                                                        <b>Duración del video: {formatTime(videoDuration)}</b>
+                                                        {!isShortsAllowed && (
+                                                            <p>Los Shorts solo se admiten para videos de entre 15 seg y 3 min (180s). Este video se publicará en formato estándar.</p>
+                                                        )}
+                                                        {isShortsAllowed && (
+                                                            <p>Este video cumple los requisitos de duración para el formato Shorts (15s a 3 min).</p>
                                                         )}
                                                     </div>
-                                                ))}
-                                                <button onClick={handleYoutubeSyncPopup} className="account-item add-more-item" style={{ marginTop: 4 }}>
-                                                    <div className="acc-avatar">+</div>
-                                                    <div className="acc-info">
-                                                        <b className="acc-name">Conectar otro canal</b>
-                                                        <span className="acc-provider">Abrir sincronizador YouTube</span>
+                                                </div>
+                                            )}
+
+                                            {!hasVideo && (
+                                                <div className="duration-notice invalid">
+                                                    <span className="notice-icon">⚠️</span>
+                                                    <div className="notice-body">
+                                                        <b>No se detectó video</b>
+                                                        <p>Debes incluir un archivo de video en el anuncio para poder publicar en YouTube.</p>
                                                     </div>
-                                                </button>
-                                            </div>
+                                                </div>
+                                            )}
                                         </div>
                                     );
                                 })()
@@ -454,7 +450,7 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
                         <button
                             className="publish-btn"
                             onClick={handleFinalPublish}
-                            disabled={loading || !selectedProfile || (platform === 'youtube' && selectedChannels.length === 0)}
+                            disabled={loading || !selectedProfile}
                         >
                             {loading ? "Procesando..." : "🚀 Publicar ahora"}
                         </button>
@@ -783,6 +779,47 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
             background: var(--accent-primary); color: #fff;
             border-color: var(--accent-primary);
             box-shadow: 0 4px 14px rgba(176,141,109,0.25);
+        }
+        .yt-fmt-btn.disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            background: var(--bg-tertiary) !important;
+            color: var(--text-muted) !important;
+            border-style: dashed !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+        .duration-notice {
+            display: flex;
+            gap: 12px;
+            padding: 16px;
+            border-radius: 16px;
+            margin-top: 14px;
+            font-size: 0.85rem;
+            align-items: flex-start;
+        }
+        .duration-notice.valid {
+            background: rgba(40, 167, 69, 0.08);
+            border: 1px solid rgba(40, 167, 69, 0.2);
+            color: #1e7e34;
+        }
+        .duration-notice.invalid {
+            background: rgba(220, 53, 69, 0.08);
+            border: 1px solid rgba(220, 53, 69, 0.2);
+            color: #bd2130;
+        }
+        .notice-icon {
+            font-size: 1.15rem;
+            line-height: 1;
+        }
+        .notice-body b {
+            display: block;
+            margin-bottom: 4px;
+        }
+        .notice-body p {
+            margin: 0;
+            opacity: 0.85;
+            line-height: 1.4;
         }
         .yt-channel-list {
             display: flex; flex-direction: column; gap: 8px;

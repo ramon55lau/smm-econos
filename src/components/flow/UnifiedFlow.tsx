@@ -12,7 +12,7 @@ export type ScrapedData = {
     title: string;
     description: string;
     images: string[];
-    videos: { url: string; thumbnail?: string; type?: string }[];
+    videos: { url: string; thumbnail?: string; type?: string; duration?: number }[];
     hashtags: string[];
     suggestedComment: string;
     linkUrl: string;
