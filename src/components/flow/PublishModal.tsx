@@ -90,6 +90,7 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
                 body: JSON.stringify({
                     adId: ad.id,
                     socialAccountId: selectedProfile,
+                    agent: data.agent || undefined,
                     destinations: [
                         {
                             platform: platform === "google-ads" ? "youtube" : platform.split("-")[0],

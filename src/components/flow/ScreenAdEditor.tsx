@@ -10,6 +10,85 @@ type Props = {
     onBack: () => void;
 };
 
+const AgentFloatingCard = ({ agent }: { agent: NonNullable<ScrapedData['agent']> }) => {
+    return (
+        <div style={{
+            position: 'absolute',
+            bottom: '12px',
+            right: '12px',
+            zIndex: 100,
+            background: 'rgba(255, 255, 255, 0.95)',
+            borderRadius: '6px',
+            boxShadow: '0 4px 10px rgba(0, 0, 0, 0.15)',
+            padding: '8px 10px',
+            width: '115px',
+            display: 'flex',
+            flexDirection: 'column' as const,
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '1px solid rgba(0,0,0,0.06)',
+            backdropFilter: 'blur(4px)',
+            pointerEvents: 'none' as const,
+            boxSizing: 'border-box' as const,
+        }}>
+            <div style={{
+                width: '44px',
+                height: '44px',
+                minHeight: '44px',
+                borderRadius: '50%',
+                overflow: 'hidden',
+                marginBottom: '4px',
+                border: '2px solid #b08d6d',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            }}>
+                <img
+                    src={agent.photo}
+                    alt={agent.name}
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        display: 'block',
+                    }}
+                    onError={(e) => {
+                        (e.target as HTMLImageElement).src = "https://mhestate.es/assets/img/client-placeholder.jpg";
+                    }}
+                />
+            </div>
+            <div style={{ textAlign: 'center', width: '100%' }}>
+                <h4 style={{
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    color: '#111',
+                    margin: '0 0 2px 0',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    lineHeight: 1.1,
+                }}>{agent.name}</h4>
+                <p style={{
+                    fontSize: '8px',
+                    color: '#555',
+                    margin: 0,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    lineHeight: 1.2,
+                }}>{agent.email}</p>
+                <p style={{
+                    fontSize: '8px',
+                    color: '#555',
+                    margin: 0,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    lineHeight: 1.2,
+                }}>{agent.phone}</p>
+            </div>
+        </div>
+    );
+};
+
 export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Props) {
     const [isMounted, setIsMounted] = useState(false);
     useEffect(() => {
@@ -388,12 +467,13 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
                                         </div>
                                     ) : (
                                         <div className="google-display-ad">
-                                            <div className="display-banner-image">
+                                            <div className="display-banner-image" style={{ position: 'relative' }}>
                                                 {selectedMedia.length > 0 ? (
                                                     <img src={selectedMedia[0].url} alt="Banner" />
                                                 ) : (
                                                     <div className="display-banner-placeholder">Carga o selecciona una imagen</div>
                                                 )}
+                                                {data.agent && <AgentFloatingCard agent={data.agent} />}
                                             </div>
                                             <div className="display-banner-content">
                                                 <div className="display-banner-header">
@@ -456,6 +536,7 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
                                         ) : (
                                             <div className="media-placeholder">Sin multimedia</div>
                                         )}
+                                        {data.agent && <AgentFloatingCard agent={data.agent} />}
                                     </div>
                                     <div className="overlay-text">
                                         <h2>{title}</h2>
@@ -485,7 +566,7 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
                                     <div className="text-content">
                                         {title}
                                     </div>
-                                    <div className="media-container fb-mosaic-grid">
+                                    <div className="media-container fb-mosaic-grid" style={{ position: 'relative' }}>
                                         {selectedMedia.length === 0 ? (
                                             <div className="media-placeholder">Sin multimedia</div>
                                         ) : (() => {
@@ -614,6 +695,7 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
                                                 );
                                             }
                                         })()}
+                                        {data.agent && <AgentFloatingCard agent={data.agent} />}
                                     </div>
 
                                     <footer>
@@ -1295,6 +1377,64 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
         }
         .display-cta-btn:hover {
             background: #1557b0;
+        }
+
+        /* AGENT FLOATING CARD */
+        .agent-floating-card {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            padding: 8px 10px;
+            width: 115px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(0,0,0,0.06);
+            backdrop-filter: blur(4px);
+            pointer-events: none;
+        }
+        .agent-avatar-container {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            overflow: hidden;
+            margin-bottom: 4px;
+            border: 2px solid #b08d6d;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .agent-avatar {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .agent-details {
+            text-align: center;
+            width: 100%;
+        }
+        .agent-name {
+            font-size: 10px;
+            font-weight: 700;
+            color: #111;
+            margin: 0 0 2px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.1;
+        }
+        .agent-info {
+            font-size: 8px;
+            color: #555;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.2;
         }
 
         @media (max-width: 1200px) {

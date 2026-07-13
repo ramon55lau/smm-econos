@@ -18,6 +18,12 @@ export type ScrapedData = {
     linkUrl: string;
     price?: string;
     city?: string;
+    agent?: {
+        name: string;
+        email: string;
+        phone: string;
+        photo: string;
+    };
 };
 
 export type FlowStep = "input" | "selection" | "editor" | "success";

@@ -176,6 +176,39 @@ async function scrapeMHEstate(propertyId: string, originalUrl: string) {
   const hashtagParts = [tipoOfer, zona, ciudad].filter(Boolean);
   const hashtags = generateHashtags(hashtagParts);
 
+  const agentName = getXmlTag(block, "agente") || "";
+  const agentEmail = getXmlTag(block, "email_agente") || "";
+  const agentPhone = getXmlTag(block, "tlf_agente") || "";
+
+  let agentInfo = undefined;
+  if (agentEmail) {
+    const cleanMail = agentEmail.toLowerCase().trim();
+    let photoUrl = "";
+    if (cleanMail.includes("cecilia")) {
+      photoUrl = "https://mhestate.es/assets/img/cecilia.jpg";
+    } else if (cleanMail.includes("rebecca")) {
+      photoUrl = "https://mhestate.es/assets/img/Rebbeca.jpg";
+    } else if (cleanMail.includes("isidora")) {
+      photoUrl = "https://mhestate.es/assets/img/Isidora.jpg";
+    } else {
+      const namePart = cleanMail.split("@")[0];
+      const capitalized = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+      photoUrl = `https://mhestate.es/assets/img/${capitalized}.jpg`;
+    }
+
+    let formattedPhone = agentPhone;
+    if (agentPhone && !formattedPhone.startsWith("+")) {
+      formattedPhone = `+34 ${agentPhone.replace(/(\d{3})(\d{3})(\d{3})/, "$1 $2 $3")}`;
+    }
+
+    agentInfo = {
+      name: agentName || "Asesor Inmobiliario",
+      email: agentEmail,
+      phone: formattedPhone,
+      photo: photoUrl
+    };
+  }
+
   return {
     title: cleanTitle(displayTitle).substring(0, 100),
     description: cleanDescrip,
@@ -186,6 +219,7 @@ async function scrapeMHEstate(propertyId: string, originalUrl: string) {
     hashtags,
     suggestedComment: "📍 Consulta detalles y agenda tu visita. ¡Te asesoramos sin compromiso!",
     linkUrl: originalUrl,
+    agent: agentInfo,
   };
 }
 
@@ -568,22 +602,33 @@ async function scrapeGeneric(url: string) {
   let keywords: string[] = [];
   let duration = 0;
 
-  // 1. Try parsing ytInitialPlayerResponse
+  // 1. Try parsing ytInitialPlayerResponse using balanced brace counting
+  //    Regex-based approaches fail because the JSON is ~70KB+ with deeply nested braces.
   if (html) {
-    let match = html.match(/ytInitialPlayerResponse\s*=\s*({[\s\S]*?});/);
-    if (!match) {
-      match = html.match(/ytInitialPlayerResponse\s*=\s*({[\s\S]+?})(?:;|<\/script>|var\s+\w+=)/);
-    }
-    if (match) {
-      try {
-        const playerResponse = JSON.parse(match[1]);
-        const details = playerResponse.videoDetails || {};
-        title = details.title || "";
-        description = details.shortDescription || "";
-        keywords = details.keywords || [];
-        duration = parseInt(details.lengthSeconds || "0", 10);
-      } catch (e) {
-        console.warn("Failed to parse ytInitialPlayerResponse", e);
+    const marker = "ytInitialPlayerResponse";
+    const markerIdx = html.indexOf(marker);
+    if (markerIdx !== -1) {
+      const braceStart = html.indexOf("{", markerIdx);
+      if (braceStart !== -1) {
+        let depth = 0;
+        let braceEnd = braceStart;
+        for (let i = braceStart; i < html.length; i++) {
+          if (html[i] === "{") depth++;
+          else if (html[i] === "}") {
+            depth--;
+            if (depth === 0) { braceEnd = i; break; }
+          }
+        }
+        try {
+          const playerResponse = JSON.parse(html.substring(braceStart, braceEnd + 1));
+          const details = playerResponse.videoDetails || {};
+          title = details.title || "";
+          description = details.shortDescription || "";
+          keywords = details.keywords || [];
+          duration = parseInt(details.lengthSeconds || "0", 10);
+        } catch (e) {
+          console.warn("Failed to parse ytInitialPlayerResponse", e);
+        }
       }
     }
   }
