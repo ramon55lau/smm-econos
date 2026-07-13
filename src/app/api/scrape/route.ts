@@ -700,6 +700,100 @@ async function scrapeMaklarringen(url: string) {
   };
 }
 
+// ─── Christie's Real Estate Madrid handler ─────────────────────────────────
+function decodeCloudflareEmail(encoded: string): string {
+  let email = "";
+  const r = parseInt(encoded.substring(0, 2), 16);
+  for (let n = 2; n < encoded.length; n += 2) {
+    email += String.fromCharCode(parseInt(encoded.substring(n, n + 2), 16) ^ r);
+  }
+  return email;
+}
+
+async function scrapeChristies(url: string) {
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "Accept-Language": "es-ES,es;q=0.9,en;q=0.8"
+    }
+  });
+
+  if (!res.ok) throw new Error(`Christie's fetch failed: ${res.status}`);
+  const html = await res.text();
+
+  // Meta tags
+  let title = getMetadataValue(html, ["og:title", "twitter:title"]) || "";
+  if (!title) {
+    const tm = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    title = tm ? tm[1] : "Propiedad en Madrid";
+  }
+  let description = getMetadataValue(html, ["og:description", "description"]) || "";
+
+  // Images: Christie's Madrid uses media.inmobalia.com CDN
+  const images: string[] = [];
+  const imgRegex = /https?:\/\/media\.inmobalia\.com\/[^\s"'<>\\]+/gi;
+  let m;
+  while ((m = imgRegex.exec(html)) !== null && images.length < 50) {
+    const src = m[0].split(/[\\"']/)[0].replace(/&amp;/g, "&");
+    if (!images.includes(src)) images.push(src);
+  }
+
+  // Agent card: lives inside class="authors" block
+  let agent: any = undefined;
+  const authIdx = html.indexOf('class="authors');
+  if (authIdx !== -1) {
+    const sub = html.substring(authIdx, authIdx + 3000);
+
+    // Photo — first full https src inside the authors block
+    let photo = "";
+    const photoMatch = sub.match(/<img[^>]+src=["'](https:[^"']+)["']/i) ||
+      sub.match(/<source[^>]+srcset=["'](https:[^"'\s,]+)/i);
+    if (photoMatch) photo = photoMatch[1];
+
+    // Name
+    let name = "";
+    const nameMatch = sub.match(/class=["']authors-title[^"']*["'][^>]*>([\s\S]*?)<\/span>/i);
+    if (nameMatch) name = nameMatch[1].replace(/<[^>]+>/g, "").trim();
+
+    // Phone via wa.me
+    let phone = "";
+    const waMatch = sub.match(/href=["']https:\/\/wa\.me\/([^"']+)["']/i);
+    if (waMatch) phone = "+" + waMatch[1].replace(/[^0-9]/g, "");
+
+    // Email via Cloudflare obfuscation XOR decode
+    let email = "";
+    const cfMatch = sub.match(/href=["']\/cdn-cgi\/l\/email-protection#([^"']+)["']/i);
+    if (cfMatch) {
+      try { email = decodeCloudflareEmail(cfMatch[1]); } catch (_) { }
+    }
+
+    if (name) {
+      agent = {
+        name,
+        email,
+        phone,
+        photo: photo || "https://mhestate.es/assets/img/client-placeholder.jpg"
+      };
+    }
+  }
+
+  title = cleanTitle(title);
+  description = cleanHtmlEntities(description);
+
+  return {
+    title: title.substring(0, 100),
+    description: description.substring(0, 500),
+    price: "",
+    city: "Madrid",
+    images: images.slice(0, 50),
+    videos: [],
+    hashtags: generateHashtags([title]),
+    suggestedComment: "📍 Consulta detalles y agenda tu visita. ¡Te asesoramos sin compromiso!",
+    linkUrl: url,
+    agent
+  };
+}
+
 async function scrapeYouTube(url: string) {
   let videoId = "";
   if (url.includes("v=")) {
@@ -839,12 +933,15 @@ export async function POST(req: NextRequest) {
 
     const isYouTube = url.includes("youtube.com") || url.includes("youtu.be");
     const isMaklarringen = url.includes("maklarringen.se") || url.includes("maklarringen.com");
+    const isChristies = url.includes("christiesrealestate-madrid.com");
     const mhMatch = url.match(/mhestate\.es\/.*(?:id=|\-)(\d+)/i);
 
     if (isYouTube) {
       result = await scrapeYouTube(url);
     } else if (isMaklarringen) {
       result = await scrapeMaklarringen(url);
+    } else if (isChristies) {
+      result = await scrapeChristies(url);
     } else if (mhMatch) {
       result = await scrapeMHEstate(mhMatch[1], url);
     } else {
