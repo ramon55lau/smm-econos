@@ -566,7 +566,141 @@ async function scrapeGeneric(url: string) {
     suggestedComment: "📍 Consulta detalles y agenda tu visita. ¡Te asesoramos sin compromiso!",
     linkUrl: url,
   };
-} async function scrapeYouTube(url: string) {
+}
+
+async function scrapeMaklarringen(url: string) {
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "Accept-Language": "es-ES,es;q=0.9,en;q=0.8"
+    }
+  });
+
+  if (!res.ok) throw new Error(`Maklarringen fetch failed: ${res.status}`);
+  const html = await res.text();
+
+  const brokerIdx = html.indexOf('"broker"');
+  let broker: any = null;
+  let streetAddress = "";
+  let rooms = "";
+  let price = "";
+  let description = "";
+  let title = "";
+  let images: string[] = [];
+
+  if (brokerIdx !== -1) {
+    const nextDataIdx = html.indexOf('id="__NEXT_DATA__"');
+    if (nextDataIdx !== -1) {
+      const braceStart = html.indexOf("{", nextDataIdx);
+      if (braceStart !== -1) {
+        let depth = 0;
+        let braceEnd = braceStart;
+        for (let i = braceStart; i < html.length; i++) {
+          if (html[i] === "{") depth++;
+          else if (html[i] === "}") {
+            depth--;
+            if (depth === 0) { braceEnd = i; break; }
+          }
+        }
+        try {
+          const nextData = JSON.parse(html.substring(braceStart, braceEnd + 1));
+
+          const findKey = (obj: any, key: string): any => {
+            if (!obj || typeof obj !== 'object') return null;
+            if (obj[key] !== undefined) return obj[key];
+            for (const k of Object.keys(obj)) {
+              const val = findKey(obj[k], key);
+              if (val) return val;
+            }
+            return null;
+          };
+
+          const propData = findKey(nextData, "broker") ? nextData : null;
+          if (propData) {
+            broker = findKey(propData, "broker");
+            streetAddress = findKey(propData, "StreetAddress") || "";
+            rooms = findKey(propData, "Rooms") || "";
+            price = findKey(propData, "Price") || "";
+
+            const longDescList = findKey(propData, "LongSaleDescription");
+            if (longDescList && Array.isArray(longDescList)) {
+              const svDesc = longDescList.find(d => d._key === 'sv' || d._key === 'es');
+              const enDesc = longDescList.find(d => d._key === 'en');
+              description = svDesc?.value || enDesc?.value || "";
+            }
+
+            const headlineList = findKey(propData, "SaleHeadline");
+            if (headlineList && Array.isArray(headlineList)) {
+              const svTitle = headlineList.find(t => t._key === 'sv' || t._key === 'es');
+              const enTitle = headlineList.find(t => t._key === 'en');
+              title = svTitle?.value || enTitle?.value || "";
+            }
+
+            const imagesList = findKey(propData, "Images") || findKey(propData, "images");
+            if (imagesList && Array.isArray(imagesList)) {
+              images = imagesList
+                .map(img => img.Url || img.url)
+                .filter(url => typeof url === 'string' && url.startsWith('http'));
+            }
+          }
+        } catch (e) {
+          console.warn("Failed to parse Next.js __NEXT_DATA__ JSON in Maklarringen:", e);
+        }
+      }
+    }
+  }
+
+  // Fallbacks: if JSON extraction was sparse or failed
+  if (!title) {
+    const tm = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    title = tm ? tm[1].replace(" - Maklarringen", "") : "Bostad i Spanien";
+  }
+
+  if (!description) {
+    description = getMetadataValue(html, ["description", "og:description"]) || "";
+  }
+
+  // If no images found from JSON, use regex matching on cdn/api patterns
+  if (images.length === 0) {
+    const imgRegex = /https?:\/\/[^\s"'<>\\]+?\/images\/[^\s"'<>\\]+/gi;
+    let match;
+    while ((match = imgRegex.exec(html)) !== null && images.length < 50) {
+      const src = match[0].split(/[\\"']/)[0].replace(/&amp;/g, '&');
+      if (src.startsWith("http") && !isJunk(src) && !images.includes(src)) {
+        images.push(src);
+      }
+    }
+  }
+
+  // Parse agent contact info
+  let agent: any = undefined;
+  if (broker && broker.BrokerName) {
+    agent = {
+      name: broker.BrokerName,
+      email: broker.EmailAddress || "",
+      phone: broker.Cellphone || "",
+      photo: broker.MainImageVitec || broker.MainImage || "https://mhestate.es/assets/img/client-placeholder.jpg"
+    };
+  }
+
+  title = cleanTitle(title);
+  description = cleanHtmlEntities(description);
+
+  return {
+    title: title.substring(0, 100),
+    description: description.substring(0, 500),
+    price: price ? String(price) : "",
+    city: "",
+    images: images.slice(0, 50),
+    videos: [],
+    hashtags: generateHashtags([title]),
+    suggestedComment: "📍 Consulta detalles y agenda tu visita. ¡Te asesoramos sin compromiso!",
+    linkUrl: url,
+    agent
+  };
+}
+
+async function scrapeYouTube(url: string) {
   let videoId = "";
   if (url.includes("v=")) {
     videoId = url.split("v=")[1].split("&")[0];
@@ -704,10 +838,13 @@ export async function POST(req: NextRequest) {
     let result;
 
     const isYouTube = url.includes("youtube.com") || url.includes("youtu.be");
+    const isMaklarringen = url.includes("maklarringen.se") || url.includes("maklarringen.com");
     const mhMatch = url.match(/mhestate\.es\/.*(?:id=|\-)(\d+)/i);
 
     if (isYouTube) {
       result = await scrapeYouTube(url);
+    } else if (isMaklarringen) {
+      result = await scrapeMaklarringen(url);
     } else if (mhMatch) {
       result = await scrapeMHEstate(mhMatch[1], url);
     } else {
