@@ -143,7 +143,53 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
+      // Handle dynamic session updates (such as impersonation)
+      if (trigger === "update" && session) {
+        if (session.action === "impersonate") {
+          // Double verify safety: only SUPER_ADMIN is allowed to impersonate.
+          // The current active user profile must be SUPER_ADMIN, OR we must already be impersonating (which requires the originalAdmin to have been a SUPER_ADMIN).
+          const isSuperAdmin = token.role === "SUPER_ADMIN";
+          const alreadyImpersonating = !!token.impersonator && token.impersonator.role === "SUPER_ADMIN";
+
+          if (isSuperAdmin || alreadyImpersonating) {
+            // Save the original administrator's session info if not already saved
+            if (!token.impersonator) {
+              token.impersonator = {
+                id: token.id,
+                name: token.name || "",
+                email: token.email || "",
+                role: token.role,
+              };
+            }
+            // Overwrite basic session identity with the target user's identity
+            token.id = session.targetUser.id;
+            token.name = session.targetUser.name;
+            token.email = session.targetUser.email;
+            token.role = session.targetUser.role;
+            token.packageName = session.targetUser.packageName || "Sin Plan";
+            token.expiresAt = session.targetUser.expiresAt ? new Date(session.targetUser.expiresAt).toISOString() : null;
+            token.createdAt = session.targetUser.createdAt ? new Date(session.targetUser.createdAt).toISOString() : null;
+            token.mfaEnabled = session.targetUser.mfaEnabled ?? false;
+          }
+        } else if (session.action === "restore") {
+          // Restore the original SUPER_ADMIN credentials
+          const original = token.impersonator;
+          if (original && original.role === "SUPER_ADMIN") {
+            token.id = original.id;
+            token.name = original.name;
+            token.email = original.email;
+            token.role = original.role;
+            token.packageName = "Sin Plan";
+            token.expiresAt = null;
+            token.mfaEnabled = true; // Super admins normally have MFA setup
+
+            // Delete the impersonator flag
+            delete token.impersonator;
+          }
+        }
+      }
+
       if (user) {
         token.role = user.role;
         token.id = user.id;
@@ -162,6 +208,7 @@ export const authOptions: NextAuthOptions = {
         session.user.createdAt = token.createdAt as string | null;
         session.user.mfaEnabled = token.mfaEnabled as boolean ?? false;
         session.user.packageName = token.packageName as string ?? "Sin Plan";
+        session.user.impersonator = token.impersonator as any || null;
       }
       return session;
     }

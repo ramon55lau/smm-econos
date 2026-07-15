@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import Script from "next/script";
 import "@/styles/globals.css";
 import { AuthProvider } from "@/components/providers/AuthProvider";
+import { ImpersonationBanner } from "@/components/flow/ImpersonationBanner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -44,7 +45,10 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={`${inter.className} min-h-screen bg-neutral-900 text-white`}>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <ImpersonationBanner />
+          {children}
+        </AuthProvider>
         <Script
           src="https://connect.facebook.net/es_LA/sdk.js"
           strategy="lazyOnload"

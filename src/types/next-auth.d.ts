@@ -10,6 +10,12 @@ declare module "next-auth" {
       createdAt?: string | null;
       mfaEnabled?: boolean;
       packageName?: string;
+      impersonator?: {
+        id: string;
+        name: string;
+        email: string;
+        role: string;
+      } | null;
     } & DefaultSession["user"];
   }
 
@@ -31,5 +37,11 @@ declare module "next-auth/jwt" {
     createdAt?: string | null;
     mfaEnabled?: boolean;
     packageName?: string;
+    impersonator?: {
+      id: string;
+      name: string;
+      email: string;
+      role: string;
+    } | null;
   }
 }

@@ -29,12 +29,13 @@ const ROLES = ["SUPER_ADMIN", "ADMIN", "EDITOR", "VIEWER"];
 const STATUSES = ["PENDING", "APPROVED", "BLOCKED"];
 
 export default function UsersPage() {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const isAdmin = session?.user?.role === "SUPER_ADMIN";
 
   const [users, setUsers] = useState<User[]>([]);
   const [packages, setPackages] = useState<Package[]>([]);
   const [loading, setLoading] = useState(true);
+  const [impersonatingId, setImpersonatingId] = useState<string | null>(null);
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -194,6 +195,38 @@ export default function UsersPage() {
     }
   };
 
+  const handleImpersonate = async (user: User) => {
+    if (!confirm(`¿Estás seguro de que deseas iniciar sesión y actuar como el usuario ${user.name || user.email}?`)) return;
+
+    try {
+      setImpersonatingId(user.id);
+      const res = await fetch("/api/users/impersonate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetUserId: user.id })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Error al solicitar impersonación");
+      }
+
+      // Update the active NextAuth session and store admin origin in cookies/token
+      await update({
+        action: "impersonate",
+        targetUser: data.targetUser
+      });
+
+      // Show feedback and redirect to workspace to show dashboard under user's perspective
+      alert(`Sesión cambiada. Ahora estás actuando como: ${user.name || user.email}`);
+      window.location.href = "/";
+    } catch (err: any) {
+      alert("No se pudo iniciar la impersonación: " + err.message);
+    } finally {
+      setImpersonatingId(null);
+    }
+  };
+
   // Renewal modal states
   const [isRenewModalOpen, setIsRenewModalOpen] = useState(false);
   const [renewModalUser, setRenewModalUser] = useState<User | null>(null);
@@ -342,6 +375,17 @@ export default function UsersPage() {
                       <button className={styles.iconBtn} onClick={() => openModal(user)} title="Editar">
                         ✏️
                       </button>
+                      {user.role !== "SUPER_ADMIN" && user.id !== session?.user?.id && (
+                        <button
+                          className={styles.iconBtn}
+                          onClick={() => handleImpersonate(user)}
+                          disabled={impersonatingId !== null}
+                          title="Iniciar sesión como este usuario (Impersonar)"
+                          style={{ color: "#ea580c" }}
+                        >
+                          {impersonatingId === user.id ? "⏳" : "👁️"}
+                        </button>
+                      )}
                       {user.mfaEnabled && (
                         <button
                           className={styles.iconBtn}
