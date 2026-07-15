@@ -215,7 +215,11 @@ export default function AccountsPage() {
   };
 
   const handleDisconnect = async (providerAccountId: string, provider: string) => {
-    if (!confirm("¿Desconectar este titular? Se eliminarán todas las Fanpages asociadas.")) return;
+    const acc = accounts.find(a => a.providerAccountId === providerAccountId && a.provider === provider);
+    const displayName = acc ? getAccountDisplayName(acc) : "esta cuenta";
+
+    if (!confirm(`¿Estás seguro de que deseas desconectar la cuenta "${displayName}"? Se eliminarán todas las configuraciones asociadas.`)) return;
+
     try {
       await fetch("/api/social/accounts", {
         method: "DELETE",
@@ -226,6 +230,22 @@ export default function AccountsPage() {
     } catch {
       alert("Error al desconectar");
     }
+  };
+
+  const getAccountDisplayName = (acc: SocialAccount): string => {
+    if (acc.provider === "youtube") {
+      return acc.pageName || acc.accountName || "Canal de YouTube";
+    }
+    if (acc.provider === "facebook") {
+      return acc.pageName || acc.accountName || "Página de Facebook";
+    }
+    if (acc.provider === "instagram") {
+      return acc.accountName || acc.pageName || "Cuenta de Instagram";
+    }
+    if (acc.provider === "google-ads") {
+      return acc.accountName || "Cuenta de Google Ads";
+    }
+    return acc.accountName || acc.pageName || "Cuenta conectada";
   };
 
   const getPlatformData = (provider: string) => {
@@ -302,10 +322,10 @@ export default function AccountsPage() {
                     <div key={acc.id} className={styles.accountItem}>
                       <div className={styles.accountMain}>
                         <div className={styles.accountAvatar}>
-                          {acc.accountName?.charAt(0) || "A"}
+                          {getAccountDisplayName(acc).charAt(0).toUpperCase()}
                         </div>
                         <div className={styles.accountDetails}>
-                          <div className={styles.accountTitle}>{acc.accountName || "Titular"}</div>
+                          <div className={styles.accountTitle}>{getAccountDisplayName(acc)}</div>
                           {acc.expiresAt && (
                             <div className={styles.accountSubtitle}>
                               Expira: {new Date(acc.expiresAt).toLocaleDateString()}
