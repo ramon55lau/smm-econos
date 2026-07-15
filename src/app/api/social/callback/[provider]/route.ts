@@ -268,6 +268,42 @@ export async function GET(
       },
     });
 
+    // Mirror registration for Google Ads if YouTube (Google) account was connected
+    if (provider === "youtube") {
+      await prisma.socialAccount.upsert({
+        where: {
+          provider_providerAccountId: {
+            provider: "google-ads",
+            providerAccountId: providerAccountId,
+          },
+        },
+        update: {
+          userId: session.user.id,
+          accessToken,
+          refreshToken,
+          expiresAt,
+          accountName, // Display the Google profile name
+          pageId: null,
+          pageName: "Google Ads",
+          igAccountId: null,
+          adAccountId: null,
+        },
+        create: {
+          userId: session.user.id,
+          provider: "google-ads",
+          providerAccountId,
+          accessToken,
+          refreshToken,
+          expiresAt,
+          accountName, // Display the Google profile name
+          pageId: null,
+          pageName: "Google Ads",
+          igAccountId: null,
+          adAccountId: null,
+        },
+      });
+    }
+
     if (isPopup) {
       return getPopupSuccessHtml();
     }

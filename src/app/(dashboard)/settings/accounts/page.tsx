@@ -194,13 +194,13 @@ export default function AccountsPage() {
   };
 
   const handleConnect = async (provider: string) => {
-    if (provider === "youtube" && !showPrivacyInfo) {
+    if ((provider === "youtube" || provider === "google-ads") && !showPrivacyInfo) {
       setShowPrivacyInfo(true);
       return;
     }
 
     try {
-      const connectProvider = provider === "instagram" ? "facebook" : provider;
+      const connectProvider = provider === "instagram" ? "facebook" : (provider === "google-ads" ? "youtube" : provider);
       const res = await fetch(`/api/social/connect?provider=${connectProvider}`);
       if (res.ok) {
         const data = await res.json();
