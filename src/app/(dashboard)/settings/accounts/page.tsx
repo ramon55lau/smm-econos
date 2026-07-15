@@ -264,7 +264,7 @@ export default function AccountsPage() {
     if (limits && limits.package) {
       if (provider === "facebook") limit = limits.package.maxFacebook;
       else if (provider === "instagram") limit = limits.package.maxInstagram;
-      else if (provider === "youtube") limit = limits.package.maxYouTube;
+      else if (provider === "youtube" || provider === "google-ads") limit = limits.package.maxYouTube;
     }
     return {
       accounts: uniqueTitulars,
