@@ -7,10 +7,11 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
+    "test:jest": "jest --verbose",
     "approve-users": "npx tsx prisma/approve-existing.ts",
     "db:sqlite": "node scripts/switch-db.js sqlite && prisma db push && prisma db seed",
     "db:postgres": "node scripts/switch-db.js postgres"
@@ -32,6 +33,7 @@
   "devDependencies": {
     "@prisma/client": "^5.22.0",
     "@types/bcrypt": "^6.0.0",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20.19.43",
     "@types/nodemailer": "^8.0.1",
     "@types/qrcode": "^1.5.6",
@@ -40,6 +42,8 @@
     "dotenv": "^17.3.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
+    "jest": "^30.4.2",
+    "jest-environment-jsdom": "^30.4.1",
     "prisma": "^5.22.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
