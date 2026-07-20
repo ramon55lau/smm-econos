@@ -8,7 +8,13 @@ export default withAuth(
     },
     {
         callbacks: {
-            authorized: ({ token }) => !!token,
+            authorized: ({ token, req }) => {
+                // Permitir acceso público a la ruta raíz (landing/información del negocio)
+                if (req.nextUrl.pathname === "/") {
+                    return true;
+                }
+                return !!token;
+            },
         },
     }
 );
