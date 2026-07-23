@@ -1,27 +1,28 @@
 :root {
-  /* ===== Premium Beige/Golden Theme — Inspired by the original dashboard ===== */
-  --bg-primary: #f7f3f0;
+  /* ===== Velibri Rebrand — Clean Teal/Green Theme ===== */
+  --bg-primary: #FAFAFA;
   --bg-secondary: #ffffff;
-  --bg-tertiary: #efebe8;
+  --bg-tertiary: #F0F2F4;
   --bg-elevated: #ffffff;
 
-  --text-primary: #4a3f35;
-  --text-secondary: #6d5f52;
-  --text-muted: rgba(74, 63, 53, 0.55);
+  --text-primary: #071322;
+  --text-secondary: #3A4553;
+  --text-muted: #8C959B;
 
-  /* Accent: Elegant Golden/Brown */
-  --accent-primary: #b08d6d;
-  --accent-hover: #9a7b5d;
-  --accent-active: #81664d;
-  --accent-warm: #d7bfa5;
-  --accent-glow: rgba(176, 141, 109, 0.15);
-  --accent-warm-glow: rgba(215, 191, 165, 0.12);
+  /* Accent: Elegant Teal/Green */
+  --accent-primary: #6B8C84;
+  --accent-hover: #5A7A72;
+  --accent-active: #4A6961;
+  --accent-warm: #8FB0A8;
+  --accent-glow: rgba(107, 140, 132, 0.15);
+  --accent-warm-glow: rgba(143, 176, 168, 0.12);
+  --accent-primary-rgb: 107, 140, 132;
 
   /* Gradients */
-  --gradient-hero: linear-gradient(135deg, #b08d6d 0%, #d7bfa5 100%);
-  --gradient-card-hover: linear-gradient(135deg, rgba(176, 141, 109, 0.08), rgba(215, 191, 165, 0.06));
-  --gradient-sidebar: linear-gradient(180deg, #f7f3f0 0%, #efebe8 100%);
-  --gradient-header-border: linear-gradient(90deg, #b08d6d, #d7bfa5, transparent);
+  --gradient-hero: linear-gradient(135deg, #6B8C84 0%, #8FB0A8 100%);
+  --gradient-card-hover: linear-gradient(135deg, rgba(107, 140, 132, 0.08), rgba(143, 176, 168, 0.06));
+  --gradient-sidebar: linear-gradient(180deg, #FAFAFA 0%, #F0F2F4 100%);
+  --gradient-header-border: linear-gradient(90deg, #6B8C84, #8FB0A8, transparent);
 
   /* Semantic status */
   --success: #2d6a4f;
@@ -30,9 +31,9 @@
   --info: #2a6f8f;
 
   /* Borders */
-  --border-color: rgba(74, 63, 53, 0.08);
-  --border-hover: rgba(74, 63, 53, 0.15);
-  --border-accent: rgba(176, 141, 109, 0.3);
+  --border-color: rgba(7, 19, 34, 0.08);
+  --border-hover: rgba(7, 19, 34, 0.15);
+  --border-accent: rgba(107, 140, 132, 0.3);
 
   /* Platform Colors */
   --facebook-color: #1877f2;
@@ -40,14 +41,14 @@
   --youtube-color: #ff0000;
 
   /* Shadows & Glassmorphism */
-  --shadow-sm: 0 1px 3px rgba(74, 63, 53, 0.1);
-  --shadow-md: 0 4px 12px rgba(74, 63, 53, 0.1);
-  --shadow-lg: 0 12px 32px rgba(74, 63, 53, 0.15);
-  --shadow-glow-gold: 0 0 20px rgba(176, 141, 109, 0.2), 0 0 40px rgba(176, 141, 109, 0.05);
-  --shadow-card-hover: 0 8px 30px rgba(74, 63, 53, 0.12);
+  --shadow-sm: 0 1px 3px rgba(7, 19, 34, 0.08);
+  --shadow-md: 0 4px 12px rgba(7, 19, 34, 0.08);
+  --shadow-lg: 0 12px 32px rgba(7, 19, 34, 0.12);
+  --shadow-glow-gold: 0 0 20px rgba(107, 140, 132, 0.2), 0 0 40px rgba(107, 140, 132, 0.05);
+  --shadow-card-hover: 0 8px 30px rgba(7, 19, 34, 0.1);
 
   --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(74, 63, 53, 0.08);
+  --glass-border: rgba(7, 19, 34, 0.08);
   --glass-bg-strong: rgba(255, 255, 255, 0.9);
 
   /* Border Radius */
@@ -75,13 +76,13 @@
 
   /* Selection States */
   --selection-border: var(--accent-primary);
-  --selection-bg: rgba(176, 141, 109, 0.2);
-  --selection-glow: 0 0 12px rgba(176, 141, 109, 0.35);
+  --selection-bg: rgba(107, 140, 132, 0.2);
+  --selection-glow: 0 0 12px rgba(107, 140, 132, 0.35);
   --accent-blue: #3b82f6;
 
-  /* Meta Theme (Adapting for beige) */
+  /* Meta Theme */
   --meta-bg: #ffffff;
-  --meta-sidebar: #f7f3f0;
+  --meta-sidebar: #FAFAFA;
   --meta-card: #ffffff;
   --meta-border: #e4e6eb;
   --meta-text-primary: #1c1e21;

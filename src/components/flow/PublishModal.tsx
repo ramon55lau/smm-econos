@@ -453,7 +453,7 @@ export default function PublishModal({ data, platform, onClose, onSuccess }: Pro
                             onClick={handleFinalPublish}
                             disabled={loading || !selectedProfile}
                         >
-                            {loading ? "Procesando..." : "🚀 Publicar ahora"}
+                            {loading ? "Procesando..." : "Publicar ahora"}
                         </button>
                     )}
                 </div>

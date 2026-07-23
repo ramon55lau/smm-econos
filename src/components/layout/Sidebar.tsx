@@ -83,7 +83,7 @@ const IconEdit = () => (
 );
 
 const navItems = [
-  { name: "Dashboard", href: "/dashboard", icon: <IconDashboard /> },
+  { name: "Inicio", href: "/dashboard", icon: <IconDashboard /> },
   {
     name: "Campañas",
     href: "/campaigns",

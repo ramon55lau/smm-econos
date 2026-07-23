@@ -330,7 +330,7 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
                                 <div className="form-section">
                                     <div className="label-with-action">
                                         <label>Hashtags</label>
-                                        <button className="suggest-btn" onClick={handleSuggestHashtags}>✨ Sugerir con I.A.</button>
+                                        <button className="suggest-btn" onClick={handleSuggestHashtags}>Sugerir con I.A.</button>
                                     </div>
                                     <textarea
                                         className="hashtags-input"
@@ -729,7 +729,8 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
                     </div>
 
                     <button className="publish-now-btn sidebar-publish" onClick={handlePublishLocal}>
-                        🚀 Publicar ahora
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 8 }}><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        Publicar ahora
                     </button>
 
                     <div className="ai-tip">
@@ -741,7 +742,10 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
 
             {/* Mobile/Tablet Fallback Publish Button */}
             < div className="mobile-publish-footer" >
-                <button className="publish-now-btn" style={{ minWidth: '220px' }} onClick={handlePublishLocal}>🚀 Publicar ahora</button>
+                <button className="publish-now-btn" style={{ minWidth: '220px' }} onClick={handlePublishLocal}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 8 }}><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    Publicar ahora
+                </button>
             </div >
 
 
@@ -1192,8 +1196,28 @@ export default function ScreenAdEditor({ data, platform, onPublish, onBack }: Pr
           box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
         }
 
-        .publish-now-btn { background: #b08d6d; color: white; border: none; padding: 12px 32px; border-radius: 30px; font-weight: 700; font-size: 0.9rem; box-shadow: 0 10px 20px rgba(176, 141, 109, 0.2); transition: all 0.2s; }
-        .publish-now-btn:hover { background: #9a7b5d; transform: translateY(-2px); box-shadow: 0 12px 24px rgba(176, 141, 109, 0.3); }
+        .publish-now-btn { 
+          background: #6B8C84; 
+          color: white; 
+          border: none; 
+          padding: 14px 24px; 
+          border-radius: 30px; 
+          font-weight: 700; 
+          font-size: 0.9rem; 
+          box-shadow: 0 10px 20px rgba(107, 140, 132, 0.2); 
+          transition: all 0.2s; 
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          white-space: nowrap;
+          width: 100%;
+          cursor: pointer;
+        }
+        .publish-now-btn:hover { 
+          background: #5A7A72; 
+          transform: translateY(-2px); 
+          box-shadow: 0 12px 24px rgba(107, 140, 132, 0.3); 
+        }
 
 
         /* GOOGLE ADS SEARCH MOCKUP - wrapper override */
