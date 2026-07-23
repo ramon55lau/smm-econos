@@ -163,7 +163,7 @@ export async function GET(
       const meRes = await fetch(`https://www.googleapis.com/oauth2/v2/userinfo?access_token=${accessToken}`);
       const meData = await meRes.json();
       providerAccountId = meData.id;
-      accountName = meData.name || null;
+      accountName = meData.name || session.user.name || null;
 
       // Fetch YouTube Channel Info
       try {

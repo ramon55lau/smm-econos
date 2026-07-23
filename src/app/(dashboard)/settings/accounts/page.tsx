@@ -243,7 +243,14 @@ export default function AccountsPage() {
       return acc.accountName || acc.pageName || "Cuenta de Instagram";
     }
     if (acc.provider === "google-ads") {
-      return acc.accountName || "Cuenta de Google Ads";
+      if (acc.accountName && acc.accountName !== "Cuenta de Google Ads" && acc.accountName !== "Google Ads") {
+        return acc.accountName;
+      }
+      const ytAcc = accounts.find(a => a.provider === "youtube" && a.providerAccountId === acc.providerAccountId);
+      if (ytAcc && ytAcc.accountName && ytAcc.accountName !== "Cuenta de Google Ads" && ytAcc.accountName !== "Google Ads") {
+        return ytAcc.accountName;
+      }
+      return limits?.name || acc.accountName || "Titular de Google";
     }
     return acc.accountName || acc.pageName || "Cuenta conectada";
   };
