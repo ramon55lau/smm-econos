@@ -159,11 +159,11 @@ export async function GET(
       refreshToken = tokens.refreshToken;
       expiresAt = new Date(Date.now() + tokens.expiresIn * 1000);
 
-      // Get user's Google ID & Name
+      // Get user's Google ID, Name & Email
       const meRes = await fetch(`https://www.googleapis.com/oauth2/v2/userinfo?access_token=${accessToken}`);
       const meData = await meRes.json();
       providerAccountId = meData.id;
-      accountName = meData.name || session.user.name || null;
+      accountName = meData.name || meData.email || "Cuenta de Google";
 
       // Fetch YouTube Channel Info
       try {

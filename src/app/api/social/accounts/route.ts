@@ -23,11 +23,48 @@ export async function GET() {
         pageId: true, // Necessary to distinguish between Feed and Fanpages in wizard
         pageName: true,
         adAccountId: true,
+        accessToken: true,
         expiresAt: true,
       },
     });
 
-    return NextResponse.json(accounts);
+    // Auto-fix Google account names if generic or matching SMM username
+    const resolvedAccounts = await Promise.all(
+      accounts.map(async (acc) => {
+        if ((acc.provider === "google-ads" || acc.provider === "youtube") && acc.accessToken) {
+          const isGenericOrSmmName =
+            !acc.accountName ||
+            acc.accountName === "Cuenta de Google Ads" ||
+            acc.accountName === "Google Ads" ||
+            acc.accountName === session.user.name;
+
+          if (isGenericOrSmmName) {
+            try {
+              const meRes = await fetch(`https://www.googleapis.com/oauth2/v2/userinfo?access_token=${acc.accessToken}`);
+              if (meRes.ok) {
+                const meData = await meRes.json();
+                const realGoogleName = meData.name || meData.email;
+                if (realGoogleName) {
+                  await prisma.socialAccount.update({
+                    where: { id: acc.id },
+                    data: { accountName: realGoogleName },
+                  });
+                  acc.accountName = realGoogleName;
+                }
+              }
+            } catch (e) {
+              console.warn("[ACCOUNTS_API] Could not auto-resolve Google name:", e);
+            }
+          }
+        }
+        return acc;
+      })
+    );
+
+    // Omit accessToken before returning to client for security
+    const sanitizedAccounts = resolvedAccounts.map(({ accessToken, ...rest }) => rest);
+
+    return NextResponse.json(sanitizedAccounts);
   } catch (error) {
     return NextResponse.json({ error: "Failed to fetch accounts" }, { status: 500 });
   }

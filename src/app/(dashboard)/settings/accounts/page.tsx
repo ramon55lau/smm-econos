@@ -250,7 +250,7 @@ export default function AccountsPage() {
       if (ytAcc && ytAcc.accountName && ytAcc.accountName !== "Cuenta de Google Ads" && ytAcc.accountName !== "Google Ads") {
         return ytAcc.accountName;
       }
-      return limits?.name || acc.accountName || "Titular de Google";
+      return acc.accountName || "Titular de Google";
     }
     return acc.accountName || acc.pageName || "Cuenta conectada";
   };
