@@ -1,29 +1,30 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { CampaignService } from "../campaign.service";
-import { prisma } from "@/lib/prisma";
-
-import { AuthorizationService } from "../auth.service";
-
-vi.mock("@/lib/prisma", () => ({
+/**
+ * Unit Tests for CampaignService (Jest version)
+ */
+jest.mock("@/lib/prisma", () => ({
     prisma: {
         campaign: {
-            findMany: vi.fn(),
-            create: vi.fn(),
-            findUnique: vi.fn(),
-            delete: vi.fn(),
+            findMany: jest.fn(),
+            create: jest.fn(),
+            findUnique: jest.fn(),
+            delete: jest.fn(),
         },
     },
 }));
 
-vi.mock("../auth.service", () => ({
+jest.mock("../auth.service", () => ({
     AuthorizationService: {
-        canAccessCampaign: vi.fn().mockResolvedValue(true),
+        canAccessCampaign: jest.fn().mockResolvedValue(true),
     },
 }));
 
+import { CampaignService } from "../campaign.service";
+import { prisma } from "@/lib/prisma";
+import { AuthorizationService } from "../auth.service";
+
 describe("CampaignService", () => {
     beforeEach(() => {
-        vi.clearAllMocks();
+        jest.clearAllMocks();
     });
 
     describe("getUserCampaigns", () => {
@@ -68,7 +69,7 @@ describe("CampaignService", () => {
         });
 
         it("should return null if user does not own campaign", async () => {
-            vi.mocked(AuthorizationService.canAccessCampaign).mockRejectedValueOnce(new Error("Unauthorized"));
+            (AuthorizationService.canAccessCampaign as jest.Mock).mockRejectedValueOnce(new Error("Unauthorized"));
 
             await expect(CampaignService.getCampaignById("user123", "1")).rejects.toThrow("Unauthorized");
         });
@@ -84,7 +85,7 @@ describe("CampaignService", () => {
         });
 
         it("should throw if campaign not found or not owned", async () => {
-            vi.mocked(AuthorizationService.canAccessCampaign).mockRejectedValueOnce(new Error("Campaign not found or unauthorized"));
+            (AuthorizationService.canAccessCampaign as jest.Mock).mockRejectedValueOnce(new Error("Campaign not found or unauthorized"));
 
             await expect(CampaignService.deleteCampaign("user123", "1"))
                 .rejects.toThrow("Campaign not found or unauthorized");

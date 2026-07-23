@@ -117,7 +117,8 @@ export const authOptions: NextAuthOptions = {
           } else {
             // Standard 6-digit TOTP verification
             const { verify } = await import("otplib");
-            const isValid = await verify({ token: trimmedCode, secret: user.mfaSecret });
+            const result = await verify({ token: trimmedCode, secret: user.mfaSecret });
+            const isValid = typeof result === "boolean" ? result : (result as any)?.valid === true;
 
             if (!isValid) {
               throw new Error("Código MFA inválido. Verifique su aplicación de autenticación.");

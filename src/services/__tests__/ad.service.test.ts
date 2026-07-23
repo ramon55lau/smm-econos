@@ -1,36 +1,38 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+/**
+ * Unit Tests for AdService (Jest version)
+ */
+jest.mock("@/lib/prisma", () => ({
+    prisma: {
+        ad: {
+            findMany: jest.fn(),
+            create: jest.fn(),
+            findUnique: jest.fn(),
+            update: jest.fn(),
+            delete: jest.fn(),
+        },
+        campaign: {
+            findFirst: jest.fn(),
+            findUnique: jest.fn(),
+            create: jest.fn(),
+            update: jest.fn(),
+        },
+    },
+}));
+
+jest.mock("../auth.service", () => ({
+    AuthorizationService: {
+        canAccessCampaign: jest.fn().mockResolvedValue(true),
+        canAccessAd: jest.fn().mockResolvedValue(true),
+    },
+}));
+
 import { AdService } from "../ad.service";
 import { prisma } from "@/lib/prisma";
 import { AuthorizationService } from "../auth.service";
 
-vi.mock("@/lib/prisma", () => ({
-    prisma: {
-        ad: {
-            findMany: vi.fn(),
-            create: vi.fn(),
-            findUnique: vi.fn(),
-            update: vi.fn(),
-            delete: vi.fn(),
-        },
-        campaign: {
-            findFirst: vi.fn(),
-            findUnique: vi.fn(),
-            create: vi.fn(),
-            update: vi.fn(),
-        },
-    },
-}));
-
-vi.mock("../auth.service", () => ({
-    AuthorizationService: {
-        canAccessCampaign: vi.fn().mockResolvedValue(true),
-        canAccessAd: vi.fn().mockResolvedValue(true),
-    },
-}));
-
 describe("AdService", () => {
     beforeEach(() => {
-        vi.clearAllMocks();
+        jest.clearAllMocks();
     });
 
     describe("getUserAds", () => {

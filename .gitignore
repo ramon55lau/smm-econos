@@ -50,3 +50,9 @@ prisma/*.db-journal
 AGENTS.md
 CLAUDE.md
 skills-lock.json
+
+# Scratch & temporary test files
+test-composition.jpg
+test-sharp-composer.ts
+tmp/
+

@@ -36,7 +36,8 @@ export async function POST(req: NextRequest) {
         }
 
         // Verify the code against the stored secret
-        const isValid = await verify({ token: code, secret: (user as any).mfaSecret });
+        const result = await verify({ token: code, secret: (user as any).mfaSecret });
+        const isValid = typeof result === "boolean" ? result : (result as any)?.valid === true;
 
         if (!isValid) {
             return NextResponse.json({ error: "Código incorrecto. Verifique su app de autenticación e intente de nuevo." }, { status: 400 });
